@@ -36,51 +36,45 @@ export function renderArcs(
   const { categoryVisible, highlightBook, hoveredBin, selectedBin } = opts;
   const baseY = layout.baselineY;
 
-  // Group by category for batch rendering
-  const categoryBuckets: Bin[][] = CATEGORY_COLORS.map(() => []);
-
+  // Filter visible bins and sort by span descending so shorter arcs render on top
+  const visible: Bin[] = [];
   for (const bin of bins) {
     if (!categoryVisible[bin.category]) continue;
-    categoryBuckets[bin.category].push(bin);
+    if (bin === hoveredBin || bin === selectedBin) continue;
+    visible.push(bin);
   }
+  visible.sort((a, b) => {
+    const spanA = Math.abs(a.targetBook - a.sourceBook);
+    const spanB = Math.abs(b.targetBook - b.sourceBook);
+    return spanB - spanA; // longest first (drawn behind)
+  });
 
-  for (let cat = 0; cat < CATEGORY_COLORS.length; cat++) {
-    const bucket = categoryBuckets[cat];
-    if (bucket.length === 0) continue;
+  for (const bin of visible) {
+    const x1 = layout.books[bin.sourceBook].centerX;
+    const x2 = layout.books[bin.targetBook].centerX;
 
-    ctx.strokeStyle = CATEGORY_COLORS[cat];
+    const sx1 = x1 * k + tx;
+    const sx2 = x2 * k + tx;
+    const sy = baseY * k + ty;
+    const midX = (sx1 + sx2) / 2;
+    const radius = Math.abs(sx2 - sx1) / 2;
 
-    for (const bin of bucket) {
-      if (bin === hoveredBin || bin === selectedBin) continue;
+    let alpha = binAlpha(bin.count);
+    let width = binWidth(bin.count);
 
-      const x1 = layout.books[bin.sourceBook].centerX;
-      const x2 = layout.books[bin.targetBook].centerX;
-      const dist = Math.abs(x2 - x1);
-      const height = dist * 0.5;
-
-      const sx1 = x1 * k + tx;
-      const sx2 = x2 * k + tx;
-      const sy = baseY * k + ty;
-      const sh = height * k;
-      const cpX = (sx1 + sx2) / 2;
-
-      let alpha = binAlpha(bin.count);
-      let width = binWidth(bin.count);
-
-      // Dim non-matching arcs when a book is highlighted
-      if (highlightBook !== null &&
-          bin.sourceBook !== highlightBook &&
-          bin.targetBook !== highlightBook) {
-        alpha *= 0.1;
-      }
-
-      ctx.globalAlpha = alpha;
-      ctx.lineWidth = width;
-      ctx.beginPath();
-      ctx.moveTo(sx1, sy);
-      ctx.quadraticCurveTo(cpX, sy - sh, sx2, sy);
-      ctx.stroke();
+    // Dim non-matching arcs when a book is highlighted
+    if (highlightBook !== null &&
+        bin.sourceBook !== highlightBook &&
+        bin.targetBook !== highlightBook) {
+      alpha *= 0.1;
     }
+
+    ctx.strokeStyle = CATEGORY_COLORS[bin.category];
+    ctx.globalAlpha = alpha;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.arc(midX, sy, radius, Math.PI, 0);
+    ctx.stroke();
   }
 
   // Render highlighted bin (hovered or selected)
@@ -90,30 +84,26 @@ export function renderArcs(
 
     const x1 = layout.books[bin.sourceBook].centerX;
     const x2 = layout.books[bin.targetBook].centerX;
-    const dist = Math.abs(x2 - x1);
-    const height = dist * 0.5;
 
     const sx1 = x1 * k + tx;
     const sx2 = x2 * k + tx;
     const sy = baseY * k + ty;
-    const sh = height * k;
-    const cpX = (sx1 + sx2) / 2;
+    const midX = (sx1 + sx2) / 2;
+    const radius = Math.abs(sx2 - sx1) / 2;
 
     // Glow
     ctx.strokeStyle = CATEGORY_COLORS[bin.category];
     ctx.lineWidth = binWidth(bin.count) + 4;
     ctx.globalAlpha = 0.3;
     ctx.beginPath();
-    ctx.moveTo(sx1, sy);
-    ctx.quadraticCurveTo(cpX, sy - sh, sx2, sy);
+    ctx.arc(midX, sy, radius, Math.PI, 0);
     ctx.stroke();
 
     // Solid
     ctx.lineWidth = binWidth(bin.count) + 1;
     ctx.globalAlpha = 1.0;
     ctx.beginPath();
-    ctx.moveTo(sx1, sy);
-    ctx.quadraticCurveTo(cpX, sy - sh, sx2, sy);
+    ctx.arc(midX, sy, radius, Math.PI, 0);
     ctx.stroke();
   }
 
@@ -204,6 +194,7 @@ export function hitTestBin(
 ): Bin | null {
   const baseY = layout.baselineY;
   let bestDist = tolerance;
+  let bestSpan = Infinity;
   let bestBin: Bin | null = null;
 
   for (const bin of bins) {
@@ -214,21 +205,25 @@ export function hitTestBin(
     if (mx < Math.min(x1, x2) - tolerance || mx > Math.max(x1, x2) + tolerance) continue;
 
     const dist = Math.abs(x2 - x1);
-    const height = dist * 0.5;
-    const cpX = (x1 + x2) / 2;
+    const midX = (x1 + x2) / 2;
+    const radius = dist / 2;
 
-    // Sample points along the quadratic bezier
-    const steps = Math.max(10, Math.min(40, Math.floor(dist / 10)));
-    for (let s = 0; s <= steps; s++) {
-      const t = s / steps;
-      const t1 = 1 - t;
-      const bx = t1 * t1 * x1 + 2 * t1 * t * cpX + t * t * x2;
-      const by = t1 * t1 * baseY + 2 * t1 * t * (baseY - height) + t * t * baseY;
-      const d = Math.sqrt((mx - bx) ** 2 + (my - by) ** 2);
-      if (d < bestDist) {
-        bestDist = d;
-        bestBin = bin;
-      }
+    // Distance from mouse to the semicircular arc
+    const dx = mx - midX;
+    const dy = my - baseY;
+    // Only match the upper half (arc goes upward)
+    if (dy > tolerance) continue;
+    const distToCenter = Math.sqrt(dx * dx + dy * dy);
+    const minD = Math.abs(distToCenter - radius);
+
+    if (minD >= tolerance) continue;
+
+    // Among all arcs within tolerance, prefer the shortest arc span.
+    // This prevents tall arcs (e.g. red) from dominating the hover.
+    if (dist < bestSpan || (dist === bestSpan && minD < bestDist)) {
+      bestDist = minD;
+      bestSpan = dist;
+      bestBin = bin;
     }
   }
 
