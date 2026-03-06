@@ -3,45 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bible Cross-Reference Visualization</title>
+  <title>Rainbow — Bible Cross-Reference Visualization</title>
   <link rel="stylesheet" href="/src/style.css" />
 </head>
 <body>
   <div id="app">
     <div id="controls">
-      <div id="theme-filters"></div>
-      <div id="vote-slider-container">
-        <label for="vote-slider">Min votes: <span id="vote-value">10</span></label>
-        <input type="range" id="vote-slider" min="0" max="1000" value="323" step="1" />
+      <div id="category-filters"></div>
+      <div id="view-toggle">
+        <button id="view-arcs" class="active">Arcs</button>
+        <button id="view-heatmap">Heatmap</button>
       </div>
-      <div id="search-container">
-        <input type="text" id="verse-search" placeholder="Search (e.g. John 3:16)" />
-        <button id="search-btn">Go</button>
-        <button id="clear-search-btn">Clear</button>
-      </div>
-      <div id="zoom-presets">
-        <button data-preset="all">Fit All</button>
-        <button data-preset="ot">Old Testament</button>
-        <button data-preset="nt">New Testament</button>
-      </div>
-      <div id="arc-count-container">
-        Arcs: <span id="arc-count">0</span>
+      <input type="text" id="book-search" placeholder="Search book..." />
+      <div id="ref-count-display">
+        <span id="ref-count">0</span> references
       </div>
     </div>
     <div id="canvas-container">
       <canvas id="main-canvas"></canvas>
     </div>
     <div id="tooltip" class="hidden"></div>
-    <div id="info-panel" class="hidden">
-      <button id="info-close">&times;</button>
-      <div id="info-content"></div>
-    </div>
-    <div id="verse-overlay" class="hidden">
-      <div id="verse-overlay-backdrop"></div>
-      <div id="verse-overlay-content">
-        <button id="verse-overlay-close">&times;</button>
-        <div id="verse-overlay-cards"></div>
-      </div>
+    <div id="side-panel" class="hidden">
+      <button id="side-panel-close">&times;</button>
+      <div id="side-panel-content"></div>
     </div>
     <div id="loading">
       <div id="loading-text">Loading cross-references...</div>

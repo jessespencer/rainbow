@@ -1,464 +1,336 @@
-import { loadBibleData, verseIndexToRef, parseVerseRef, type Arc, type BibleData } from './data/loader';
-import { computeLayout, BOTTOM_REGION, type Layout } from './layout/book-layout';
-import { createCanvasManager, clearCanvas, type CanvasManager } from './render/canvas-manager';
-import { renderBookBars, computeChapterCounts, type ChapterCounts } from './render/book-bar-renderer';
-import { renderArcs, renderHighlightedArcs, buildSpatialGrid, hitTestArc, type SpatialGrid, type ScreenTransform } from './render/arc-renderer';
-import { THEME_COLORS, THEME_LABELS } from './render/theme-colors';
-import { zoom, zoomIdentity, type ZoomBehavior, type D3ZoomEvent } from 'd3-zoom';
-import { select } from 'd3-selection';
-import 'd3-transition';
+import { CATEGORIES, CATEGORY_COLORS } from './data/categories';
+import { BOOKS } from './data/books';
+import { computeLayout, type Layout } from './lib/layout';
+import { renderArcs, renderBookLabels, renderCredit, hitTestBin, createAnimation, getAnimationAlpha, type RenderOptions, type ScreenTransform, type AnimationState } from './lib/renderer';
+import { buildHeatmapData, renderHeatmap, heatmapHitTest, type HeatmapData } from './lib/heatmap';
+import { showBinTooltip, showHeatmapTooltip, hideTooltip, showSidePanel, hideSidePanel } from './lib/tooltip';
+import { setupZoom, zoomTo, type ZoomState } from './lib/zoom';
+import type { Bin, Reference, WorkerResult } from './lib/dataWorker';
 
 // State
-let data: BibleData;
-let cm: CanvasManager;
+let bins: Bin[] = [];
+let references: Reference[] = [];
+let totalCount = 0;
 let layout: Layout;
-let grid: SpatialGrid;
-let chapterCounts: ChapterCounts;
-let zoomBehavior: ZoomBehavior<HTMLCanvasElement, unknown>;
-let currentTransform = zoomIdentity;
-let themeVisible: boolean[] = THEME_COLORS.map(() => true);
-let minVotes = 10;
-let highlightVerseIndex: number | null = null;
-let hoveredArcIndex: number | null = null;
-let selectedArcIndex: number | null = null;
-let selectedVerseIndex: number | null = null;
+let zoomState: ZoomState;
+let heatmapData: HeatmapData;
+let animation: AnimationState | null = null;
+
+let categoryVisible: boolean[] = CATEGORIES.map(() => true);
+let highlightBook: number | null = null;
+let hoveredBin: Bin | null = null;
+let selectedBin: Bin | null = null;
+let viewMode: 'arcs' | 'heatmap' = 'arcs';
 let animFrame: number | null = null;
+let filterDebounce: ReturnType<typeof setTimeout> | null = null;
 
-function setProgress(pct: number) {
-  const el = document.getElementById('loading-progress');
-  if (el) el.style.width = `${pct}%`;
+// Canvas
+let canvas: HTMLCanvasElement;
+let ctx: CanvasRenderingContext2D;
+let width = 0;
+let height = 0;
+let dpr = 1;
+
+function resizeCanvas() {
+  const container = canvas.parentElement!;
+  const rect = container.getBoundingClientRect();
+  width = rect.width;
+  height = rect.height;
+  dpr = window.devicePixelRatio || 1;
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
 }
 
-function hideLoading() {
-  document.getElementById('loading')?.classList.add('hidden');
-}
-
-function updateArcCount(count: number) {
-  const el = document.getElementById('arc-count');
-  if (el) el.textContent = count.toLocaleString();
-}
-
-function getScreenTransform(): ScreenTransform {
-  return {
-    k: currentTransform.k,
-    tx: currentTransform.x,
-    ty: currentTransform.y,
-  };
+function clearCanvas() {
+  ctx.save();
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = '#0D0D1A';
+  ctx.fillRect(0, 0, width, height);
+  ctx.restore();
 }
 
 function render() {
-  if (!data || !cm || !layout) return;
+  if (!layout) return;
+  clearCanvas();
 
-  clearCanvas(cm);
-  cm.ctx.save();
-  // Identity transform (screen-space only, DPR-scaled)
-  cm.ctx.setTransform(cm.dpr, 0, 0, cm.dpr, 0, 0);
+  ctx.save();
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  const transform = getScreenTransform();
+  if (viewMode === 'heatmap') {
+    renderHeatmap(ctx, heatmapData, width, height, categoryVisible);
+  } else {
+    const transform: ScreenTransform = { k: zoomState.k, tx: zoomState.tx, ty: zoomState.ty };
 
-  // Viewport bounds in world coordinates
-  const viewportLeft = -currentTransform.x / currentTransform.k;
-  const viewportRight = (cm.width - currentTransform.x) / currentTransform.k;
+    // Apply animation alpha modifier if animating
+    if (animation && !animation.done) {
+      const elapsed = performance.now() - animation.startTime;
+      if (elapsed >= animation.totalDuration) {
+        animation.done = true;
+      }
+      // Render with per-category animation
+      renderArcsAnimated(transform);
+    } else {
+      renderArcs(ctx, bins, layout, {
+        categoryVisible,
+        highlightBook,
+        hoveredBin,
+        selectedBin,
+      }, transform);
+    }
 
-  // Render book bars (chapter histogram)
-  renderBookBars(cm.ctx, layout, cm.width, cm.height, transform, chapterCounts);
-
-  // Render arcs
-  renderArcs(cm.ctx, data.arcs, layout, {
-    themeVisible,
-    minVotes,
-    highlightVerseIndex,
-    zoomK: currentTransform.k,
-    viewportLeft,
-    viewportRight,
-    selectedArcIndex,
-    selectedVerseIndex,
-  }, transform);
-
-  // Render search-highlighted arcs
-  if (highlightVerseIndex !== null && highlightVerseIndex !== selectedVerseIndex) {
-    renderHighlightedArcs(cm.ctx, data.arcs, layout, highlightVerseIndex, themeVisible, transform);
+    renderBookLabels(ctx, layout, transform, highlightBook);
+    renderCredit(ctx, totalCount, width, height);
   }
 
-  cm.ctx.restore();
+  ctx.restore();
+
+  if (animation && !animation.done) {
+    animFrame = requestAnimationFrame(() => { animFrame = null; render(); });
+  }
+}
+
+function renderArcsAnimated(transform: ScreenTransform) {
+  if (!animation) return;
+  const { k, tx, ty } = transform;
+  const baseY = layout.baselineY;
+
+  // Sort bins by count (ascending) so densest appear last
+  const sorted = [...bins].sort((a, b) => a.count - b.count);
+
+  for (const bin of sorted) {
+    if (!categoryVisible[bin.category]) continue;
+
+    const alpha = getAnimationAlpha(animation, bin.category);
+    if (alpha <= 0) continue;
+
+    const x1 = layout.books[bin.sourceBook].centerX;
+    const x2 = layout.books[bin.targetBook].centerX;
+    const dist = Math.abs(x2 - x1);
+    const height = dist * 0.5;
+
+    const sx1 = x1 * k + tx;
+    const sx2 = x2 * k + tx;
+    const sy = baseY * k + ty;
+    const sh = height * k;
+    const cpX = (sx1 + sx2) / 2;
+
+    const baseAlpha = 0.3 + 0.55 * Math.min(1, Math.log(bin.count + 1) / Math.log(500));
+    const lineWidth = 1 + 3 * Math.min(1, Math.log(bin.count + 1) / Math.log(500));
+
+    ctx.strokeStyle = CATEGORY_COLORS[bin.category];
+    ctx.globalAlpha = baseAlpha * alpha;
+    ctx.lineWidth = lineWidth;
+
+    // Animate from baseline upward
+    const animatedSh = sh * alpha;
+    ctx.beginPath();
+    ctx.moveTo(sx1, sy);
+    ctx.quadraticCurveTo(cpX, sy - animatedSh, sx2, sy);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
 }
 
 function scheduleRender() {
   if (animFrame) return;
-  animFrame = requestAnimationFrame(() => {
-    animFrame = null;
-    render();
-  });
+  animFrame = requestAnimationFrame(() => { animFrame = null; render(); });
 }
 
-function setupZoom() {
-  zoomBehavior = zoom<HTMLCanvasElement, unknown>()
-    .scaleExtent([0.5, 50])
-    .on('zoom', (event: D3ZoomEvent<HTMLCanvasElement, unknown>) => {
-      currentTransform = event.transform;
-      scheduleRender();
-    });
-
-  select(cm.canvas).call(zoomBehavior);
+function debouncedRender() {
+  if (filterDebounce) clearTimeout(filterDebounce);
+  filterDebounce = setTimeout(() => { scheduleRender(); }, 150);
 }
 
-function setupHover() {
-  const tooltip = document.getElementById('tooltip')!;
-
-  cm.canvas.addEventListener('mousemove', (e) => {
-    if (!grid) return;
-    const rect = cm.canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left - currentTransform.x) / currentTransform.k;
-    const my = (e.clientY - rect.top - currentTransform.y) / currentTransform.k;
-
-    const hit = hitTestArc(mx, my, data.arcs, layout, grid, themeVisible, minVotes);
-
-    if (hit !== null && hit !== hoveredArcIndex) {
-      hoveredArcIndex = hit;
-      const arc = data.arcs[hit];
-      const from = verseIndexToRef(arc[0], data.books);
-      const to = verseIndexToRef(arc[1], data.books);
-
-      tooltip.innerHTML = `
-        <div class="theme-label" style="color: ${THEME_COLORS[arc[3]]}">${THEME_LABELS[arc[3]]}</div>
-        <div class="refs">${from} &harr; ${to}</div>
-        <div class="votes">${arc[2]} vote${arc[2] !== 1 ? 's' : ''}</div>
-      `;
-      tooltip.classList.remove('hidden');
-      tooltip.style.left = `${e.clientX + 12}px`;
-      tooltip.style.top = `${e.clientY - 10}px`;
-    } else if (hit === null) {
-      hoveredArcIndex = null;
-      tooltip.classList.add('hidden');
-    } else {
-      tooltip.style.left = `${e.clientX + 12}px`;
-      tooltip.style.top = `${e.clientY - 10}px`;
-    }
-  });
-
-  cm.canvas.addEventListener('mouseleave', () => {
-    hoveredArcIndex = null;
-    tooltip.classList.add('hidden');
-  });
-}
-
-function setupClick() {
-  const infoPanel = document.getElementById('info-panel')!;
-  const infoContent = document.getElementById('info-content')!;
-  const infoClose = document.getElementById('info-close')!;
-
-  infoClose.addEventListener('click', () => {
-    selectedArcIndex = null;
-    selectedVerseIndex = null;
-    infoPanel.classList.add('hidden');
-    scheduleRender();
-  });
-
-  cm.canvas.addEventListener('click', (e) => {
-    const rect = cm.canvas.getBoundingClientRect();
-    const screenX = e.clientX - rect.left;
-    const screenY = e.clientY - rect.top;
-    const mx = (screenX - currentTransform.x) / currentTransform.k;
-    const my = (screenY - currentTransform.y) / currentTransform.k;
-
-    // Check if click is on book bar region
-    const barScreenY = layout.barY * currentTransform.k + currentTransform.y;
-    if (screenY >= barScreenY && screenY <= barScreenY + 120) {
-      // Click on bar: select verse
-      const verseIdx = layout.xToVerse(mx);
-      selectedVerseIndex = verseIdx;
-      selectedArcIndex = null;
-      showVerseInfo(verseIdx, infoPanel, infoContent);
-      scheduleRender();
-      return;
-    }
-
-    // Hit-test arcs
-    const hit = hitTestArc(mx, my, data.arcs, layout, grid, themeVisible, minVotes);
-    if (hit !== null) {
-      selectedArcIndex = hit;
-      selectedVerseIndex = null;
-      showArcInfo(hit, infoPanel, infoContent);
-      scheduleRender();
-    } else {
-      // Click on empty space: clear selection
-      selectedArcIndex = null;
-      selectedVerseIndex = null;
-      infoPanel.classList.add('hidden');
-      scheduleRender();
-    }
-  });
-}
-
-function setupVerseOverlay() {
-  const overlay = document.getElementById('verse-overlay')!;
-  const backdrop = document.getElementById('verse-overlay-backdrop')!;
-  const closeBtn = document.getElementById('verse-overlay-close')!;
-
-  function close() {
-    overlay.classList.add('hidden');
-  }
-  closeBtn.addEventListener('click', close);
-  backdrop.addEventListener('click', close);
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') close();
-  });
-}
-
-function showVerseOverlay(verseIdx1: number, verseIdx2: number, themeColor: string) {
-  const overlay = document.getElementById('verse-overlay')!;
-  const cards = document.getElementById('verse-overlay-cards')!;
-  const ref1 = verseIndexToRef(verseIdx1, data.books);
-  const ref2 = verseIndexToRef(verseIdx2, data.books);
-
-  cards.innerHTML = `
-    <div class="verse-card">
-      <div class="verse-card-ref" style="color: ${themeColor}">${ref1}</div>
-      <div class="verse-card-text">${ref1}</div>
-    </div>
-    <div class="verse-card-divider"></div>
-    <div class="verse-card">
-      <div class="verse-card-ref" style="color: ${themeColor}">${ref2}</div>
-      <div class="verse-card-text">${ref2}</div>
-    </div>
-  `;
-
-  overlay.classList.remove('hidden');
-}
-
-function showArcInfo(arcIdx: number, panel: HTMLElement, content: HTMLElement) {
-  const arc = data.arcs[arcIdx];
-  const from = verseIndexToRef(arc[0], data.books);
-  const to = verseIndexToRef(arc[1], data.books);
-  const color = THEME_COLORS[arc[3]];
-
-  content.innerHTML = `
-    <div class="info-theme" style="color: ${color}">${THEME_LABELS[arc[3]]}</div>
-    <div class="info-refs">
-      <span class="info-ref" data-verse="${arc[0]}" data-other="${arc[1]}">${from}</span>
-      <span class="info-arrow">&harr;</span>
-      <span class="info-ref" data-verse="${arc[1]}" data-other="${arc[0]}">${to}</span>
-    </div>
-    <div class="info-votes">${arc[2]} vote${arc[2] !== 1 ? 's' : ''}</div>
-  `;
-
-  // Click a verse ref -> show overlay with both verses
-  content.querySelectorAll('.info-ref').forEach(el => {
-    el.addEventListener('click', () => {
-      showVerseOverlay(arc[0], arc[1], color);
-    });
-  });
-
-  panel.classList.remove('hidden');
-}
-
-function showVerseInfo(verseIdx: number, panel: HTMLElement, content: HTMLElement) {
-  const ref = verseIndexToRef(verseIdx, data.books);
-
-  // Find all arcs connected to this verse
-  const connected: { arcIdx: number; otherVerse: number; votes: number; theme: number }[] = [];
-  for (let i = 0; i < data.arcs.length; i++) {
-    const arc = data.arcs[i];
-    if (arc[0] === verseIdx || arc[1] === verseIdx) {
-      const other = arc[0] === verseIdx ? arc[1] : arc[0];
-      connected.push({ arcIdx: i, otherVerse: other, votes: arc[2], theme: arc[3] });
-    }
-  }
-  connected.sort((a, b) => b.votes - a.votes);
-
-  let html = `<div class="info-verse-title">${ref}</div>`;
-  html += `<div class="info-count">${connected.length} cross-reference${connected.length !== 1 ? 's' : ''}</div>`;
-  html += `<div class="info-ref-list">`;
-  for (const c of connected.slice(0, 50)) {
-    const otherRef = verseIndexToRef(c.otherVerse, data.books);
-    const color = THEME_COLORS[c.theme];
-    html += `<div class="info-ref-item" data-verse="${c.otherVerse}">
-      <span class="info-dot" style="background:${color}"></span>
-      <span>${otherRef}</span>
-      <span class="info-item-votes">${c.votes}v</span>
-    </div>`;
-  }
-  if (connected.length > 50) {
-    html += `<div class="info-more">+ ${connected.length - 50} more</div>`;
-  }
-  html += `</div>`;
-
-  content.innerHTML = html;
-
-  // Make refs clickable
-  content.querySelectorAll('.info-ref-item').forEach(el => {
-    el.addEventListener('click', () => {
-      const vi = parseInt((el as HTMLElement).dataset.verse!, 10);
-      zoomToVerse(vi);
-    });
-  });
-
-  panel.classList.remove('hidden');
-}
-
-function zoomToVerse(verseIdx: number) {
-  const x = layout.verseToX(verseIdx);
-  const k = 10;
-  const txVal = cm.width / 2 - x * k;
-  const tyVal = currentTransform.y;
-  select(cm.canvas)
-    .transition()
-    .duration(750)
-    .call(zoomBehavior.transform, zoomIdentity.translate(txVal, tyVal).scale(k));
-}
-
-function setupThemeFilters() {
-  const container = document.getElementById('theme-filters')!;
-  THEME_COLORS.forEach((color, i) => {
+// UI Setup
+function setupFilters() {
+  const container = document.getElementById('category-filters')!;
+  CATEGORIES.forEach((cat, i) => {
     const btn = document.createElement('button');
-    btn.className = 'theme-toggle';
-    btn.innerHTML = `<span class="theme-dot" style="background:${color}"></span>${THEME_LABELS[i]}`;
+    btn.className = 'cat-pill';
+    btn.innerHTML = `<span class="cat-dot" style="background:${cat.color}"></span>${cat.label}`;
     btn.addEventListener('click', () => {
-      themeVisible[i] = !themeVisible[i];
-      btn.classList.toggle('inactive', !themeVisible[i]);
-      scheduleRender();
+      categoryVisible[i] = !categoryVisible[i];
+      btn.classList.toggle('inactive', !categoryVisible[i]);
+      debouncedRender();
     });
     container.appendChild(btn);
   });
 }
 
-// Logarithmic slider: position 0-1000 maps to votes 0-1275
-const MAX_VOTES = 1275;
-function sliderToVotes(pos: number): number {
-  if (pos === 0) return 0;
-  const maxPos = 1000;
-  return Math.round(Math.exp((pos / maxPos) * Math.log(MAX_VOTES + 1)) - 1);
-}
+function setupViewToggle() {
+  const arcBtn = document.getElementById('view-arcs')!;
+  const heatBtn = document.getElementById('view-heatmap')!;
 
-function votesToSlider(votes: number): number {
-  if (votes === 0) return 0;
-  return Math.round((Math.log(votes + 1) / Math.log(MAX_VOTES + 1)) * 1000);
-}
+  arcBtn.addEventListener('click', () => {
+    viewMode = 'arcs';
+    arcBtn.classList.add('active');
+    heatBtn.classList.remove('active');
+    scheduleRender();
+  });
 
-function setupVoteSlider() {
-  const slider = document.getElementById('vote-slider') as HTMLInputElement;
-  const valueEl = document.getElementById('vote-value')!;
-  // Set initial slider position for minVotes=10
-  slider.value = String(votesToSlider(minVotes));
-  valueEl.textContent = String(minVotes);
-
-  slider.addEventListener('input', () => {
-    minVotes = sliderToVotes(parseInt(slider.value, 10));
-    valueEl.textContent = String(minVotes);
+  heatBtn.addEventListener('click', () => {
+    viewMode = 'heatmap';
+    heatBtn.classList.add('active');
+    arcBtn.classList.remove('active');
     scheduleRender();
   });
 }
 
 function setupSearch() {
-  const input = document.getElementById('verse-search') as HTMLInputElement;
-  const searchBtn = document.getElementById('search-btn')!;
-  const clearBtn = document.getElementById('clear-search-btn')!;
-
-  function doSearch() {
-    const idx = parseVerseRef(input.value, data.books);
-    if (idx !== null) {
-      highlightVerseIndex = idx;
-      zoomToVerse(idx);
+  const input = document.getElementById('book-search') as HTMLInputElement;
+  input.addEventListener('input', () => {
+    const query = input.value.trim().toLowerCase();
+    if (!query) {
+      highlightBook = null;
+      scheduleRender();
+      return;
     }
-  }
-
-  searchBtn.addEventListener('click', doSearch);
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') doSearch();
-  });
-
-  clearBtn.addEventListener('click', () => {
-    highlightVerseIndex = null;
-    input.value = '';
-    select(cm.canvas)
-      .transition()
-      .duration(750)
-      .call(zoomBehavior.transform, zoomIdentity);
+    const idx = BOOKS.findIndex(b =>
+      b.name.toLowerCase().startsWith(query) ||
+      b.abbr.toLowerCase().startsWith(query)
+    );
+    highlightBook = idx >= 0 ? idx : null;
+    scheduleRender();
   });
 }
 
-function setupZoomPresets() {
-  const container = document.getElementById('zoom-presets')!;
-  container.querySelectorAll('button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const preset = btn.dataset.preset;
-      let txVal = 0, tyVal = 0, k = 1;
-      if (preset === 'all') {
-        // Scale so the full width fits, and barY + bottom region fits in canvas height
-        const kw = cm.width / layout.totalWidth;
-        const totalWorldHeight = layout.barY + BOTTOM_REGION;
-        const kh = cm.height / totalWorldHeight;
-        k = Math.min(kw, kh);
-        txVal = (cm.width - layout.totalWidth * k) / 2;
-        tyVal = (cm.height - totalWorldHeight * k) / 2;
-      } else if (preset === 'ot') {
-        const otEnd = data.books[38].offset + data.books[38].verseCount;
-        const otWidth = layout.verseToX(otEnd);
-        k = cm.width / otWidth;
-        txVal = 0;
-      } else if (preset === 'nt') {
-        const ntStart = layout.verseToX(data.books[39].offset);
-        const ntEnd = layout.verseToX(data.totalVerses);
-        const ntWidth = ntEnd - ntStart;
-        k = cm.width / ntWidth;
-        txVal = -ntStart * k;
+function setupInteraction() {
+  // Hover
+  canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const screenX = e.clientX - rect.left;
+    const screenY = e.clientY - rect.top;
+
+    if (viewMode === 'heatmap') {
+      const hit = heatmapHitTest(screenX, screenY, width, height);
+      if (hit) {
+        const key = hit.row * 66 + hit.col;
+        const count = heatmapData.matrix[key];
+        if (count > 0) {
+          showHeatmapTooltip(hit.row, hit.col, count, heatmapData.dominantCat[key], e.clientX, e.clientY);
+        } else {
+          hideTooltip();
+        }
+      } else {
+        hideTooltip();
       }
-      select(cm.canvas)
-        .transition()
-        .duration(750)
-        .call(zoomBehavior.transform, zoomIdentity.translate(txVal, tyVal).scale(k));
-    });
+      return;
+    }
+
+    // Arc view: transform to world coords
+    const mx = (screenX - zoomState.tx) / zoomState.k;
+    const my = (screenY - zoomState.ty) / zoomState.k;
+
+    const tolerance = 8 / zoomState.k;
+    const hit = hitTestBin(mx, my, bins, layout, categoryVisible, tolerance);
+
+    if (hit !== hoveredBin) {
+      hoveredBin = hit;
+      scheduleRender();
+    }
+
+    if (hit) {
+      showBinTooltip(hit, e.clientX, e.clientY);
+      canvas.style.cursor = 'pointer';
+    } else {
+      hideTooltip();
+      canvas.style.cursor = 'default';
+    }
   });
-}
 
-async function main() {
-  data = await loadBibleData(setProgress);
-
-  // Sort arcs by votes descending so LOD cutoff keeps the best arcs
-  data.arcs.sort((a, b) => b[2] - a[2]);
-
-  hideLoading();
-
-  const canvas = document.getElementById('main-canvas') as HTMLCanvasElement;
-  cm = createCanvasManager(canvas);
-
-  layout = computeLayout(data.books, data.totalVerses, cm.width, cm.height);
-  chapterCounts = computeChapterCounts(data.arcs, data.books);
-  grid = buildSpatialGrid(data.arcs, layout);
-
-  setupZoom();
-  setupHover();
-  setupClick();
-  setupVerseOverlay();
-  setupThemeFilters();
-  setupVoteSlider();
-  setupSearch();
-  setupZoomPresets();
-
-  // Set initial transform to fit all content including labels
-  {
-    const kw = cm.width / layout.totalWidth;
-    const totalWorldHeight = layout.barY + BOTTOM_REGION;
-    const kh = cm.height / totalWorldHeight;
-    const k = Math.min(kw, kh);
-    const txVal = (cm.width - layout.totalWidth * k) / 2;
-    const tyVal = (cm.height - totalWorldHeight * k) / 2;
-    const initialTransform = zoomIdentity.translate(txVal, tyVal).scale(k);
-    select(cm.canvas).call(zoomBehavior.transform, initialTransform);
-  }
-
-  window.addEventListener('resize', () => {
-    cm.resize();
-    layout = computeLayout(data.books, data.totalVerses, cm.width, cm.height);
-    grid = buildSpatialGrid(data.arcs, layout);
+  canvas.addEventListener('mouseleave', () => {
+    hoveredBin = null;
+    hideTooltip();
     scheduleRender();
   });
 
-  render();
+  // Click
+  canvas.addEventListener('click', (e) => {
+    if (viewMode === 'heatmap') return;
+
+    const rect = canvas.getBoundingClientRect();
+    const screenX = e.clientX - rect.left;
+    const screenY = e.clientY - rect.top;
+    const mx = (screenX - zoomState.tx) / zoomState.k;
+    const my = (screenY - zoomState.ty) / zoomState.k;
+
+    const tolerance = 8 / zoomState.k;
+    const hit = hitTestBin(mx, my, bins, layout, categoryVisible, tolerance);
+
+    if (hit) {
+      selectedBin = hit;
+      showSidePanel(hit, references);
+      scheduleRender();
+    } else {
+      selectedBin = null;
+      hideSidePanel();
+      scheduleRender();
+    }
+  });
+
+  // Side panel close
+  document.getElementById('side-panel-close')!.addEventListener('click', () => {
+    selectedBin = null;
+    hideSidePanel();
+    scheduleRender();
+  });
+}
+
+function setProgress(pct: number) {
+  const bar = document.getElementById('loading-progress') as HTMLElement;
+  if (bar) bar.style.width = `${pct}%`;
+}
+
+async function main() {
+  canvas = document.getElementById('main-canvas') as HTMLCanvasElement;
+  ctx = canvas.getContext('2d')!;
+  resizeCanvas();
+
+  layout = computeLayout(width, height);
+  zoomState = setupZoom(canvas, () => scheduleRender());
+
+  // Start worker
+  const worker = new Worker(
+    new URL('./lib/dataWorker.ts', import.meta.url),
+    { type: 'module' }
+  );
+
+  worker.onmessage = (e: MessageEvent<WorkerResult>) => {
+    if (e.data.type === 'progress') {
+      setProgress(e.data.progress!);
+    } else if (e.data.type === 'ready') {
+      bins = e.data.bins!;
+      references = e.data.references!;
+      totalCount = e.data.totalCount!;
+      heatmapData = buildHeatmapData(bins);
+
+      document.getElementById('loading')!.classList.add('hidden');
+      document.getElementById('ref-count')!.textContent = totalCount.toLocaleString();
+
+      // Start entrance animation
+      animation = createAnimation();
+      scheduleRender();
+    }
+  };
+
+  worker.postMessage({ type: 'load', url: '/references.json' });
+
+  setupFilters();
+  setupViewToggle();
+  setupSearch();
+  setupInteraction();
+
+  window.addEventListener('resize', () => {
+    resizeCanvas();
+    layout = computeLayout(width, height);
+    scheduleRender();
+  });
 }
 
 main().catch(err => {
   console.error('Failed to initialize:', err);
-  const loadingText = document.getElementById('loading-text');
-  if (loadingText) loadingText.textContent = `Error: ${err.message}`;
+  const text = document.getElementById('loading-text');
+  if (text) text.textContent = `Error: ${err.message}`;
 });
