@@ -47,7 +47,7 @@ function resizeCanvas() {
 function clearCanvas() {
   ctx.save();
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.fillStyle = '#0D0D1A';
+  ctx.fillStyle = '#0C1017';
   ctx.fillRect(0, 0, width, height);
   ctx.restore();
 }
@@ -82,8 +82,9 @@ function render() {
     }
 
     renderBookLabels(ctx, layout, transform, highlightBook);
-    renderCredit(ctx, totalCount, width, height);
   }
+
+  renderCredit(ctx, totalCount, width, height);
 
   ctx.restore();
 
@@ -150,11 +151,13 @@ function fitRainbowToView(animated: boolean) {
   // Scale to fit with padding
   const scaleX = (width - padding * 2) / rainbowWidth;
   const scaleY = (height - padding * 2) / rainbowHeight;
-  const k = Math.min(scaleX, scaleY);
+  const k = Math.min(scaleX, scaleY) * 0.94;
 
-  // Center horizontally, position so top of tallest arc has padding
-  const tx = (width - rainbowWidth * k) / 2 - left * k;
-  const ty = padding - top * k;
+  // Center horizontally and vertically
+  const contentW = rainbowWidth * k;
+  const contentH = rainbowHeight * k;
+  const tx = (width - contentW) / 2 - left * k;
+  const ty = (height - contentH) / 2 - top * k;
 
   zoomTo(canvas, zoomState, k, tx, ty, animated);
 }
