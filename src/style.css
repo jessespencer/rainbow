@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&display=swap');
 
 * {
   margin: 0;
@@ -7,7 +7,7 @@
 }
 
 body {
-  background: #0D0D1A;
+  background: #0C1017;
   color: #e0e0e8;
   font-family: 'EB Garamond', Georgia, serif;
   overflow: hidden;
@@ -48,7 +48,7 @@ body {
   background: rgba(255,255,255,0.07);
   border: 1px solid rgba(255,255,255,0.08);
   color: #d0d0d8;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 11px;
   cursor: pointer;
   transition: opacity 0.2s, background 0.2s;
@@ -89,7 +89,7 @@ body {
   border-radius: 4px;
   background: transparent;
   color: rgba(200,200,210,0.6);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 11px;
   cursor: pointer;
   transition: all 0.2s;
@@ -116,7 +116,7 @@ body {
   border: 1px solid rgba(255,255,255,0.08);
   background: rgba(255,255,255,0.05);
   color: rgba(200,200,210,0.6);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 11px;
   cursor: pointer;
   transition: all 0.2s;
@@ -134,7 +134,7 @@ body {
   border: 1px solid rgba(255,255,255,0.08);
   background: rgba(255,255,255,0.04);
   color: #e0e0e8;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12px;
   width: 140px;
   outline: none;
@@ -150,7 +150,7 @@ body {
 }
 
 #ref-count-display {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 11px;
   color: rgba(180,180,190,0.5);
   margin-left: auto;
@@ -204,7 +204,7 @@ body {
 .tt-count {
   color: rgba(180,180,190,0.6);
   font-size: 11px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 /* Side panel */
@@ -247,7 +247,7 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 600;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', sans-serif;
   margin-bottom: 4px;
 }
 
@@ -260,7 +260,7 @@ body {
 .sp-count {
   color: rgba(180,180,190,0.5);
   font-size: 12px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 .sp-samples {
@@ -278,7 +278,7 @@ body {
 }
 
 .sp-refs {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12px;
   color: rgba(200,200,210,0.8);
   margin-bottom: 4px;
@@ -303,22 +303,65 @@ body {
   letter-spacing: 0.5px;
   color: rgba(180,180,190,0.4);
   margin-bottom: 8px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 .sp-refitem {
   padding: 4px 0;
   font-size: 12px;
   color: rgba(200,200,210,0.6);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', sans-serif;
   border-bottom: 1px solid rgba(255,255,255,0.03);
 }
 
-.sp-more {
-  color: rgba(180,180,190,0.3);
+.sp-refitems {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.sp-refitem-hidden {
+  display: none;
+}
+
+.sp-show-all {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 6px 0;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+  background: rgba(255,255,255,0.04);
+  color: rgba(200,200,210,0.7);
+  font-family: 'Inter', sans-serif;
   font-size: 11px;
-  padding-top: 4px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sp-show-all:hover {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
+
+/* Credit */
+#credit-left {
+  position: fixed;
+  bottom: 10px;
+  left: 16px;
+  font: 11px 'EB Garamond', Georgia, serif;
+  color: rgba(180,180,190,0.4);
+  z-index: 5;
+  pointer-events: auto;
+}
+
+#credit-left a {
+  color: rgba(180,180,190,0.4);
+  text-decoration: none;
+}
+
+#credit-left a:hover {
+  color: rgba(180,180,190,0.7);
+  text-decoration: underline;
 }
 
 /* Loading */
@@ -329,7 +372,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #0D0D1A;
+  background: #0C1017;
   z-index: 1000;
   gap: 20px;
 }
@@ -353,7 +396,7 @@ body {
 #loading-progress {
   width: 0%;
   height: 100%;
-  background: linear-gradient(90deg, #F5A623, #6A0DAD, #1A8C7A, #B22222, #2C5F8A, #E8A838);
+  background: linear-gradient(90deg, #C94040, #D47240, #E8B84B, #96BC5A, #50976A, #3D9E92, #3B6E9E, #7B3DAE);
   transition: width 0.3s;
 }
 
@@ -367,6 +410,19 @@ body {
 }
 
 #side-panel::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+}
+
+.sp-refitems::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sp-refitems::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sp-refitems::-webkit-scrollbar-thumb {
   background: rgba(255,255,255,0.1);
   border-radius: 2px;
 }

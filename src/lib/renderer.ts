@@ -178,10 +178,11 @@ export function renderCredit(
   ctx.textAlign = 'right';
   ctx.textBaseline = 'bottom';
   ctx.fillText(
-    `${totalCount.toLocaleString()} connections across 66 books, ~1,500 years, ~40 authors`,
+    `${totalCount.toLocaleString()} connections across 66 books, ~1,500 years, ~40 authors, 1 awesome God`,
     canvasWidth - 16,
     canvasHeight - 12,
   );
+
 }
 
 // Hit-test which bin an (x, y) world coordinate is near

@@ -5,15 +5,19 @@ export interface Category {
 }
 
 export const CATEGORIES: Category[] = [
-  { id: 'messianic', label: 'Messianic Prophecy / Fulfillment', color: '#F5A623' },
-  { id: 'law', label: 'Law & Covenant', color: '#2C5F8A' },
-  { id: 'wisdom', label: 'Wisdom & Proverbs', color: '#6B8F71' },
-  { id: 'prophecy', label: 'Prophecy & Apocalyptic', color: '#6A0DAD' },
-  { id: 'praise', label: 'Praise & Worship', color: '#E8A838' },
-  { id: 'historical', label: 'Historical Parallel', color: '#7A8B8B' },
-  { id: 'creation', label: 'Creation & Cosmos', color: '#1A8C7A' },
-  { id: 'redemption', label: 'Sin, Redemption & Grace', color: '#B22222' },
+  { id: 'redemption', label: 'Sin, Redemption & Grace', color: '#C94040' },
+  { id: 'messianic', label: 'Messianic Prophecy / Fulfillment', color: '#D47240' },
+  { id: 'praise', label: 'Praise & Worship', color: '#E8B84B' },
+  { id: 'wisdom', label: 'Wisdom & Proverbs', color: '#96BC5A' },
+  { id: 'creation', label: 'Creation & Cosmos', color: '#50976A' },
+  { id: 'historical', label: 'Historical Parallel', color: '#3D9E92' },
+  { id: 'law', label: 'Law & Covenant', color: '#3B6E9E' },
+  { id: 'prophecy', label: 'Prophecy & Apocalyptic', color: '#7B3DAE' },
 ];
+
+// Maps old data category indices to new array indices
+// Old: 0=messianic, 1=law, 2=wisdom, 3=prophecy, 4=praise, 5=historical, 6=creation, 7=redemption
+export const CATEGORY_REMAP = [1, 6, 3, 7, 2, 5, 4, 0];
 
 export const CATEGORY_COLORS = CATEGORIES.map(c => c.color);
 export const CATEGORY_LABELS = CATEGORIES.map(c => c.label);

@@ -84,24 +84,38 @@ export function showSidePanel(bin: Bin, references: Reference[]) {
     html += '</div>';
   }
 
-  // Show raw reference list (top 20)
-  const subset = bin.refIndices.slice(0, 20);
-  if (subset.length > 0) {
+  // Show raw reference list with expand capability
+  const INITIAL_COUNT = 20;
+  if (bin.refIndices.length > 0) {
     html += '<div class="sp-reflist"><div class="sp-reflist-title">References</div>';
-    for (const idx of subset) {
-      const ref = references[idx];
+    html += '<div class="sp-refitems">';
+    for (let i = 0; i < bin.refIndices.length; i++) {
+      const ref = references[bin.refIndices[i]];
       const src = `${BOOKS[ref.s[0]].name} ${ref.s[1]}:${ref.s[2]}`;
       const tgt = `${BOOKS[ref.t[0]].name} ${ref.t[1]}:${ref.t[2]}`;
-      html += `<div class="sp-refitem">${src} &harr; ${tgt}</div>`;
+      const hidden = i >= INITIAL_COUNT ? ' class="sp-refitem sp-refitem-hidden"' : ' class="sp-refitem"';
+      html += `<div${hidden}>${src} &harr; ${tgt}</div>`;
     }
-    if (bin.refIndices.length > 20) {
-      html += `<div class="sp-more">+ ${bin.refIndices.length - 20} more</div>`;
+    html += '</div>';
+    if (bin.refIndices.length > INITIAL_COUNT) {
+      html += `<button class="sp-show-all">Show all ${bin.refIndices.length} references</button>`;
     }
     html += '</div>';
   }
 
   content.innerHTML = html;
   panel.classList.remove('hidden');
+
+  // Wire up expand button
+  const showAllBtn = content.querySelector('.sp-show-all');
+  if (showAllBtn) {
+    showAllBtn.addEventListener('click', () => {
+      content.querySelectorAll('.sp-refitem-hidden').forEach(el => {
+        el.classList.remove('sp-refitem-hidden');
+      });
+      showAllBtn.remove();
+    });
+  }
 }
 
 export function hideSidePanel() {

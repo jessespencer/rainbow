@@ -1,4 +1,5 @@
 // Web Worker: loads references JSON, bins by (sourceBook, targetBook, category)
+import { CATEGORY_REMAP } from '../data/categories';
 
 export interface Reference {
   s: [number, number, number]; // [bookIndex, chapter, verse]
@@ -57,7 +58,9 @@ self.onmessage = async (e: MessageEvent<WorkerCommand>) => {
     const resp = await fetch(e.data.url);
     self.postMessage({ type: 'progress', progress: 40 } as WorkerResult);
 
-    const refs: Reference[] = await resp.json();
+    const rawRefs: Reference[] = await resp.json();
+    // Remap category indices to new order
+    const refs = rawRefs.map(r => ({ ...r, cat: CATEGORY_REMAP[r.cat] }));
     self.postMessage({ type: 'progress', progress: 70 } as WorkerResult);
 
     const bins = binReferences(refs);
