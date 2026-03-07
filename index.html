@@ -8,31 +8,42 @@
 </head>
 <body>
   <div id="app">
-    <div id="controls">
-      <div id="category-filters"></div>
-      <div id="view-toggle">
-        <button id="view-arcs" class="active">Arcs</button>
-        <button id="view-heatmap">Heatmap</button>
+    <div id="header">
+      <div id="header-row">
+        <div id="header-title">
+          <h1>Rainbow Reference</h1>
+          <p class="subtitle">The world's first hyperlinked Text</p>
+        </div>
+        <div id="controls">
+          <div id="view-toggle">
+            <button id="view-arcs" class="active">Arcs</button>
+            <button id="view-heatmap">Heatmap</button>
+          </div>
+          <div id="zoom-presets">
+            <button data-preset="all">Fit All</button>
+            <button data-preset="ot">Old Testament</button>
+            <button data-preset="nt">New Testament</button>
+          </div>
+          <input type="text" id="book-search" placeholder="Search book..." />
+        </div>
       </div>
-      <div id="zoom-presets">
-        <button data-preset="all">Fit All</button>
-        <button data-preset="ot">Old Testament</button>
-        <button data-preset="nt">New Testament</button>
-      </div>
-      <input type="text" id="book-search" placeholder="Search book..." />
-      <div id="ref-count-display">
-        <span id="ref-count">0</span> references
-      </div>
+      <div class="gradient-bar"></div>
     </div>
     <div id="canvas-container">
       <canvas id="main-canvas"></canvas>
+    </div>
+    <div id="category-filters"></div>
+    <div id="footer">
+      <div id="footer-text">
+        <span>Inspired by Chris Harrison. Made by <a href="https://www.jessedestroys.com" target="_blank">www.jessedestroys.com</a></span>
+        <span id="footer-stats"></span>
+      </div>
     </div>
     <div id="tooltip" class="hidden"></div>
     <div id="side-panel" class="hidden">
       <button id="side-panel-close">&times;</button>
       <div id="side-panel-content"></div>
     </div>
-    <div id="credit-left">Inspired by Chris Harrison. Made by <a href="https://www.jessedestroys.com" target="_blank">www.jessedestroys.com</a></div>
     <div id="loading">
       <div id="loading-text">Loading cross-references...</div>
       <div id="loading-bar"><div id="loading-progress"></div></div>

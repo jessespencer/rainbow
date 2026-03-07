@@ -1,7 +1,7 @@
 import { CATEGORIES, CATEGORY_COLORS } from './data/categories';
 import { BOOKS, OT_COUNT } from './data/books';
 import { computeLayout, type Layout } from './lib/layout';
-import { renderArcs, renderBookLabels, renderCredit, hitTestBin, createAnimation, getAnimationAlpha, type RenderOptions, type ScreenTransform, type AnimationState } from './lib/renderer';
+import { renderArcs, renderBookLabels, hitTestBin, createAnimation, getAnimationAlpha, type RenderOptions, type ScreenTransform, type AnimationState } from './lib/renderer';
 import { buildHeatmapData, renderHeatmap, heatmapHitTest, type HeatmapData } from './lib/heatmap';
 import { showBinTooltip, showHeatmapTooltip, hideTooltip, showSidePanel, hideSidePanel } from './lib/tooltip';
 import { setupZoom, zoomTo, type ZoomState } from './lib/zoom';
@@ -47,7 +47,7 @@ function resizeCanvas() {
 function clearCanvas() {
   ctx.save();
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.fillStyle = '#0C1017';
+  ctx.fillStyle = '#0B0D12';
   ctx.fillRect(0, 0, width, height);
   ctx.restore();
 }
@@ -83,8 +83,6 @@ function render() {
 
     renderBookLabels(ctx, layout, transform, highlightBook);
   }
-
-  renderCredit(ctx, totalCount, width, height);
 
   ctx.restore();
 
@@ -412,7 +410,8 @@ async function main() {
       heatmapData = buildHeatmapData(bins);
 
       document.getElementById('loading')!.classList.add('hidden');
-      document.getElementById('ref-count')!.textContent = totalCount.toLocaleString();
+      document.getElementById('footer-stats')!.textContent =
+        `${totalCount.toLocaleString()} connections across 66 books, ~1,500 years, ~40 authors, 1 awesome God`;
 
       // Fit the full rainbow in the viewport
       fitRainbowToView(false);
