@@ -259,12 +259,36 @@ function setupFilters() {
         b.classList.toggle('focused', focusedCategory === j);
         b.classList.toggle('inactive', focusedCategory !== null && focusedCategory !== j);
       });
+      updateClearButton();
       scheduleRender();
     });
     buttons.push(btn);
     container.appendChild(btn);
   });
+
+  // Clear filters button (in canvas-controls-left, next to shuffle)
+  const clearBtn = document.getElementById('clear-filters')!;
+  clearBtn.addEventListener('click', () => {
+    focusedCategory = null;
+    categoryVisible = CATEGORIES.map(() => true);
+    selectedBook = null;
+    selectedBin = null;
+    highlightBook = null;
+    hideSidePanel();
+    buttons.forEach(b => {
+      b.classList.remove('focused', 'inactive');
+    });
+    updateClearButton();
+    scheduleRender();
+  });
+
+  updateClearButton = () => {
+    const hasFilter = focusedCategory !== null || selectedBook !== null || selectedBin !== null;
+    clearBtn.classList.toggle('visible', hasFilter);
+  };
 }
+
+let updateClearButton: () => void = () => {};
 
 function fitBooksToView(startBook: number, endBook: number, animated: boolean) {
   const padding = 20;
@@ -366,6 +390,7 @@ function setupSearch() {
       hideSidePanel();
       input.value = '';
       input.blur();
+      updateClearButton();
       scheduleRender();
     }
   });
@@ -528,6 +553,7 @@ function setupInteraction() {
         selectedBook = selectedBook === hitBook ? null : hitBook;
         selectedBin = null;
         hideSidePanel();
+        updateClearButton();
         scheduleRender();
         return;
       }
@@ -539,11 +565,13 @@ function setupInteraction() {
     if (hit) {
       selectedBin = hit;
       showSidePanel(hit, references);
+      updateClearButton();
       scheduleRender();
     } else {
       selectedBin = null;
       selectedBook = null;
       hideSidePanel();
+      updateClearButton();
       scheduleRender();
     }
   });
@@ -552,6 +580,7 @@ function setupInteraction() {
   document.getElementById('side-panel-close')!.addEventListener('click', () => {
     selectedBin = null;
     hideSidePanel();
+    updateClearButton();
     scheduleRender();
   });
 }

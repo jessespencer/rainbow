@@ -195,6 +195,14 @@ body {
   border-radius: 50%;
 }
 
+#clear-filters {
+  display: none;
+}
+
+#clear-filters.visible {
+  display: inline-flex;
+}
+
 /* ─── CANVAS CONTROLS (floating) ─────────────────────────── */
 #canvas-controls-left {
   position: absolute;
