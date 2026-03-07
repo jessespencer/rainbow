@@ -613,12 +613,16 @@ body {
 }
 
 #shuffle-arrow {
-  font-size: 24px;
+  font-size: 32px;
   color: var(--text-muted);
 }
 
 #btn-shuffle-again {
   margin-top: 16px;
+}
+
+#btn-shuffle-exit {
+  margin-top: -32px;
 }
 
 /* ─── LOADING ────────────────────────────────────────────── */

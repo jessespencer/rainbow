@@ -6,6 +6,7 @@ import type { Layout } from './layout';
 export interface RenderOptions {
   categoryVisible: boolean[];
   highlightBook: number | null;
+  selectedBook: number | null;
   hoveredBin: Bin | null;
   selectedBin: Bin | null;
 }
@@ -33,8 +34,10 @@ export function renderArcs(
   transform: ScreenTransform,
 ) {
   const { k, tx, ty } = transform;
-  const { categoryVisible, highlightBook, hoveredBin, selectedBin } = opts;
+  const { categoryVisible, highlightBook, selectedBook, hoveredBin, selectedBin } = opts;
   const baseY = layout.baselineY;
+  const activeBook = selectedBook ?? highlightBook;
+
 
   // Filter visible bins and sort by span descending so shorter arcs render on top
   const visible: Bin[] = [];
@@ -62,11 +65,12 @@ export function renderArcs(
     let alpha = binAlpha(bin.count);
     let width = binWidth(bin.count);
 
-    // Dim non-matching arcs when a book is highlighted
-    if (highlightBook !== null &&
-        bin.sourceBook !== highlightBook &&
-        bin.targetBook !== highlightBook) {
-      alpha *= 0.1;
+    // Dim or hide non-matching arcs when a book is highlighted or selected
+    if (activeBook !== null &&
+        bin.sourceBook !== activeBook &&
+        bin.targetBook !== activeBook) {
+      if (selectedBook !== null) continue; // skip entirely in book focus mode
+      alpha *= 0.05;
     }
 
     ctx.strokeStyle = CATEGORY_COLORS[bin.category];
@@ -115,6 +119,7 @@ export function renderBookLabels(
   layout: Layout,
   transform: ScreenTransform,
   highlightBook: number | null,
+  selectedBook: number | null,
 ) {
   const { k, tx, ty } = transform;
   const labelY = layout.baselineY * k + ty + 8;
@@ -149,14 +154,16 @@ export function renderBookLabels(
 
   for (const book of layout.books) {
     const cx = book.centerX * k + tx;
+    const isSelected = book.index === selectedBook;
     const isHighlighted = book.index === highlightBook;
+    const isActive = isSelected || isHighlighted;
 
-    ctx.font = `${isHighlighted ? 'bold ' : ''}${fontSize}px "Fraunces", Georgia, serif`;
-    ctx.fillStyle = isHighlighted ? '#EDF2F8' : '#A0AEC0';
+    ctx.font = `${isActive ? 'bold ' : ''}${fontSize}px "Fraunces", Georgia, serif`;
+    ctx.fillStyle = isSelected ? '#FFFFFF' : isHighlighted ? '#EDF2F8' : '#A0AEC0';
 
     // Book tick mark
-    ctx.strokeStyle = isHighlighted ? '#EDF2F8' : 'rgba(255,255,255,0.22)';
-    ctx.lineWidth = isHighlighted ? 2 : 1;
+    ctx.strokeStyle = isActive ? '#EDF2F8' : 'rgba(255,255,255,0.22)';
+    ctx.lineWidth = isActive ? 2 : 1;
     ctx.beginPath();
     ctx.moveTo(cx, sy);
     ctx.lineTo(cx, sy + 4);
@@ -164,6 +171,17 @@ export function renderBookLabels(
 
     const label = bookW > 60 ? BOOKS[book.index].name : BOOKS[book.index].abbr;
     ctx.fillText(label, cx, labelY, bookW - 2);
+
+    // Underline selected book
+    if (isSelected) {
+      const textWidth = Math.min(ctx.measureText(label).width, bookW - 2);
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(cx - textWidth / 2, labelY + fontSize + 2);
+      ctx.lineTo(cx + textWidth / 2, labelY + fontSize + 2);
+      ctx.stroke();
+    }
   }
 }
 
@@ -174,6 +192,7 @@ export function hitTestBin(
   layout: Layout,
   categoryVisible: boolean[],
   tolerance: number = 8,
+  selectedBook: number | null = null,
 ): Bin | null {
   const baseY = layout.baselineY;
   let bestDist = tolerance;
@@ -182,6 +201,7 @@ export function hitTestBin(
 
   for (const bin of bins) {
     if (!categoryVisible[bin.category]) continue;
+    if (selectedBook !== null && bin.sourceBook !== selectedBook && bin.targetBook !== selectedBook) continue;
 
     const x1 = layout.books[bin.sourceBook].centerX;
     const x2 = layout.books[bin.targetBook].centerX;
