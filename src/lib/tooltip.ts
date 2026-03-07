@@ -85,7 +85,8 @@ export function showSidePanel(bin: Bin, references: Reference[]) {
   }
 
   // Show raw reference list with expand capability
-  const INITIAL_COUNT = 20;
+  const INITIAL_COUNT = 8;
+  const EXPANDED_COUNT = 16;
   if (bin.refIndices.length > 0) {
     html += '<div class="sp-reflist"><div class="sp-reflist-title">References</div>';
     html += '<div class="sp-refitems">';
@@ -93,12 +94,11 @@ export function showSidePanel(bin: Bin, references: Reference[]) {
       const ref = references[bin.refIndices[i]];
       const src = `${BOOKS[ref.s[0]].name} ${ref.s[1]}:${ref.s[2]}`;
       const tgt = `${BOOKS[ref.t[0]].name} ${ref.t[1]}:${ref.t[2]}`;
-      const hidden = i >= INITIAL_COUNT ? ' class="sp-refitem sp-refitem-hidden"' : ' class="sp-refitem"';
-      html += `<div${hidden}>${src} &harr; ${tgt}</div>`;
+      html += `<div class="sp-refitem">${src} &harr; ${tgt}</div>`;
     }
     html += '</div>';
     if (bin.refIndices.length > INITIAL_COUNT) {
-      html += `<button class="sp-show-all">Show all ${bin.refIndices.length} references</button>`;
+      html += `<button class="sp-show-more">Expand</button>`;
     }
     html += '</div>';
   }
@@ -107,17 +107,21 @@ export function showSidePanel(bin: Bin, references: Reference[]) {
   panel.classList.remove('hidden');
 
   // Wire up expand button
-  const showAllBtn = content.querySelector('.sp-show-all');
-  if (showAllBtn) {
-    showAllBtn.addEventListener('click', () => {
-      content.querySelectorAll('.sp-refitem-hidden').forEach(el => {
-        el.classList.remove('sp-refitem-hidden');
-      });
-      showAllBtn.remove();
+  const showMoreBtn = content.querySelector('.sp-show-more');
+  if (showMoreBtn) {
+    showMoreBtn.addEventListener('click', () => {
+      const refItems = content.querySelector('.sp-refitems');
+      if (refItems) {
+        refItems.classList.add('expanded');
+      }
+      panel.classList.add('expanded');
+      showMoreBtn.remove();
     });
   }
 }
 
 export function hideSidePanel() {
-  sidePanel().classList.add('hidden');
+  const panel = sidePanel();
+  panel.classList.add('hidden');
+  panel.classList.remove('expanded');
 }

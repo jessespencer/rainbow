@@ -195,7 +195,27 @@ body {
   border-radius: 50%;
 }
 
-/* ─── VIEW TOGGLE (segmented control) ────────────────────── */
+/* ─── CANVAS CONTROLS (floating) ─────────────────────────── */
+#canvas-controls-left {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#canvas-controls-right {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 #view-toggle {
   display: inline-flex;
   align-items: center;
@@ -230,33 +250,60 @@ body {
   color: var(--text-secondary);
 }
 
-/* ─── ZOOM PRESETS (segmented control) ───────────────────── */
-#zoom-presets {
+/* ─── CANVAS BUTTONS (with icons) ───────────────────────── */
+.canvas-btn {
   display: inline-flex;
   align-items: center;
-  background: var(--fill-subtle);
-  border: 1px solid var(--border-faint);
-  border-radius: var(--radius-pill);
-  padding: 3px;
-  gap: 2px;
-}
-
-#zoom-presets button {
+  gap: 5px;
   height: 28px;
-  padding: 0 14px;
+  padding: 0 12px;
   border-radius: var(--radius-pill);
-  border: none;
-  background: transparent;
+  border: 1px solid var(--border-faint);
+  background: var(--fill-subtle);
   color: var(--text-dim);
   font-family: 'DM Mono', monospace;
   font-size: 11px;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
   white-space: nowrap;
 }
 
-#zoom-presets button:hover {
+.canvas-btn:hover {
+  background: var(--fill-hover);
   color: var(--text-secondary);
+}
+
+.canvas-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2;
+}
+
+/* ─── ZOOM PRESET BUTTONS ───────────────────────────────── */
+.preset-btn {
+  height: 28px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-faint);
+  background: var(--fill-subtle);
+  color: var(--text-dim);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.preset-btn:hover {
+  background: var(--fill-hover);
+  color: var(--text-secondary);
+}
+
+.preset-btn.active {
+  background: var(--fill-selected);
+  border-color: var(--border-strong);
+  color: var(--text-bright);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
 }
 
 /* ─── BOOK SEARCH ────────────────────────────────────────── */
@@ -343,11 +390,11 @@ body {
 
 /* ─── SIDE PANEL ─────────────────────────────────────────── */
 #side-panel {
-  position: fixed;
-  top: 52px;
-  right: 16px;
+  position: absolute;
+  top: 76px;
+  left: 24px;
   width: 320px;
-  max-height: calc(100vh - 72px);
+  max-height: calc(100% - 100px);
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
@@ -356,6 +403,11 @@ body {
   backdrop-filter: blur(16px);
   box-shadow: 0 8px 32px rgba(0,0,0,0.5);
   overflow-y: auto;
+  transition: all 0.2s ease;
+}
+
+#side-panel.expanded {
+  max-height: calc(100% - 100px);
 }
 
 #side-panel.hidden { display: none; }
@@ -452,15 +504,20 @@ body {
 }
 
 .sp-refitems {
-  max-height: 400px;
+  max-height: calc(8 * 25px);
   overflow-y: auto;
+  transition: max-height 0.2s ease;
+}
+
+.sp-refitems.expanded {
+  max-height: none;
 }
 
 .sp-refitem-hidden {
   display: none;
 }
 
-.sp-show-all {
+.sp-show-more {
   display: block;
   width: 100%;
   margin-top: 8px;
@@ -475,7 +532,7 @@ body {
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
-.sp-show-all:hover {
+.sp-show-more:hover {
   background: var(--fill-hover);
   border-color: var(--border-default);
   color: var(--text-primary);
@@ -506,6 +563,62 @@ body {
 #footer-text a:hover {
   color: var(--text-dim);
   text-decoration: underline;
+}
+
+/* ─── SHUFFLE OVERLAY ────────────────────────────────────── */
+#shuffle-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(11, 13, 18, 0.9);
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+#shuffle-overlay.hidden { display: none; }
+
+#shuffle-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+#shuffle-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 48px;
+  max-width: 555px;
+  cursor: default;
+  user-select: text;
+}
+
+.shuffle-ref {
+  font-family: 'Fraunces', Georgia, serif;
+  font-variation-settings: 'SOFT' 0, 'WONK' 1;
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 40px;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+#shuffle-arrow {
+  font-size: 24px;
+  color: var(--text-muted);
+}
+
+#btn-shuffle-again {
+  margin-top: 16px;
 }
 
 /* ─── LOADING ────────────────────────────────────────────── */
