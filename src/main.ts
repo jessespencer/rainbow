@@ -557,7 +557,7 @@ async function main() {
     }
   };
 
-  worker.postMessage({ type: 'load', url: '/references.json' });
+  worker.postMessage({ type: 'load', url: `${import.meta.env.BASE_URL}references.json` });
 
   // Inject Lucide icons (prepend before text)
   document.getElementById('btn-shuffle')!.prepend(createElement(Shuffle));
