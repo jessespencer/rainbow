@@ -123,7 +123,7 @@ export function renderBookLabels(
   ctx.textBaseline = 'top';
 
   // Draw baseline
-  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.13)';
   ctx.lineWidth = 1;
   const sy = layout.baselineY * k + ty;
   ctx.beginPath();
@@ -135,7 +135,7 @@ export function renderBookLabels(
   const otEnd = (layout.books[38].left + layout.books[38].width) * k + tx;
   const ntStart = layout.books[39].left * k + tx;
   const divX = (otEnd + ntStart) / 2;
-  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
   ctx.setLineDash([4, 4]);
   ctx.beginPath();
   ctx.moveTo(divX, 0);
@@ -151,11 +151,11 @@ export function renderBookLabels(
     const cx = book.centerX * k + tx;
     const isHighlighted = book.index === highlightBook;
 
-    ctx.font = `${isHighlighted ? 'bold ' : ''}${fontSize}px "EB Garamond", Georgia, serif`;
-    ctx.fillStyle = isHighlighted ? '#fff' : 'rgba(180,180,190,0.8)';
+    ctx.font = `${isHighlighted ? 'bold ' : ''}${fontSize}px "Fraunces", Georgia, serif`;
+    ctx.fillStyle = isHighlighted ? '#EDF2F8' : '#A0AEC0';
 
     // Book tick mark
-    ctx.strokeStyle = isHighlighted ? '#fff' : 'rgba(255,255,255,0.2)';
+    ctx.strokeStyle = isHighlighted ? '#EDF2F8' : 'rgba(255,255,255,0.22)';
     ctx.lineWidth = isHighlighted ? 2 : 1;
     ctx.beginPath();
     ctx.moveTo(cx, sy);
@@ -165,24 +165,6 @@ export function renderBookLabels(
     const label = bookW > 60 ? BOOKS[book.index].name : BOOKS[book.index].abbr;
     ctx.fillText(label, cx, labelY, bookW - 2);
   }
-}
-
-export function renderCredit(
-  ctx: CanvasRenderingContext2D,
-  totalCount: number,
-  canvasWidth: number,
-  canvasHeight: number,
-) {
-  ctx.font = '11px "EB Garamond", Georgia, serif';
-  ctx.fillStyle = 'rgba(180,180,190,0.4)';
-  ctx.textAlign = 'right';
-  ctx.textBaseline = 'bottom';
-  ctx.fillText(
-    `${totalCount.toLocaleString()} connections across 66 books, ~1,500 years, ~40 authors, 1 awesome God`,
-    canvasWidth - 16,
-    canvasHeight - 12,
-  );
-
 }
 
 // Hit-test which bin an (x, y) world coordinate is near
