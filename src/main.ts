@@ -1,3 +1,4 @@
+import { createElement, Shuffle, Scaling } from 'lucide';
 import { CATEGORIES, CATEGORY_COLORS } from './data/categories';
 import { BOOKS, OT_COUNT } from './data/books';
 import { computeLayout, type Layout } from './lib/layout';
@@ -22,12 +23,16 @@ let highlightBook: number | null = null;
 let hoveredBin: Bin | null = null;
 let selectedBin: Bin | null = null;
 let viewMode: 'arcs' | 'heatmap' = 'arcs';
+let shuffleActive = false;
+let shuffleRef: Reference | null = null;
 let animFrame: number | null = null;
 let filterDebounce: ReturnType<typeof setTimeout> | null = null;
 
 // Canvas
 let canvas: HTMLCanvasElement;
 let ctx: CanvasRenderingContext2D;
+let shuffleCanvas: HTMLCanvasElement;
+let shuffleCtx: CanvasRenderingContext2D;
 let width = 0;
 let height = 0;
 let dpr = 1;
@@ -86,6 +91,11 @@ function render() {
 
   ctx.restore();
 
+  // Render highlighted arc on shuffle overlay canvas
+  if (shuffleActive) {
+    renderShuffleArc();
+  }
+
   if (animation && !animation.done) {
     animFrame = requestAnimationFrame(() => { animFrame = null; render(); });
   }
@@ -121,8 +131,11 @@ function renderArcsAnimated(transform: ScreenTransform) {
     const baseAlpha = 0.3 + 0.55 * Math.min(1, Math.log(bin.count + 1) / Math.log(500));
     const lineWidth = 1 + 3 * Math.min(1, Math.log(bin.count + 1) / Math.log(500));
 
+    // Fade from 50% to 100% of base alpha during animation
+    const opacityScale = 0.5 + 0.5 * alpha;
+
     ctx.strokeStyle = CATEGORY_COLORS[bin.category];
-    ctx.globalAlpha = baseAlpha * alpha;
+    ctx.globalAlpha = baseAlpha * opacityScale;
     ctx.lineWidth = lineWidth;
 
     // Animate: grow radius from 0 to full
@@ -131,6 +144,56 @@ function renderArcsAnimated(transform: ScreenTransform) {
     ctx.stroke();
   }
   ctx.globalAlpha = 1;
+}
+
+function renderShuffleArc() {
+  // Size the shuffle canvas to full viewport
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  shuffleCanvas.width = vw * dpr;
+  shuffleCanvas.height = vh * dpr;
+  shuffleCanvas.style.width = `${vw}px`;
+  shuffleCanvas.style.height = `${vh}px`;
+  shuffleCtx.clearRect(0, 0, shuffleCanvas.width, shuffleCanvas.height);
+
+  if (!shuffleRef || !layout) return;
+
+  // Get the canvas container offset relative to the viewport
+  const containerRect = canvas.parentElement!.getBoundingClientRect();
+  const offsetX = containerRect.left;
+  const offsetY = containerRect.top;
+
+  const src = Math.min(shuffleRef.s[0], shuffleRef.t[0]);
+  const tgt = Math.max(shuffleRef.s[0], shuffleRef.t[0]);
+
+  const x1 = layout.books[src].centerX;
+  const x2 = layout.books[tgt].centerX;
+  const { k, tx, ty } = zoomState;
+  const sx1 = x1 * k + tx + offsetX;
+  const sx2 = x2 * k + tx + offsetX;
+  const sy = layout.baselineY * k + ty + offsetY;
+  const midX = (sx1 + sx2) / 2;
+  const radius = Math.abs(sx2 - sx1) / 2;
+
+  shuffleCtx.save();
+  shuffleCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // Glow
+  shuffleCtx.strokeStyle = CATEGORY_COLORS[shuffleRef.cat];
+  shuffleCtx.lineWidth = 6;
+  shuffleCtx.globalAlpha = 0.4;
+  shuffleCtx.beginPath();
+  shuffleCtx.arc(midX, sy, radius, Math.PI, 0);
+  shuffleCtx.stroke();
+
+  // Solid arc
+  shuffleCtx.lineWidth = 2.5;
+  shuffleCtx.globalAlpha = 1.0;
+  shuffleCtx.beginPath();
+  shuffleCtx.arc(midX, sy, radius, Math.PI, 0);
+  shuffleCtx.stroke();
+
+  shuffleCtx.restore();
 }
 
 function fitRainbowToView(animated: boolean) {
@@ -224,13 +287,36 @@ function fitBooksToView(startBook: number, endBook: number, animated: boolean) {
 }
 
 function setupZoomPresets() {
-  document.querySelectorAll('#zoom-presets button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const preset = (btn as HTMLElement).dataset.preset;
-      if (preset === 'all') fitRainbowToView(true);
-      else if (preset === 'ot') fitBooksToView(0, OT_COUNT - 1, true);
-      else if (preset === 'nt') fitBooksToView(OT_COUNT, 65, true);
-    });
+  const fitBtn = document.getElementById('zoom-fit')!;
+  const otBtn = document.getElementById('zoom-ot')!;
+  const ntBtn = document.getElementById('zoom-nt')!;
+
+  fitBtn.addEventListener('click', () => {
+    otBtn.classList.remove('active');
+    ntBtn.classList.remove('active');
+    fitRainbowToView(true);
+  });
+
+  otBtn.addEventListener('click', () => {
+    const wasActive = otBtn.classList.contains('active');
+    otBtn.classList.toggle('active');
+    ntBtn.classList.remove('active');
+    if (wasActive) {
+      fitRainbowToView(true);
+    } else {
+      fitBooksToView(0, OT_COUNT - 1, true);
+    }
+  });
+
+  ntBtn.addEventListener('click', () => {
+    const wasActive = ntBtn.classList.contains('active');
+    ntBtn.classList.toggle('active');
+    otBtn.classList.remove('active');
+    if (wasActive) {
+      fitRainbowToView(true);
+    } else {
+      fitBooksToView(OT_COUNT, 65, true);
+    }
   });
 }
 
@@ -267,6 +353,53 @@ function setupSearch() {
       b.abbr.toLowerCase().startsWith(query)
     );
     highlightBook = idx >= 0 ? idx : null;
+    scheduleRender();
+  });
+}
+
+function setupShuffle() {
+  const overlay = document.getElementById('shuffle-overlay')!;
+  const verse1 = document.getElementById('shuffle-verse-1')!;
+  const verse2 = document.getElementById('shuffle-verse-2')!;
+  const btn = document.getElementById('btn-shuffle')!;
+  const btnAgain = document.getElementById('btn-shuffle-again')!;
+
+  function doShuffle() {
+    if (references.length === 0) return;
+
+    // Pick a random reference
+    const idx = Math.floor(Math.random() * references.length);
+    const ref = references[idx];
+    shuffleRef = ref;
+    shuffleActive = true;
+
+    const srcName = `${BOOKS[ref.s[0]].name} ${ref.s[1]}:${ref.s[2]}`;
+    const tgtName = `${BOOKS[ref.t[0]].name} ${ref.t[1]}:${ref.t[2]}`;
+    verse1.textContent = srcName;
+    verse2.textContent = tgtName;
+
+    overlay.classList.remove('hidden');
+    scheduleRender();
+  }
+
+  const content = document.getElementById('shuffle-content')!;
+
+  btn.addEventListener('click', doShuffle);
+  btnAgain.addEventListener('click', (e) => {
+    e.stopPropagation();
+    doShuffle();
+  });
+
+  // Prevent clicks on content (text selection) from dismissing
+  content.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+
+  // Click overlay background to dismiss
+  overlay.addEventListener('click', () => {
+    shuffleActive = false;
+    shuffleRef = null;
+    overlay.classList.add('hidden');
     scheduleRender();
   });
 }
@@ -389,6 +522,8 @@ function setProgress(pct: number) {
 async function main() {
   canvas = document.getElementById('main-canvas') as HTMLCanvasElement;
   ctx = canvas.getContext('2d')!;
+  shuffleCanvas = document.getElementById('shuffle-canvas') as HTMLCanvasElement;
+  shuffleCtx = shuffleCanvas.getContext('2d')!;
   resizeCanvas();
 
   layout = computeLayout(width, height);
@@ -424,11 +559,17 @@ async function main() {
 
   worker.postMessage({ type: 'load', url: '/references.json' });
 
+  // Inject Lucide icons (prepend before text)
+  document.getElementById('btn-shuffle')!.prepend(createElement(Shuffle));
+  document.getElementById('btn-shuffle-again')!.prepend(createElement(Shuffle));
+  document.getElementById('zoom-fit')!.prepend(createElement(Scaling));
+
   setupFilters();
   setupZoomPresets();
   setupViewToggle();
   setupSearch();
   setupInteraction();
+  setupShuffle();
 
   window.addEventListener('resize', () => {
     resizeCanvas();

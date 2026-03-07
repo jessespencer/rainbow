@@ -12,25 +12,32 @@
       <div id="header-row">
         <div id="header-title">
           <h1>Rainbow Reference</h1>
-          <p class="subtitle">The world's first hyperlinked Text</p>
+          <p class="subtitle">The world's first hyperlinked Text — The Bible</p>
         </div>
         <div id="controls">
-          <div id="view-toggle">
-            <button id="view-arcs" class="active">Arcs</button>
-            <button id="view-heatmap">Heatmap</button>
-          </div>
-          <div id="zoom-presets">
-            <button data-preset="all">Fit All</button>
-            <button data-preset="ot">Old Testament</button>
-            <button data-preset="nt">New Testament</button>
-          </div>
-          <input type="text" id="book-search" placeholder="Search book..." />
+          <button id="zoom-fit" class="canvas-btn">Fit</button>
+          <button id="zoom-ot" class="preset-btn">Old Testament</button>
+          <button id="zoom-nt" class="preset-btn">New Testament</button>
         </div>
       </div>
       <div class="gradient-bar"></div>
     </div>
     <div id="canvas-container">
       <canvas id="main-canvas"></canvas>
+      <div id="canvas-controls-left">
+        <button id="btn-shuffle" class="canvas-btn">Shuffle</button>
+      </div>
+      <div id="side-panel" class="hidden">
+        <button id="side-panel-close">&times;</button>
+        <div id="side-panel-content"></div>
+      </div>
+      <div id="canvas-controls-right">
+        <input type="text" id="book-search" placeholder="Search book..." />
+        <div id="view-toggle">
+          <button id="view-arcs" class="active">Arcs</button>
+          <button id="view-heatmap">Heatmap</button>
+        </div>
+      </div>
     </div>
     <div id="category-filters"></div>
     <div id="footer">
@@ -40,9 +47,14 @@
       </div>
     </div>
     <div id="tooltip" class="hidden"></div>
-    <div id="side-panel" class="hidden">
-      <button id="side-panel-close">&times;</button>
-      <div id="side-panel-content"></div>
+    <div id="shuffle-overlay" class="hidden">
+      <canvas id="shuffle-canvas"></canvas>
+      <div id="shuffle-content">
+        <p id="shuffle-verse-1" class="shuffle-ref"></p>
+        <div id="shuffle-arrow">↔</div>
+        <p id="shuffle-verse-2" class="shuffle-ref"></p>
+        <button id="btn-shuffle-again" class="canvas-btn">Shuffle</button>
+      </div>
     </div>
     <div id="loading">
       <div id="loading-text">Loading cross-references...</div>
