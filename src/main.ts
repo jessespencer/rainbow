@@ -20,6 +20,7 @@ let animation: AnimationState | null = null;
 let categoryVisible: boolean[] = CATEGORIES.map(() => true);
 let focusedCategory: number | null = null;
 let highlightBook: number | null = null;
+let selectedBook: number | null = null;
 let hoveredBin: Bin | null = null;
 let selectedBin: Bin | null = null;
 let viewMode: 'arcs' | 'heatmap' = 'arcs';
@@ -81,12 +82,13 @@ function render() {
       renderArcs(ctx, bins, layout, {
         categoryVisible,
         highlightBook,
+        selectedBook,
         hoveredBin,
         selectedBin,
       }, transform);
     }
 
-    renderBookLabels(ctx, layout, transform, highlightBook);
+    renderBookLabels(ctx, layout, transform, highlightBook, selectedBook);
   }
 
   ctx.restore();
@@ -355,6 +357,18 @@ function setupSearch() {
     highlightBook = idx >= 0 ? idx : null;
     scheduleRender();
   });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && highlightBook !== null) {
+      selectedBook = highlightBook;
+      highlightBook = null;
+      selectedBin = null;
+      hideSidePanel();
+      input.value = '';
+      input.blur();
+      scheduleRender();
+    }
+  });
 }
 
 function setupShuffle() {
@@ -383,11 +397,23 @@ function setupShuffle() {
   }
 
   const content = document.getElementById('shuffle-content')!;
+  const btnExit = document.getElementById('btn-shuffle-exit')!;
+
+  function dismissShuffle() {
+    shuffleActive = false;
+    shuffleRef = null;
+    overlay.classList.add('hidden');
+    scheduleRender();
+  }
 
   btn.addEventListener('click', doShuffle);
   btnAgain.addEventListener('click', (e) => {
     e.stopPropagation();
     doShuffle();
+  });
+  btnExit.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dismissShuffle();
   });
 
   // Prevent clicks on content (text selection) from dismissing
@@ -396,12 +422,7 @@ function setupShuffle() {
   });
 
   // Click overlay background to dismiss
-  overlay.addEventListener('click', () => {
-    shuffleActive = false;
-    shuffleRef = null;
-    overlay.classList.add('hidden');
-    scheduleRender();
-  });
+  overlay.addEventListener('click', dismissShuffle);
 }
 
 function setupInteraction() {
@@ -434,7 +455,6 @@ function setupInteraction() {
     // Check if hovering over book label area (below baseline)
     const baselineScreen = layout.baselineY * zoomState.k + zoomState.ty;
     if (screenY > baselineScreen - 2 && screenY < baselineScreen + 40) {
-      const bookW = layout.bookWidth;
       let hitBook: number | null = null;
       for (const book of layout.books) {
         if (mx >= book.left && mx < book.left + book.width) {
@@ -452,14 +472,14 @@ function setupInteraction() {
       return;
     }
 
-    // Clear book highlight when not over labels
+    // Clear book highlight when not over labels (but keep selectedBook)
     if (highlightBook !== null) {
       highlightBook = null;
       scheduleRender();
     }
 
     const tolerance = 8 / zoomState.k;
-    const hit = hitTestBin(mx, my, bins, layout, categoryVisible, tolerance);
+    const hit = hitTestBin(mx, my, bins, layout, categoryVisible, tolerance, selectedBook);
 
     if (hit !== hoveredBin) {
       hoveredBin = hit;
@@ -479,6 +499,7 @@ function setupInteraction() {
     hoveredBin = null;
     highlightBook = null;
     hideTooltip();
+    // Keep selectedBook — it persists until explicitly toggled
     scheduleRender();
   });
 
@@ -492,8 +513,28 @@ function setupInteraction() {
     const mx = (screenX - zoomState.tx) / zoomState.k;
     const my = (screenY - zoomState.ty) / zoomState.k;
 
+    // Check if clicking on a book label
+    const baselineScreen = layout.baselineY * zoomState.k + zoomState.ty;
+    if (screenY > baselineScreen - 2 && screenY < baselineScreen + 40) {
+      let hitBook: number | null = null;
+      for (const book of layout.books) {
+        if (mx >= book.left && mx < book.left + book.width) {
+          hitBook = book.index;
+          break;
+        }
+      }
+      if (hitBook !== null) {
+        // Toggle: click same book to deselect, different book to switch
+        selectedBook = selectedBook === hitBook ? null : hitBook;
+        selectedBin = null;
+        hideSidePanel();
+        scheduleRender();
+        return;
+      }
+    }
+
     const tolerance = 8 / zoomState.k;
-    const hit = hitTestBin(mx, my, bins, layout, categoryVisible, tolerance);
+    const hit = hitTestBin(mx, my, bins, layout, categoryVisible, tolerance, selectedBook);
 
     if (hit) {
       selectedBin = hit;
@@ -501,6 +542,7 @@ function setupInteraction() {
       scheduleRender();
     } else {
       selectedBin = null;
+      selectedBook = null;
       hideSidePanel();
       scheduleRender();
     }
@@ -570,6 +612,12 @@ async function main() {
   setupSearch();
   setupInteraction();
   setupShuffle();
+
+  // Prevent browser zoom (ctrl+wheel / pinch) outside the canvas
+  // d3-zoom already handles wheel events on the canvas itself
+  document.getElementById('app')!.addEventListener('wheel', (e) => {
+    if (e.ctrlKey) e.preventDefault();
+  }, { passive: false });
 
   window.addEventListener('resize', () => {
     resizeCanvas();
