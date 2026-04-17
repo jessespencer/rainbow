@@ -7,6 +7,10 @@ import {
   MAX_YEAR,
 } from "./lib/scale.ts";
 import { renderBars } from "./lib/renderBars.ts";
+import { initScrubber } from "./lib/scrubber.ts";
+import { initTooltip } from "./lib/tooltip.ts";
+import { initMinimap } from "./lib/minimap.ts";
+import { ERA_BANDS } from "./lib/eras.ts";
 import { figures } from "./data/timeline.ts";
 import type { Category } from "./data/timeline.ts";
 
@@ -99,6 +103,17 @@ const mainViewport = el("div", "main-viewport", contentRow);
 const mainInner = el("div", "main-inner", mainViewport);
 mainInner.style.width = `${TIMELINE_WIDTH}px`;
 
+// ─── Render Era Background Bands ─────────────────────────────────
+
+for (const era of ERA_BANDS) {
+  const band = el("div", "era-band", mainInner);
+  const left = yearToX(era.startYear);
+  const width = yearToX(era.endYear) - left;
+  band.style.left = `${left}px`;
+  band.style.width = `${width}px`;
+  band.style.background = era.color;
+}
+
 // ─── Render Tick Marks ───────────────────────────────────────────
 
 const firstTick =
@@ -173,9 +188,24 @@ CATEGORY_ORDER.forEach((cat, i) => {
   }
 });
 
+// ─── Minimap ─────────────────────────────────────────────────────
+
+const minimap = initMinimap(mainViewport);
+
+// ─── Scrubber ────────────────────────────────────────────────────
+
+initScrubber(mainViewport, figures, (year) => {
+  minimap.setScrubberYear(year);
+});
+
+// ─── Tooltip ─────────────────────────────────────────────────────
+
+initTooltip(mainViewport, figures);
+
 // ─── Scroll Sync ─────────────────────────────────────────────────
 
 mainViewport.addEventListener("scroll", () => {
   axisViewport.scrollLeft = mainViewport.scrollLeft;
   laneLabels.scrollTop = mainViewport.scrollTop;
+  minimap.syncScroll();
 });
