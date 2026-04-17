@@ -1,38 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,100..900,0..100,0..1&display=swap');
-
-/* ─── TOKENS ──────────────────────────────────────────────── */
+/* ─── APP-SPECIFIC TOKENS (layered on top of @jessespencer/bible-ui) ─── */
 :root {
-  /* Backgrounds */
-  --bg-base:        #0B0D12;
-  --bg-surface:     #13161E;
-  --bg-elevated:    #1A1D27;
-
-  /* Component fills */
-  --fill-subtle:    #1C2030;
-  --fill-default:   #232840;
-  --fill-hover:     #2A3050;
-  --fill-active:    #313860;
-  --fill-selected:  #363D5A;
-
-  /* Borders */
-  --border-faint:   rgba(255,255,255,0.05);
-  --border-subtle:  rgba(255,255,255,0.09);
-  --border-default: rgba(255,255,255,0.13);
-  --border-strong:  rgba(255,255,255,0.22);
-
-  /* Text */
-  --text-disabled:  #3A4060;
-  --text-muted:     #5A6480;
-  --text-dim:       #8090A8;
-  --text-secondary: #A0AEC0;
-  --text-primary:   #D8E4F0;
-  --text-bright:    #EDF2F8;
-
-  /* Accent */
-  --accent-fill:    #3B4E7A;
-  --accent-border:  rgba(100,140,220,0.35);
-  --accent-text:    #90B4F0;
-
   /* Semantic colors */
   --crimson:   #C94040;
   --ember:     #D47240;
@@ -52,12 +19,6 @@
   --verdigris-tint: rgba(61,158,146,0.12);
   --cerulean-tint:  rgba(59,110,158,0.12);
   --iris-tint:      rgba(123,61,174,0.12);
-
-  /* Radii */
-  --radius-sm:   6px;
-  --radius-md:   8px;
-  --radius-lg:   12px;
-  --radius-pill: 999px;
 }
 
 * {
@@ -69,7 +30,7 @@
 body {
   background: var(--bg-base);
   color: var(--text-secondary);
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: var(--font-ui);
   font-variation-settings: 'SOFT' 0, 'WONK' 1;
   overflow: hidden;
   height: 100vh;
@@ -81,60 +42,9 @@ body {
   height: 100vh;
 }
 
-/* ─── HEADER ─────────────────────────────────────────────── */
-#header {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 24px 24px 0;
+/* ─── HEADER OVERRIDES ───────────────────────────────────── */
+.bui-header {
   z-index: 10;
-}
-
-#header-row {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-}
-
-#header-title {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-#header-title h1 {
-  font-family: 'Fraunces', Georgia, serif;
-  font-size: 32px;
-  font-weight: 400;
-  line-height: 40px;
-  color: var(--text-primary);
-  font-variation-settings: 'SOFT' 0, 'WONK' 1;
-}
-
-#header-title .subtitle {
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--text-muted);
-  line-height: 10px;
-}
-
-.gradient-bar {
-  height: 4px;
-  width: 100%;
-  background: linear-gradient(90deg,
-    rgb(154, 61, 55) 0%,
-    rgb(163, 95, 59) 14.423%,
-    rgb(182, 148, 74) 27.404%,
-    rgb(126, 148, 82) 39.423%,
-    rgb(74, 118, 88) 52.404%,
-    rgb(53, 88, 124) 68.75%,
-    rgb(53, 88, 124) 85.096%,
-    rgb(93, 56, 135) 100%
-  );
 }
 
 /* ─── CONTROLS ───────────────────────────────────────────── */

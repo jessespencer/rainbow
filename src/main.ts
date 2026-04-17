@@ -1,3 +1,5 @@
+import '@jessespencer/bible-ui/style.css';
+import { createHeader, loadFonts } from '@jessespencer/bible-ui';
 import { createElement, Shuffle, Scaling } from 'lucide';
 import { CATEGORIES, CATEGORY_COLORS } from './data/categories';
 import { BOOKS, OT_COUNT } from './data/books';
@@ -591,6 +593,34 @@ function setProgress(pct: number) {
 }
 
 async function main() {
+  // Load shared fonts and create header
+  loadFonts();
+  const app = document.getElementById('app')!;
+  const { element: header, controls } = createHeader({
+    title: 'Rainbow Reference',
+    subtitle: 'The world\'s first hyperlinked Text — The Bible',
+    background: 'var(--bg-base)',
+  });
+
+  // Create zoom preset buttons inside the shared header controls slot
+  const fitBtn = document.createElement('button');
+  fitBtn.id = 'zoom-fit';
+  fitBtn.className = 'canvas-btn';
+  fitBtn.textContent = 'Fit';
+
+  const otBtn = document.createElement('button');
+  otBtn.id = 'zoom-ot';
+  otBtn.className = 'preset-btn';
+  otBtn.textContent = 'Old Testament';
+
+  const ntBtn = document.createElement('button');
+  ntBtn.id = 'zoom-nt';
+  ntBtn.className = 'preset-btn';
+  ntBtn.textContent = 'New Testament';
+
+  controls.append(fitBtn, otBtn, ntBtn);
+  app.prepend(header);
+
   canvas = document.getElementById('main-canvas') as HTMLCanvasElement;
   ctx = canvas.getContext('2d')!;
   shuffleCanvas = document.getElementById('shuffle-canvas') as HTMLCanvasElement;
@@ -633,7 +663,7 @@ async function main() {
   // Inject Lucide icons (prepend before text)
   document.getElementById('btn-shuffle')!.prepend(createElement(Shuffle));
   document.getElementById('btn-shuffle-again')!.prepend(createElement(Shuffle));
-  document.getElementById('zoom-fit')!.prepend(createElement(Scaling));
+  fitBtn.prepend(createElement(Scaling));
 
   setupFilters();
   setupZoomPresets();
