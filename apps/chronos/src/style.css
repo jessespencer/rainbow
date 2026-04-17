@@ -1,0 +1,278 @@
+/* ─── Design Tokens ────────────────────────────────────────────── */
+
+:root {
+  /* Surface */
+  --bg: #0a0a0c;
+  --bg-elevated: #131318;
+  --border: #1e1e26;
+  --border-dim: #16161c;
+
+  /* Text */
+  --text: #d8dae0;
+  --text-dim: #6b6e7a;
+
+  /* Accent */
+  --accent: #6c8aff;
+
+  /* Category palette */
+  --cat-antediluvian: #d4a056;
+  --cat-postdiluvian: #c4883c;
+  --cat-patriarch: #e87840;
+  --cat-exodus: #e05252;
+  --cat-judge: #b87348;
+  --cat-united-king: #9b6dff;
+  --cat-israel-king: #40b8a0;
+  --cat-judah-king: #d4b84a;
+  --cat-prophet: #5a9cf5;
+  --cat-exile-return: #4aad6e;
+  --cat-messiah: #e8e0d0;
+
+  /* Typography */
+  --font-ui: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Layout */
+  --axis-h: 60px;
+  --label-w: 140px;
+  --lane-h: 80px;
+}
+
+/* ─── Reset ───────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ─── App Shell ───────────────────────────────────────────────── */
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* ─── Axis Row (top bar) ──────────────────────────────────────── */
+
+.axis-row {
+  display: flex;
+  height: var(--axis-h);
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elevated);
+}
+
+.label-gutter {
+  width: var(--label-w);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.axis-viewport {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.axis-inner {
+  position: relative;
+  height: 100%;
+}
+
+/* ─── Tick Marks ──────────────────────────────────────────────── */
+
+.tick {
+  position: absolute;
+  bottom: 0;
+  width: 1px;
+  background: var(--border);
+}
+
+.tick--minor {
+  height: 10px;
+}
+
+.tick--major {
+  height: 18px;
+  background: var(--border);
+}
+
+.tick__label {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+  font-family: var(--font-mono);
+}
+
+/* ─── Era Markers ─────────────────────────────────────────────── */
+
+.era-label {
+  position: absolute;
+  top: 6px;
+  transform: translateX(-100%) rotate(-32deg);
+  transform-origin: bottom right;
+  font-size: 0.55rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  white-space: nowrap;
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.era-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--accent);
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+/* ─── Content Row ─────────────────────────────────────────────── */
+
+.content-row {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ─── Lane Labels (fixed left column) ─────────────────────────── */
+
+.lane-labels {
+  width: var(--label-w);
+  flex-shrink: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+  background: var(--bg-elevated);
+}
+
+.lane-label {
+  height: var(--lane-h);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--border-dim);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.lane-label__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.lane-label__text {
+  color: var(--text-dim);
+}
+
+/* ─── Main Scroll Viewport ────────────────────────────────────── */
+
+.main-viewport {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+.main-inner {
+  position: relative;
+}
+
+/* ─── Lanes ───────────────────────────────────────────────────── */
+
+.lane {
+  height: var(--lane-h);
+  border-bottom: 1px solid var(--border-dim);
+  position: relative;
+}
+
+.lane:nth-child(even) {
+  background: rgba(255, 255, 255, 0.008);
+}
+
+/* ─── Figure Bars ─────────────────────────────────────────────── */
+
+.figure-bar {
+  position: absolute;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--bar-color) 25%, transparent);
+  border: 1px solid color-mix(in srgb, var(--bar-color) 35%, transparent);
+  overflow: hidden;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.figure-bar:hover {
+  filter: brightness(1.4);
+  z-index: 10;
+}
+
+.figure-bar__name {
+  display: block;
+  padding: 0 4px;
+  font-size: 11px;
+  line-height: 22px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+  position: relative;
+  z-index: 1;
+}
+
+.figure-bar__reign {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: color-mix(in srgb, var(--bar-color) 40%, transparent);
+  border-top: 2px solid var(--bar-color);
+  pointer-events: none;
+}
+
+/* ─── Scrollbar Styling ───────────────────────────────────────── */
+
+.main-viewport::-webkit-scrollbar {
+  height: 8px;
+  width: 6px;
+}
+
+.main-viewport::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+.main-viewport::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.main-viewport::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
+}
