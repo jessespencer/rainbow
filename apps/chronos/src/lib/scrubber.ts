@@ -164,6 +164,8 @@ const highlightBars = (container: HTMLElement, aliveIds: Set<string>) => {
 export interface ScrubberHandle {
   setYear: (year: number) => void;
   getCurrentYear: () => number;
+  /** Reposition the scrubber line without recomputing the panel (for zoom). */
+  reposition: () => void;
 }
 
 export const initScrubber = (
@@ -255,5 +257,6 @@ export const initScrubber = (
   return {
     setYear: update,
     getCurrentYear: () => currentYear,
+    reposition: () => positionScrubber(currentYear),
   };
 };

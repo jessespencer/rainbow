@@ -4,7 +4,7 @@
  * and the scrubber position. Clickable and draggable for navigation.
  */
 
-import { yearToX, TIMELINE_WIDTH } from "./scale.ts";
+import { yearToX, getTimelineWidth } from "./scale.ts";
 import { ERA_BANDS } from "./eras.ts";
 
 export interface MinimapHandle {
@@ -34,8 +34,8 @@ export const initMinimap = (
     band.className = "minimap__era";
     const l = yearToX(era.startYear);
     const w = yearToX(era.endYear) - l;
-    band.style.left = `${(l / TIMELINE_WIDTH) * 100}%`;
-    band.style.width = `${(w / TIMELINE_WIDTH) * 100}%`;
+    band.style.left = `${(l / getTimelineWidth()) * 100}%`;
+    band.style.width = `${(w / getTimelineWidth()) * 100}%`;
     band.style.background = era.color;
     track.appendChild(band);
   }
@@ -65,7 +65,7 @@ export const initMinimap = (
   };
 
   const setScrubberYear = (year: number) => {
-    const pct = yearToX(year) / TIMELINE_WIDTH;
+    const pct = yearToX(year) / getTimelineWidth();
     scrubLine.style.left = `${pct * 100}%`;
   };
 
