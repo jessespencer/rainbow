@@ -188,10 +188,11 @@ export const initScrubber = (
   onChange?: (year: number) => void,
 ): ScrubberHandle => {
   const mainInner = scrollContainer.querySelector<HTMLElement>(".main-inner")!;
+  const contentRow = scrollContainer.parentElement!;
 
   const { wrapper, label } = buildScrubberLine(mainInner);
   const { panel, header, list } = buildPanel();
-  document.getElementById("app")!.appendChild(panel);
+  contentRow.appendChild(panel);
 
   // State: the scrubber tracks a year, not a pixel position.
   // This keeps it stable when the container scrolls.

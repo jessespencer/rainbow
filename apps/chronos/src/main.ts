@@ -1,4 +1,6 @@
+import "@jessespencer/bible-ui/style.css";
 import "./style.css";
+import { createHeader, loadFonts } from "@jessespencer/bible-ui";
 import {
   yearToX,
   formatYear,
@@ -85,18 +87,15 @@ const cssVar = (cat: Category): string =>
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 
-// -- Header --
-const header = el("header", "site-header", app);
+// -- Load shared fonts --
+loadFonts();
 
-const headerLeft = el("div", "site-header__left", header);
-const headerTitle = el("h1", "site-header__title", headerLeft);
-headerTitle.textContent = "Chronos";
-const headerSubtitle = el("p", "site-header__subtitle", headerLeft);
-headerSubtitle.textContent = "A Visual History of the Bible";
-
-const headerRight = el("div", "site-header__right", header);
-
-el("div", "site-header__gradient", header);
+// -- Header (shared component) --
+const { element: headerEl, controls: headerControls } = createHeader({
+  title: "Chronos",
+  subtitle: "A Visual History of the Bible",
+});
+app.appendChild(headerEl);
 
 // -- Axis row --
 const axisRow = el("div", "axis-row", app);
@@ -275,7 +274,7 @@ const repositionAll = () => {
   minimap.syncScroll();
 };
 
-initZoom(mainViewport, headerRight, repositionAll);
+initZoom(mainViewport, headerControls, repositionAll);
 
 // ─── Scroll Sync ─────────────────────────────────────────────────
 

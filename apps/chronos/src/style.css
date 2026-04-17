@@ -1,40 +1,12 @@
 /* ═══════════════════════════════════════════════════════════════════
-   Design tokens — shared visual language with Rainbow Reference
+   Chronos-specific tokens (base tokens come from @jessespencer/bible-ui)
    ═══════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* Surface — navy-toned dark palette */
-  --bg:           #0B0D12;
-  --bg-surface:   #13161E;
-  --bg-elevated:  #1A1D27;
+  /* Accent extension */
+  --accent-glow: rgba(100, 140, 220, 0.30);
 
-  /* Fills — interactive element states */
-  --fill-subtle:  #1C2030;
-  --fill-default: #232840;
-  --fill-hover:   #2A3050;
-  --fill-active:  #313860;
-  --fill-selected:#363D5A;
-
-  /* Borders — opacity-based for cohesion */
-  --border-faint:   rgba(255, 255, 255, 0.05);
-  --border-subtle:  rgba(255, 255, 255, 0.09);
-  --border-default: rgba(255, 255, 255, 0.13);
-  --border-strong:  rgba(255, 255, 255, 0.22);
-
-  /* Text — 5-step hierarchy */
-  --text-muted:     #5A6480;
-  --text-dim:       #8090A8;
-  --text-secondary: #A0AEC0;
-  --text-primary:   #D8E4F0;
-  --text-bright:    #EDF2F8;
-
-  /* Accent */
-  --accent-fill:   #3B4E7A;
-  --accent-border: rgba(100, 140, 220, 0.35);
-  --accent-text:   #90B4F0;
-  --accent-glow:   rgba(100, 140, 220, 0.30);
-
-  /* Category palette — Chronos-specific, tuned for navy bg */
+  /* Category palette — Chronos-specific */
   --cat-antediluvian:  #d4a056;
   --cat-postdiluvian:  #c48060;
   --cat-patriarch:     #e87840;
@@ -46,16 +18,6 @@
   --cat-prophet:       #5a9cf5;
   --cat-exile-return:  #4aad6e;
   --cat-messiah:       #e8e0d0;
-
-  /* Typography — shared with Rainbow Reference */
-  --font-ui:   "Fraunces", Georgia, serif;
-  --font-mono: "DM Mono", ui-monospace, monospace;
-
-  /* Radii — shared scale */
-  --radius-sm:   6px;
-  --radius-md:   8px;
-  --radius-lg:   12px;
-  --radius-pill: 999px;
 
   /* Layout */
   --axis-h:    60px;
@@ -80,7 +42,7 @@ body {
   height: 100%;
   overflow: hidden;
   font-family: var(--font-ui);
-  background: var(--bg);
+  background: var(--bg-base);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -92,62 +54,6 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
-}
-
-/* ─── Site Header ─────────────────────────────────────────────── */
-
-.site-header {
-  flex-shrink: 0;
-  background: var(--bg-elevated);
-  padding: 14px 24px 0;
-  position: relative;
-}
-
-.site-header__left {
-  display: inline-block;
-}
-
-.site-header__right {
-  position: absolute;
-  right: 24px;
-  top: 50%;
-  transform: translateY(-60%);
-}
-
-.site-header__title {
-  font-family: var(--font-ui);
-  font-size: 28px;
-  font-weight: 400;
-  color: var(--text-bright);
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-}
-
-.site-header__subtitle {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-top: 2px;
-}
-
-.site-header__gradient {
-  height: 3px;
-  margin-top: 12px;
-  border-radius: 2px;
-  background: linear-gradient(
-    90deg,
-    rgb(154, 61, 55) 0%,
-    rgb(163, 95, 59) 14%,
-    rgb(182, 148, 74) 27%,
-    rgb(126, 148, 82) 39%,
-    rgb(74, 118, 88) 52%,
-    rgb(53, 88, 124) 69%,
-    rgb(53, 88, 124) 85%,
-    rgb(93, 56, 135) 100%
-  );
 }
 
 /* ─── Axis Row (top bar) ──────────────────────────────────────── */
@@ -305,6 +211,7 @@ body {
   display: flex;
   flex: 1;
   overflow: hidden;
+  position: relative;
 }
 
 /* ─── Lane Labels (fixed left column) ─────────────────────────── */
@@ -522,11 +429,11 @@ body {
 /* ─── Floating Panel ──────────────────────────────────────────── */
 
 .panel {
-  position: fixed;
-  top: 80px;
-  right: 16px;
+  position: absolute;
+  top: 24px;
+  right: 24px;
   width: var(--panel-w);
-  max-height: calc(100vh - 140px);
+  max-height: calc(100vh - 200px);
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
@@ -681,7 +588,7 @@ body {
   height: 100%;
   border-radius: var(--radius-sm);
   overflow: hidden;
-  background: var(--bg);
+  background: var(--bg-base);
 }
 
 .minimap__era {
