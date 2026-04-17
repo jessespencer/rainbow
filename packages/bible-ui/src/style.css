@@ -1,0 +1,118 @@
+/* ═══════════════════════════════════════════════════════════════
+   @jessespencer/bible-ui — shared design tokens & components
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Design Tokens ───────────────────────────────────────────── */
+
+:root {
+  /* Surface */
+  --bg-base:      #0B0D12;
+  --bg-surface:   #13161E;
+  --bg-elevated:  #1A1D27;
+
+  /* Fills */
+  --fill-subtle:  #1C2030;
+  --fill-default: #232840;
+  --fill-hover:   #2A3050;
+  --fill-active:  #313860;
+  --fill-selected:#363D5A;
+
+  /* Borders */
+  --border-faint:   rgba(255, 255, 255, 0.05);
+  --border-subtle:  rgba(255, 255, 255, 0.09);
+  --border-default: rgba(255, 255, 255, 0.13);
+  --border-strong:  rgba(255, 255, 255, 0.22);
+
+  /* Text */
+  --text-disabled:  #3A4060;
+  --text-muted:     #5A6480;
+  --text-dim:       #8090A8;
+  --text-secondary: #A0AEC0;
+  --text-primary:   #D8E4F0;
+  --text-bright:    #EDF2F8;
+
+  /* Accent */
+  --accent-fill:   #3B4E7A;
+  --accent-border: rgba(100, 140, 220, 0.35);
+  --accent-text:   #90B4F0;
+
+  /* Radii */
+  --radius-sm:   6px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-pill: 999px;
+
+  /* Typography */
+  --font-ui:   "Fraunces", Georgia, serif;
+  --font-mono: "DM Mono", ui-monospace, monospace;
+}
+
+/* ─── Site Header ─────────────────────────────────────────────── */
+
+.bui-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 24px 0;
+  background: var(--bg-elevated);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.bui-header__row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.bui-header__title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.bui-header__title {
+  font-family: var(--font-ui);
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 40px;
+  color: var(--text-primary);
+  font-variation-settings: "SOFT" 0, "WONK" 1;
+}
+
+.bui-header__subtitle {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  line-height: 10px;
+}
+
+.bui-header__controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  flex: 1;
+  justify-content: flex-end;
+  z-index: 10;
+}
+
+.bui-header__gradient {
+  height: 4px;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    rgb(154, 61, 55) 0%,
+    rgb(163, 95, 59) 14.423%,
+    rgb(182, 148, 74) 27.404%,
+    rgb(126, 148, 82) 39.423%,
+    rgb(74, 118, 88) 52.404%,
+    rgb(53, 88, 124) 68.75%,
+    rgb(53, 88, 124) 85.096%,
+    rgb(93, 56, 135) 100%
+  );
+}
