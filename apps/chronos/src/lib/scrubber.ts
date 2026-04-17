@@ -63,9 +63,23 @@ const buildPanel = () => {
   const panel = document.createElement("aside");
   panel.className = "panel";
 
+  const topRow = document.createElement("div");
+  topRow.className = "panel__top";
+
   const header = document.createElement("h2");
   header.className = "panel__header";
-  panel.appendChild(header);
+  topRow.appendChild(header);
+
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "panel__close";
+  closeBtn.setAttribute("aria-label", "Close panel");
+  closeBtn.textContent = "×";
+  closeBtn.addEventListener("click", () => {
+    panel.classList.add("panel--hidden");
+  });
+  topRow.appendChild(closeBtn);
+
+  panel.appendChild(topRow);
 
   const list = document.createElement("div");
   list.className = "panel__list";
@@ -174,11 +188,10 @@ export const initScrubber = (
   onChange?: (year: number) => void,
 ): ScrubberHandle => {
   const mainInner = scrollContainer.querySelector<HTMLElement>(".main-inner")!;
-  const contentRow = scrollContainer.parentElement!;
 
   const { wrapper, label } = buildScrubberLine(mainInner);
   const { panel, header, list } = buildPanel();
-  contentRow.appendChild(panel);
+  document.getElementById("app")!.appendChild(panel);
 
   // State: the scrubber tracks a year, not a pixel position.
   // This keeps it stable when the container scrolls.
@@ -202,6 +215,7 @@ export const initScrubber = (
   const update = (year: number) => {
     currentYear = clamp(Math.round(year), MIN_YEAR, MAX_YEAR);
     positionScrubber(currentYear);
+    panel.classList.remove("panel--hidden");
 
     const alive = aliveAt(figures, currentYear);
     const aliveIds = new Set(alive.map((f) => f.id));

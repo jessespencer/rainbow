@@ -85,9 +85,22 @@ const cssVar = (cat: Category): string =>
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 
+// -- Header --
+const header = el("header", "site-header", app);
+
+const headerLeft = el("div", "site-header__left", header);
+const headerTitle = el("h1", "site-header__title", headerLeft);
+headerTitle.textContent = "Chronos";
+const headerSubtitle = el("p", "site-header__subtitle", headerLeft);
+headerSubtitle.textContent = "A Visual History of the Bible";
+
+const headerRight = el("div", "site-header__right", header);
+
+el("div", "site-header__gradient", header);
+
 // -- Axis row --
 const axisRow = el("div", "axis-row", app);
-const labelGutter = el("div", "label-gutter", axisRow);
+el("div", "label-gutter", axisRow);
 
 const axisViewport = el("div", "axis-viewport", axisRow);
 const axisInner = el("div", "axis-inner", axisViewport);
@@ -262,7 +275,7 @@ const repositionAll = () => {
   minimap.syncScroll();
 };
 
-initZoom(mainViewport, labelGutter, repositionAll);
+initZoom(mainViewport, headerRight, repositionAll);
 
 // ─── Scroll Sync ─────────────────────────────────────────────────
 
