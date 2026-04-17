@@ -128,9 +128,17 @@ The raw data comes from the [OpenBible.info cross-reference dataset](https://www
 
 The color scheme is drawn directly from visible light — a literal rainbow mapped to theological spectrum. The dark background is intentional: arcs are luminous against darkness, the same way meaning emerges from the surrounding silence of a text.
 
-Typography uses a monospaced stack for verse references (precision, scripture-as-code) paired with a humanist sans for UI chrome (readability, warmth). The two registers are kept visually distinct.
+Typography uses Fraunces (a warm variable serif) for content and DM Mono for verse references and UI labels — two registers kept visually distinct: meaning vs. metadata.
 
 The arc shape follows a simple semicircle rather than a cubic Bézier, which Harrison's original used. The tradeoff: slightly less visual elegance for significantly better hit-testing accuracy at high zoom levels.
+
+## 🤝 Shared Design System
+
+Rainbow Reference is part of a Bible visualization ecosystem alongside [Chronos](https://github.com/jessespencer/chronos) (interactive timeline). Both apps share the [`@jessespencer/bible-ui`](../bible-ui) package, which provides:
+
+- **Site header** — `createHeader()` with title, subtitle, rainbow gradient bar, and controls slot
+- **Design tokens** — navy-toned palette, opacity-based borders, fill states, text hierarchy (CSS custom properties)
+- **Typography** — Fraunces + DM Mono via Google Fonts, with `loadFonts()` helper
 
 ---
 
