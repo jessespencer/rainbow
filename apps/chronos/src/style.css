@@ -63,7 +63,7 @@ body {
   height: var(--axis-h);
   flex-shrink: 0;
   border-bottom: 1px solid var(--border-subtle);
-  background: var(--bg-elevated);
+  background: var(--bg-base);
   z-index: 30;
 }
 
@@ -221,7 +221,7 @@ body {
   flex-shrink: 0;
   overflow: hidden;
   border-right: 1px solid var(--border-subtle);
-  background: var(--bg-elevated);
+  background: var(--bg-base);
   z-index: 10;
 }
 

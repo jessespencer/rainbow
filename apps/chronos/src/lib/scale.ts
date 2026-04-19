@@ -10,7 +10,7 @@ export const MAX_YEAR = 50;
 
 const DEFAULT_PPY = 3;
 
-let pixelsPerYear = DEFAULT_PPY;
+let pixelsPerYear = 1;
 
 export const getPixelsPerYear = (): number => pixelsPerYear;
 
