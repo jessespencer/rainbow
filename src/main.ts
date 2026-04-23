@@ -452,6 +452,23 @@ function setupShuffle() {
   overlay.addEventListener('click', dismissShuffle);
 }
 
+function setupKeyboard() {
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    // Don't intercept Escape when typing in an input
+    if (document.activeElement instanceof HTMLInputElement) {
+      (document.activeElement as HTMLInputElement).blur();
+      return;
+    }
+
+    const hasFilter = focusedCategory !== null || selectedBook !== null || selectedBin !== null;
+    if (!hasFilter) return;
+
+    // Clear all filters (same as clear button)
+    document.getElementById('clear-filters')!.click();
+  });
+}
+
 function setupInteraction() {
   // Hover
   canvas.addEventListener('mousemove', (e) => {
@@ -671,6 +688,7 @@ async function main() {
   setupSearch();
   setupInteraction();
   setupShuffle();
+  setupKeyboard();
 
   // Prevent browser zoom (ctrl+wheel / pinch) outside the canvas
   // d3-zoom already handles wheel events on the canvas itself
