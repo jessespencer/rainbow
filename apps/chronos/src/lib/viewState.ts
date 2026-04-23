@@ -1,8 +1,9 @@
 /**
- * View state — simple pub/sub for toggling between Timeline and Lineage views.
+ * View state — simple pub/sub for toggling between Timeline, Lineage,
+ * and Narrative views.
  */
 
-export type ViewMode = "timeline" | "lineage";
+export type ViewMode = "timeline" | "lineage" | "narrative";
 
 type Listener = (view: ViewMode) => void;
 

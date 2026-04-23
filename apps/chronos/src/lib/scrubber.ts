@@ -199,6 +199,7 @@ export const initScrubber = (
   scrollContainer: HTMLElement,
   figures: TimelineFigure[],
   onChange?: (year: number) => void,
+  renderExtra?: (list: HTMLElement, year: number) => void,
 ): ScrubberHandle => {
   const mainInner = scrollContainer.querySelector<HTMLElement>(".main-inner")!;
   const contentRow = scrollContainer.parentElement!;
@@ -235,6 +236,7 @@ export const initScrubber = (
     const aliveIds = new Set(alive.map((f) => f.id));
     highlightBars(mainInner, aliveIds);
     renderPanel(header, list, currentYear, alive);
+    renderExtra?.(list, currentYear);
     onChange?.(currentYear);
   };
 

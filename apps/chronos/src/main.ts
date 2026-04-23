@@ -16,9 +16,10 @@ import { initZoom } from "./lib/zoom.ts";
 import { ERA_BANDS } from "./lib/eras.ts";
 import { figures } from "./data/timeline.ts";
 import type { Category } from "./data/timeline.ts";
-import { onViewChange } from "./lib/viewState.ts";
+import { onViewChange, getView } from "./lib/viewState.ts";
 import { initHeader } from "./lib/header.ts";
 import { initLineageView } from "./lib/renderLineage.ts";
+import { initNarrativeView } from "./lib/renderNarrative.ts";
 
 // ─── Constants ───────────────────────────────────────────────────
 
@@ -133,10 +134,12 @@ const laneLabelsInner = el("div", undefined, laneLabels);
 const mainViewport = el("div", "main-viewport", contentRow);
 const mainInner = el("div", "main-inner", mainViewport);
 
-// -- View containers (both live inside mainInner) --
+// -- View containers (all live inside mainInner) --
 const timelineView = el("div", "timeline-view", mainInner);
 const lineageView = el("div", "lineage-view", mainInner);
 lineageView.style.display = "none";
+const narrativeView = el("div", "narrative-view", mainInner);
+narrativeView.style.display = "none";
 
 // ─── Set initial widths ──────────────────────────────────────────
 
@@ -287,18 +290,17 @@ syncLaneLabels(laneHeights);
 
 const lineageHandle = initLineageView(lineageView);
 
+// ─── Narrative View ──────────────────────────────────────────────
+
+const narrativeHandle = initNarrativeView(narrativeView);
+
 // ─── View Switching ──────────────────────────────────────────────
 
 onViewChange((view) => {
-  if (view === "timeline") {
-    timelineView.style.display = "";
-    lineageView.style.display = "none";
-    laneLabels.style.display = "";
-  } else {
-    timelineView.style.display = "none";
-    lineageView.style.display = "";
-    laneLabels.style.display = "none";
-  }
+  timelineView.style.display = view === "timeline" ? "" : "none";
+  lineageView.style.display = view === "lineage" ? "" : "none";
+  narrativeView.style.display = view === "narrative" ? "" : "none";
+  laneLabels.style.display = view === "timeline" ? "" : "none";
 });
 
 // ─── Minimap ─────────────────────────────────────────────────────
@@ -307,9 +309,57 @@ const minimap = initMinimap(mainViewport);
 
 // ─── Scrubber ────────────────────────────────────────────────────
 
+// ─── Narrative value-word helper ─────────────────────────────────
+
+const narrativeValueWord = (v: number): string => {
+  if (v >= 80) return "overwhelming";
+  if (v >= 60) return "dominant";
+  if (v >= 40) return "strong";
+  if (v >= 20) return "present";
+  return "faint";
+};
+
+const renderNarrativeExtra = (list: HTMLElement, year: number) => {
+  if (getView() !== "narrative") return;
+
+  const values = narrativeHandle.getThreadValuesAt(year)
+    .filter((t) => t.value > 5)
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 3);
+
+  if (values.length === 0) return;
+
+  const section = document.createElement("div");
+  section.className = "panel__section narrative-story";
+
+  const title = document.createElement("h3");
+  title.className = "panel__section-title narrative-story__title";
+  title.textContent = "Story at this moment";
+  section.appendChild(title);
+
+  for (const { id, name, value } of values) {
+    const entry = document.createElement("div");
+    entry.className = "panel__entry narrative-story__entry";
+
+    const swatch = document.createElement("span");
+    swatch.className = "narrative-story__swatch";
+    swatch.style.background = `var(--thread-${id})`;
+    entry.appendChild(swatch);
+
+    const label = document.createElement("span");
+    label.className = "narrative-story__label";
+    label.textContent = `${name} — ${narrativeValueWord(value)}`;
+    entry.appendChild(label);
+
+    section.appendChild(entry);
+  }
+
+  list.insertBefore(section, list.firstChild);
+};
+
 const scrubber = initScrubber(mainViewport, figures, (year) => {
   minimap.setScrubberYear(year);
-});
+}, renderNarrativeExtra);
 
 // ─── Tooltip ─────────────────────────────────────────────────────
 
@@ -327,6 +377,7 @@ const repositionAll = () => {
   syncLaneLabels(newHeights);
 
   lineageHandle.reposition();
+  narrativeHandle.reposition();
 
   scrubber.reposition();
   minimap.syncScroll();

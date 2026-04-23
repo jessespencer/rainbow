@@ -28,6 +28,15 @@
   --lineage-tribes:      #7090b0;
   --lineage-israel-king: #40b8a0;
 
+  /* Narrative thread palette */
+  --thread-covenant:       #D4A84B;
+  --thread-kingdom-united: #6E4BA8;
+  --thread-kingdom-north:  #A85050;
+  --thread-kingdom-south:  #3B7A7A;
+  --thread-prophecy:       #9E8BC4;
+  --thread-exile:          #3A4452;
+  --thread-messianic:      #F4E8C8;
+
   /* Layout */
   --axis-h:    60px;
   --label-w:   140px;
@@ -739,7 +748,8 @@ body {
 /* ─── View Containers ─────────────────────────────────────────── */
 
 .timeline-view,
-.lineage-view {
+.lineage-view,
+.narrative-view {
   position: relative;
   width: 100%;
 }
@@ -772,4 +782,168 @@ body {
 .lineage--highlighted {
   opacity: 1;
   transition: opacity 0.2s;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Narrative Stream Graph
+   ═══════════════════════════════════════════════════════════════════ */
+
+.narrative-view {
+  min-height: 500px;
+}
+
+.narrative-svg {
+  display: block;
+}
+
+.narrative-svg path {
+  opacity: 0.85;
+  transition: opacity 0.15s ease;
+}
+
+.narrative--dimmed {
+  opacity: 0.15 !important;
+  transition: opacity 0.15s ease !important;
+}
+
+.narrative--highlighted {
+  opacity: 1 !important;
+  filter: brightness(1.1);
+  transition: opacity 0.15s ease !important;
+}
+
+/* ─── Entrance animation ─────────────────────────────────────────── */
+
+@keyframes narrative-fade-in {
+  from { opacity: 0; transform: scaleY(0.3); }
+  to   { opacity: 0.85; transform: scaleY(1); }
+}
+
+.narrative-path--animate {
+  animation: narrative-fade-in 600ms ease-out both;
+}
+
+/* ─── Era annotations ────────────────────────────────────────────── */
+
+.narrative-era-line {
+  stroke: var(--text-dim, #888);
+  stroke-width: 0.5;
+  opacity: 0.3;
+}
+
+.narrative-era-label {
+  font-family: var(--font-mono, "DM Mono", monospace);
+  font-size: 9px;
+  fill: var(--text-dim, #888);
+  opacity: 0.6;
+}
+
+/* ─── Legend ──────────────────────────────────────────────────────── */
+
+.narrative-legend {
+  position: fixed;
+  bottom: 52px;
+  left: 20px;
+  background: rgba(20, 22, 28, 0.88);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-faint, rgba(255, 255, 255, 0.08));
+  border-radius: 8px;
+  padding: 10px 14px;
+  z-index: 40;
+  pointer-events: auto;
+}
+
+.narrative-legend__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.narrative-legend__swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.narrative-legend__name {
+  font-family: var(--font-mono, "DM Mono", monospace);
+  font-size: 11px;
+  color: var(--text-dim, #888);
+}
+
+/* ─── Hover tooltip ──────────────────────────────────────────────── */
+
+.narrative-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(20, 22, 28, 0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-faint, rgba(255, 255, 255, 0.08));
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-family: var(--font-mono, "DM Mono", monospace);
+  font-size: 11px;
+  color: var(--text-primary, #ccc);
+  line-height: 1.5;
+  white-space: nowrap;
+  z-index: 50;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.narrative-tooltip--visible {
+  opacity: 1;
+}
+
+.narrative-tooltip__desc {
+  color: var(--text-dim, #888);
+  font-style: italic;
+}
+
+.narrative-tooltip__year {
+  color: var(--text-bright, #eee);
+}
+
+.narrative-tooltip__word {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ─── Story-at-this-moment (scrubber panel section) ──────────────── */
+
+.narrative-story {
+  border-bottom: 1px solid var(--border-faint, rgba(255, 255, 255, 0.08));
+  padding-bottom: 12px;
+  margin-bottom: 8px;
+}
+
+.narrative-story__title {
+  font-family: var(--font-mono, "DM Mono", monospace);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim, #888);
+  margin-bottom: 6px;
+}
+
+.narrative-story__entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.narrative-story__swatch {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.narrative-story__label {
+  font-family: var(--font-mono, "DM Mono", monospace);
+  font-size: 11px;
+  color: var(--text-primary, #ccc);
 }
