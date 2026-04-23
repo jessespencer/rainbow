@@ -19,6 +19,15 @@
   --cat-exile-return:  #4aad6e;
   --cat-messiah:       #e8e0d0;
 
+  /* Lineage palette */
+  --lineage-messianic:   #e8c06a;
+  --lineage-cainite:     #8a6050;
+  --lineage-nations:     #6a8a6a;
+  --lineage-ishmaelite:  #b89050;
+  --lineage-edomite:     #a06040;
+  --lineage-tribes:      #7090b0;
+  --lineage-israel-king: #40b8a0;
+
   /* Layout */
   --axis-h:    60px;
   --label-w:   140px;
@@ -249,6 +258,14 @@ body {
 
 .lane-label__text {
   color: var(--text-dim);
+  cursor: help;
+  border-bottom: 1px dashed transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.lane-label__text:hover {
+  color: var(--text-primary);
+  border-bottom-color: var(--text-dim);
 }
 
 /* ─── Main Scroll Viewport ────────────────────────────────────── */
@@ -389,6 +406,26 @@ body {
   margin-top: 4px;
 }
 
+.tooltip__cat-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.tooltip__cat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 /* ─── Scrubber ────────────────────────────────────────────────── */
 
 .scrubber {
@@ -512,11 +549,15 @@ body {
 }
 
 .panel__section {
-  padding: 0 0 4px;
+  padding: 16px 0;
+}
+
+.panel__section + .panel__section {
+  border-top: 1px solid var(--border-faint);
 }
 
 .panel__section-title {
-  padding: 10px 16px 4px;
+  padding: 0 16px;
   font-family: var(--font-mono);
   font-size: 9px;
   font-weight: 500;
@@ -537,7 +578,7 @@ body {
 }
 
 .panel__entry {
-  padding: 6px 16px 6px 28px;
+  padding: 16px 16px 16px 28px;
 }
 
 .panel__entry + .panel__entry {
@@ -551,6 +592,20 @@ body {
   font-weight: 600;
   color: var(--text-primary);
   line-height: 1.3;
+}
+
+.panel__life,
+.panel__reign {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.panel__reign {
+  color: var(--accent-text);
+  opacity: 0.85;
 }
 
 .panel__ref {
@@ -642,4 +697,79 @@ body {
 
 .main-viewport::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
+}
+
+/* ─── View Toggle ─────────────────────────────────────────────── */
+
+.view-toggle {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-faint);
+  border-radius: 6px;
+  margin-right: 12px;
+}
+
+.view-toggle__btn {
+  padding: 4px 14px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.view-toggle__btn:hover {
+  color: var(--text-primary);
+}
+
+.view-toggle__btn--active {
+  background: var(--bg-elevated);
+  color: var(--text-bright, var(--text-primary));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── View Containers ─────────────────────────────────────────── */
+
+.timeline-view,
+.lineage-view {
+  position: relative;
+  width: 100%;
+}
+
+/* ─── Lineage SVG ─────────────────────────────────────────────── */
+
+.lineage-svg {
+  display: block;
+}
+
+.lineage-svg text {
+  pointer-events: none;
+  user-select: none;
+}
+
+.lineage-svg circle {
+  cursor: pointer;
+  transition: r 0.15s, filter 0.15s;
+}
+
+.lineage-svg circle:hover {
+  filter: brightness(1.3);
+}
+
+.lineage--dimmed {
+  opacity: 0.15;
+  transition: opacity 0.2s;
+}
+
+.lineage--highlighted {
+  opacity: 1;
+  transition: opacity 0.2s;
 }

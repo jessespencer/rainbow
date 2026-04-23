@@ -53,6 +53,38 @@
  *   (Joash of Judah era).
  * - Obadiah: placed at ~586 BC (post-destruction), though some
  *   scholars date him to the 9th century.
+ *
+ * ═══════════════════════════════════════════════════════════════════
+ * GENEALOGY / LINEAGE DATA
+ * ═══════════════════════════════════════════════════════════════════
+ *
+ * The `parent` and `lineage` fields support the subway-map lineage
+ * view. Each figure may optionally belong to a lineage "line" and
+ * reference its direct ancestor via `parent`.
+ *
+ * Messianic line source: Matthew 1 (primary), cross-referenced with
+ * Luke 3 and Genesis 5, 11. The segment from Zerubbabel to Joseph
+ * (Matt 1:13-15: Abiud → Eliakim → Azor → Zadok → Achim → Eliud →
+ * Eleazar → Matthan → Jacob) uses approximate dates evenly
+ * distributed across the intertestamental period (~500–10 BC), as
+ * Scripture provides no chronological data for these figures.
+ *
+ * Matthew 1 skips three kings between Jehoram and Uzziah (Ahaziah,
+ * Joash, Amaziah). The lineage parent chain follows Matthew's
+ * simplified genealogy: Jehoram → Uzziah (Azariah).
+ *
+ * Israel-king `parent` fields trace political succession (predecessor
+ * on the throne), NOT biological father-son relationships. Most
+ * northern dynasty changes were violent usurpations, not hereditary.
+ *
+ * Lineage taxonomy:
+ *   messianic    — Adam → Jesus through-line (Gen 5, 11; Matt 1)
+ *   cainite      — Cain and descendants (terminates at the Flood)
+ *   nations      — Ham, Japheth, and early post-Flood branches
+ *   ishmaelite   — Ishmael's line
+ *   edomite      — Esau's line
+ *   tribes       — the 11 non-Judah sons of Jacob
+ *   israel-king  — kings of the northern kingdom (931–722 BC)
  */
 
 // ─── Types ───────────────────────────────────────────────────────
@@ -70,6 +102,15 @@ export type Category =
   | "exile-return"
   | "messiah";
 
+export type Lineage =
+  | "messianic"
+  | "cainite"
+  | "nations"
+  | "ishmaelite"
+  | "edomite"
+  | "tribes"
+  | "israel-king";
+
 export interface TimelineFigure {
   id: string;
   name: string;
@@ -80,6 +121,8 @@ export interface TimelineFigure {
   category: Category;
   scriptureRef: string;
   blurb: string;
+  parent?: string;
+  lineage?: Lineage;
 }
 
 // ─── Data ────────────────────────────────────────────────────────
@@ -96,6 +139,7 @@ export const figures: TimelineFigure[] = [
     category: "antediluvian",
     scriptureRef: "Gen 1–5",
     blurb: "First man, created in the image of God; lived 930 years.",
+    lineage: "messianic",
   },
   {
     id: "seth",
@@ -106,6 +150,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "Gen 4:25–5:8",
     blurb:
       "Son of Adam born after Abel's death; ancestor of the line leading to Noah.",
+    parent: "adam",
+    lineage: "messianic",
   },
   {
     id: "enosh",
@@ -116,6 +162,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "Gen 5:6–11",
     blurb:
       "Son of Seth; in his time people began to call on the name of the LORD.",
+    parent: "seth",
+    lineage: "messianic",
   },
   {
     id: "kenan",
@@ -125,6 +173,8 @@ export const figures: TimelineFigure[] = [
     category: "antediluvian",
     scriptureRef: "Gen 5:9–14",
     blurb: "Son of Enosh; fourth generation from Adam.",
+    parent: "enosh",
+    lineage: "messianic",
   },
   {
     id: "mahalalel",
@@ -134,6 +184,8 @@ export const figures: TimelineFigure[] = [
     category: "antediluvian",
     scriptureRef: "Gen 5:12–17",
     blurb: "Son of Kenan; lived 895 years.",
+    parent: "kenan",
+    lineage: "messianic",
   },
   {
     id: "jared",
@@ -143,6 +195,8 @@ export const figures: TimelineFigure[] = [
     category: "antediluvian",
     scriptureRef: "Gen 5:15–20",
     blurb: "Son of Mahalalel and father of Enoch; lived 962 years.",
+    parent: "mahalalel",
+    lineage: "messianic",
   },
   {
     id: "enoch",
@@ -153,6 +207,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "Gen 5:18–24",
     blurb:
       "Walked with God and was taken up without dying; lived 365 years on earth.",
+    parent: "jared",
+    lineage: "messianic",
   },
   {
     id: "methuselah",
@@ -163,6 +219,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "Gen 5:21–27",
     blurb:
       "Oldest recorded person at 969 years; died the year of the flood.",
+    parent: "enoch",
+    lineage: "messianic",
   },
   {
     id: "lamech",
@@ -172,6 +230,8 @@ export const figures: TimelineFigure[] = [
     category: "antediluvian",
     scriptureRef: "Gen 5:25–31",
     blurb: "Father of Noah; died five years before the flood at age 777.",
+    parent: "methuselah",
+    lineage: "messianic",
   },
   {
     id: "noah",
@@ -182,6 +242,104 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "Gen 5–10",
     blurb:
       "Built the ark and preserved humanity through the flood; lived 950 years.",
+    parent: "lamech",
+    lineage: "messianic",
+  },
+
+  // ─── Cainite branch (Gen 4) ────────────────────────────────────
+  // All perish in the Flood (-2348). Dates approximate, distributed
+  // between Adam's era and the Flood.
+  {
+    id: "cain",
+    name: "Cain",
+    birth: -3874,
+    death: -2348,
+    category: "antediluvian",
+    scriptureRef: "Gen 4:1–24",
+    blurb:
+      "Firstborn of Adam; murdered his brother Abel and was cursed to wander.",
+    parent: "adam",
+    lineage: "cainite",
+  },
+  {
+    id: "abel",
+    name: "Abel",
+    birth: -3864,
+    death: -3824,
+    category: "antediluvian",
+    scriptureRef: "Gen 4:2–8",
+    blurb:
+      "Second son of Adam; offered an acceptable sacrifice and was killed by Cain.",
+    parent: "adam",
+    lineage: "cainite",
+  },
+  {
+    id: "enoch-cain",
+    name: "Enoch (of Cain)",
+    birth: -3800,
+    death: -2348,
+    category: "antediluvian",
+    scriptureRef: "Gen 4:17",
+    blurb:
+      "Son of Cain; the first city was named after him.",
+    parent: "cain",
+    lineage: "cainite",
+  },
+  {
+    id: "irad",
+    name: "Irad",
+    birth: -3730,
+    death: -2348,
+    category: "antediluvian",
+    scriptureRef: "Gen 4:18",
+    blurb: "Son of Enoch of Cain; third generation of the Cainite line.",
+    parent: "enoch-cain",
+    lineage: "cainite",
+  },
+  {
+    id: "mehujael",
+    name: "Mehujael",
+    birth: -3660,
+    death: -2348,
+    category: "antediluvian",
+    scriptureRef: "Gen 4:18",
+    blurb: "Son of Irad; fourth generation of the Cainite line.",
+    parent: "irad",
+    lineage: "cainite",
+  },
+  {
+    id: "methushael",
+    name: "Methushael",
+    birth: -3590,
+    death: -2348,
+    category: "antediluvian",
+    scriptureRef: "Gen 4:18",
+    blurb: "Son of Mehujael; fifth generation of the Cainite line.",
+    parent: "mehujael",
+    lineage: "cainite",
+  },
+  {
+    id: "lamech-cain",
+    name: "Lamech (of Cain)",
+    birth: -3520,
+    death: -2348,
+    category: "antediluvian",
+    scriptureRef: "Gen 4:18–24",
+    blurb:
+      "First recorded polygamist; boasted of killing a man and claimed sevenfold vengeance.",
+    parent: "methushael",
+    lineage: "cainite",
+  },
+  {
+    id: "tubal-cain",
+    name: "Tubal-Cain",
+    birth: -3450,
+    death: -2348,
+    category: "antediluvian",
+    scriptureRef: "Gen 4:22",
+    blurb: "Son of Lamech of Cain; forger of all instruments of bronze and iron.",
+    parent: "lamech-cain",
+    lineage: "cainite",
   },
 
   // ═══════════════════════════════════════════════════════════════
@@ -197,6 +355,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "Gen 10–11",
     blurb:
       "Son of Noah; ancestor of the Semitic peoples and the messianic line.",
+    parent: "noah",
+    lineage: "messianic",
   },
   {
     id: "arphaxad",
@@ -206,6 +366,8 @@ export const figures: TimelineFigure[] = [
     category: "postdiluvian",
     scriptureRef: "Gen 11:10–13",
     blurb: "Born two years after the flood; grandson of Noah through Shem.",
+    parent: "shem",
+    lineage: "messianic",
   },
   {
     id: "shelah",
@@ -215,6 +377,8 @@ export const figures: TimelineFigure[] = [
     category: "postdiluvian",
     scriptureRef: "Gen 11:12–15",
     blurb: "Son of Arphaxad; part of the post-flood genealogy linking Noah to Abraham.",
+    parent: "arphaxad",
+    lineage: "messianic",
   },
   {
     id: "eber",
@@ -225,6 +389,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "Gen 11:14–17",
     blurb:
       "Ancestor from whom the term 'Hebrew' may derive; outlived several descendants.",
+    parent: "shelah",
+    lineage: "messianic",
   },
   {
     id: "peleg",
@@ -235,6 +401,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "Gen 11:16–19",
     blurb:
       "Named 'division' because in his days the earth was divided.",
+    parent: "eber",
+    lineage: "messianic",
   },
   {
     id: "reu",
@@ -244,6 +412,8 @@ export const figures: TimelineFigure[] = [
     category: "postdiluvian",
     scriptureRef: "Gen 11:18–21",
     blurb: "Son of Peleg; seventh generation from Shem.",
+    parent: "peleg",
+    lineage: "messianic",
   },
   {
     id: "serug",
@@ -253,6 +423,8 @@ export const figures: TimelineFigure[] = [
     category: "postdiluvian",
     scriptureRef: "Gen 11:20–23",
     blurb: "Son of Reu and grandfather of Nahor; lived 230 years.",
+    parent: "reu",
+    lineage: "messianic",
   },
   {
     id: "nahor",
@@ -262,6 +434,8 @@ export const figures: TimelineFigure[] = [
     category: "postdiluvian",
     scriptureRef: "Gen 11:22–25",
     blurb: "Grandfather of Abraham; lived 148 years.",
+    parent: "serug",
+    lineage: "messianic",
   },
   {
     id: "terah",
@@ -272,6 +446,69 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "Gen 11:24–32",
     blurb:
       "Father of Abraham; migrated from Ur toward Canaan but settled in Haran.",
+    parent: "nahor",
+    lineage: "messianic",
+  },
+
+  // ─── Nations branch (Gen 10) ───────────────────────────────────
+  {
+    id: "ham",
+    name: "Ham",
+    birth: -2448,
+    death: -1900,
+    category: "postdiluvian",
+    scriptureRef: "Gen 9–10",
+    blurb:
+      "Son of Noah; father of Canaan, Cush, Mizraim, and Put — ancestor of many ancient nations.",
+    parent: "noah",
+    lineage: "nations",
+  },
+  {
+    id: "japheth",
+    name: "Japheth",
+    birth: -2448,
+    death: -1900,
+    category: "postdiluvian",
+    scriptureRef: "Gen 9–10",
+    blurb:
+      "Son of Noah; ancestor of the Indo-European peoples who spread across the coastlands.",
+    parent: "noah",
+    lineage: "nations",
+  },
+  {
+    id: "cush",
+    name: "Cush",
+    birth: -2340,
+    death: -1800,
+    category: "postdiluvian",
+    scriptureRef: "Gen 10:6–12",
+    blurb: "Son of Ham; father of Nimrod and ancestor of the Cushite peoples.",
+    parent: "ham",
+    lineage: "nations",
+  },
+  {
+    id: "canaan-son",
+    name: "Canaan",
+    birth: -2330,
+    death: -1800,
+    category: "postdiluvian",
+    scriptureRef: "Gen 9:20–27; 10:15–19",
+    blurb:
+      "Son of Ham; cursed by Noah — his descendants inhabited the land promised to Israel.",
+    parent: "ham",
+    lineage: "nations",
+  },
+  {
+    id: "nimrod",
+    name: "Nimrod",
+    birth: -2300,
+    death: -1750,
+    category: "postdiluvian",
+    scriptureRef: "Gen 10:8–12",
+    blurb:
+      "Mighty hunter before the LORD; founded Babel, Nineveh, and other great cities.",
+    parent: "cush",
+    lineage: "nations",
   },
 
   // ═══════════════════════════════════════════════════════════════
@@ -286,6 +523,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "Gen 12–25",
     blurb:
       "Father of many nations; received God's covenant promise of land, seed, and blessing.",
+    parent: "terah",
+    lineage: "messianic",
   },
   {
     id: "sarah",
@@ -305,6 +544,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "Gen 16–25",
     blurb:
       "Son of Abraham and Hagar; became father of twelve princes and a great nation.",
+    parent: "abraham",
+    lineage: "ishmaelite",
   },
   {
     id: "isaac",
@@ -315,6 +556,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "Gen 21–35",
     blurb:
       "Child of promise; nearly sacrificed on Mount Moriah, father of Jacob and Esau.",
+    parent: "abraham",
+    lineage: "messianic",
   },
   {
     id: "rebekah",
@@ -335,6 +578,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "Gen 25–50",
     blurb:
       "Renamed Israel; father of the twelve tribes through his twelve sons.",
+    parent: "isaac",
+    lineage: "messianic",
   },
   {
     id: "esau",
@@ -345,6 +590,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "Gen 25–36",
     blurb:
       "Twin brother of Jacob; sold his birthright and became father of the Edomites.",
+    parent: "isaac",
+    lineage: "edomite",
   },
   {
     id: "leah",
@@ -366,6 +613,130 @@ export const figures: TimelineFigure[] = [
     blurb:
       "Beloved wife of Jacob; mother of Joseph and Benjamin, died in childbirth.",
   },
+
+  // ─── Messianic: Judah (continues the through-line) ─────────────
+  {
+    id: "judah",
+    name: "Judah",
+    birth: -1795,
+    death: -1650,
+    category: "patriarch",
+    scriptureRef: "Gen 29:35; 38; 49:8–12",
+    blurb:
+      "Fourth son of Jacob; ancestor of David and the royal messianic line.",
+    parent: "jacob",
+    lineage: "messianic",
+  },
+
+  // ─── Tribes branch (11 non-Judah sons of Jacob) ────────────────
+  {
+    id: "reuben",
+    name: "Reuben",
+    birth: -1790,
+    death: -1660,
+    category: "patriarch",
+    scriptureRef: "Gen 29:32; 35:22; 49:3–4",
+    blurb:
+      "Firstborn of Jacob; lost his birthright for defiling his father's bed.",
+    parent: "jacob",
+    lineage: "tribes",
+  },
+  {
+    id: "simeon",
+    name: "Simeon",
+    birth: -1788,
+    death: -1658,
+    category: "patriarch",
+    scriptureRef: "Gen 29:33; 34; 49:5–7",
+    blurb:
+      "Second son of Jacob; condemned with Levi for the massacre at Shechem.",
+    parent: "jacob",
+    lineage: "tribes",
+  },
+  {
+    id: "levi",
+    name: "Levi",
+    birth: -1786,
+    death: -1649,
+    category: "patriarch",
+    scriptureRef: "Gen 29:34; 49:5–7; Exod 6:16",
+    blurb:
+      "Third son of Jacob; ancestor of the priestly tribe that served at the tabernacle and temple.",
+    parent: "jacob",
+    lineage: "tribes",
+  },
+  {
+    id: "dan",
+    name: "Dan",
+    birth: -1775,
+    death: -1645,
+    category: "patriarch",
+    scriptureRef: "Gen 30:5–6; 49:16–18",
+    blurb:
+      "Son of Jacob and Bilhah; his tribe later settled in the far north of Israel.",
+    parent: "jacob",
+    lineage: "tribes",
+  },
+  {
+    id: "naphtali",
+    name: "Naphtali",
+    birth: -1773,
+    death: -1643,
+    category: "patriarch",
+    scriptureRef: "Gen 30:7–8; 49:21",
+    blurb:
+      "Son of Jacob and Bilhah; his tribe settled in the Galilee region.",
+    parent: "jacob",
+    lineage: "tribes",
+  },
+  {
+    id: "gad",
+    name: "Gad",
+    birth: -1770,
+    death: -1640,
+    category: "patriarch",
+    scriptureRef: "Gen 30:9–11; 49:19",
+    blurb:
+      "Son of Jacob and Zilpah; his tribe settled in the Transjordan.",
+    parent: "jacob",
+    lineage: "tribes",
+  },
+  {
+    id: "asher",
+    name: "Asher",
+    birth: -1768,
+    death: -1638,
+    category: "patriarch",
+    scriptureRef: "Gen 30:12–13; 49:20",
+    blurb:
+      "Son of Jacob and Zilpah; blessed with rich food and royal delicacies.",
+    parent: "jacob",
+    lineage: "tribes",
+  },
+  {
+    id: "issachar",
+    name: "Issachar",
+    birth: -1755,
+    death: -1625,
+    category: "patriarch",
+    scriptureRef: "Gen 30:17–18; 49:14–15",
+    blurb:
+      "Son of Jacob and Leah; his tribe was known for understanding the times.",
+    parent: "jacob",
+    lineage: "tribes",
+  },
+  {
+    id: "zebulun",
+    name: "Zebulun",
+    birth: -1753,
+    death: -1623,
+    category: "patriarch",
+    scriptureRef: "Gen 30:19–20; 49:13",
+    blurb:
+      "Son of Jacob and Leah; his tribe settled near the coast of Sidon.",
+    parent: "jacob",
+    lineage: "tribes",
+  },
   {
     id: "joseph",
     name: "Joseph",
@@ -375,6 +746,182 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "Gen 37–50",
     blurb:
       "Sold into slavery by his brothers; rose to become vizier of Egypt.",
+    parent: "jacob",
+    lineage: "tribes",
+  },
+  {
+    id: "benjamin",
+    name: "Benjamin",
+    birth: -1735,
+    death: -1605,
+    category: "patriarch",
+    scriptureRef: "Gen 35:16–18; 49:27",
+    blurb:
+      "Youngest son of Jacob and Rachel; his tribe produced Saul, Israel's first king.",
+    parent: "jacob",
+    lineage: "tribes",
+  },
+
+  // ─── Ishmaelite branch ─────────────────────────────────────────
+  {
+    id: "nebaioth",
+    name: "Nebaioth",
+    birth: -1870,
+    death: -1750,
+    category: "patriarch",
+    scriptureRef: "Gen 25:13; 28:9; Isa 60:7",
+    blurb:
+      "Firstborn of Ishmael; ancestor of an Arabian tribe associated with flocks and herds.",
+    parent: "ishmael",
+    lineage: "ishmaelite",
+  },
+  {
+    id: "kedar",
+    name: "Kedar",
+    birth: -1865,
+    death: -1745,
+    category: "patriarch",
+    scriptureRef: "Gen 25:13; Isa 21:16–17; Ps 120:5",
+    blurb:
+      "Second son of Ishmael; his descendants were skilled archers and tent-dwellers in the Arabian desert.",
+    parent: "ishmael",
+    lineage: "ishmaelite",
+  },
+
+  // ─── Edomite branch ────────────────────────────────────────────
+  {
+    id: "eliphaz",
+    name: "Eliphaz",
+    birth: -1790,
+    death: -1670,
+    category: "patriarch",
+    scriptureRef: "Gen 36:4, 10–12",
+    blurb:
+      "Firstborn of Esau; father of Teman and Amalek, progenitor of Edomite clans.",
+    parent: "esau",
+    lineage: "edomite",
+  },
+  {
+    id: "amalek",
+    name: "Amalek",
+    birth: -1760,
+    death: -1640,
+    category: "patriarch",
+    scriptureRef: "Gen 36:12; Exod 17:8–16",
+    blurb:
+      "Grandson of Esau through Eliphaz; ancestor of Israel's persistent enemy, the Amalekites.",
+    parent: "eliphaz",
+    lineage: "edomite",
+  },
+
+  // ─── Messianic: Perez through Jesse ────────────────────────────
+  {
+    id: "perez",
+    name: "Perez",
+    birth: -1727,
+    death: -1600,
+    category: "patriarch",
+    scriptureRef: "Gen 38:27–30; Ruth 4:18",
+    blurb:
+      "Son of Judah and Tamar; ancestor of David through the line recorded in Ruth 4.",
+    parent: "judah",
+    lineage: "messianic",
+  },
+  {
+    id: "hezron",
+    name: "Hezron",
+    birth: -1700,
+    death: -1570,
+    category: "patriarch",
+    scriptureRef: "Gen 46:12; Ruth 4:18; 1 Chr 2:5",
+    blurb:
+      "Son of Perez; entered Egypt with Jacob's household.",
+    parent: "perez",
+    lineage: "messianic",
+  },
+  {
+    id: "ram",
+    name: "Ram",
+    birth: -1670,
+    death: -1540,
+    category: "patriarch",
+    scriptureRef: "Ruth 4:19; 1 Chr 2:9–10",
+    blurb:
+      "Son of Hezron; messianic ancestor between the patriarchal and exodus periods.",
+    parent: "hezron",
+    lineage: "messianic",
+  },
+  {
+    id: "amminadab",
+    name: "Amminadab",
+    birth: -1640,
+    death: -1510,
+    category: "patriarch",
+    scriptureRef: "Ruth 4:19–20; 1 Chr 2:10",
+    blurb:
+      "Son of Ram; his daughter married Aaron the high priest.",
+    parent: "ram",
+    lineage: "messianic",
+  },
+  {
+    id: "nahshon",
+    name: "Nahshon",
+    birth: -1610,
+    death: -1480,
+    category: "exodus",
+    scriptureRef: "Num 1:7; 2:3; Ruth 4:20",
+    blurb:
+      "Leader of the tribe of Judah during the wilderness wanderings; brother-in-law of Aaron.",
+    parent: "amminadab",
+    lineage: "messianic",
+  },
+  {
+    id: "salmon",
+    name: "Salmon",
+    birth: -1580,
+    death: -1450,
+    category: "exodus",
+    scriptureRef: "Ruth 4:20–21; Matt 1:5",
+    blurb:
+      "Son of Nahshon; married Rahab of Jericho according to Matthew's genealogy.",
+    parent: "nahshon",
+    lineage: "messianic",
+  },
+  {
+    id: "boaz",
+    name: "Boaz",
+    birth: -1350,
+    death: -1230,
+    category: "judge",
+    scriptureRef: "Ruth 2–4",
+    blurb:
+      "Kinsman-redeemer of Ruth; a man of standing in Bethlehem during the period of the judges.",
+    parent: "salmon",
+    lineage: "messianic",
+  },
+  {
+    id: "obed",
+    name: "Obed",
+    birth: -1310,
+    death: -1190,
+    category: "judge",
+    scriptureRef: "Ruth 4:13–17; 1 Chr 2:12",
+    blurb:
+      "Son of Boaz and Ruth; grandfather of David.",
+    parent: "boaz",
+    lineage: "messianic",
+  },
+  {
+    id: "jesse",
+    name: "Jesse",
+    birth: -1080,
+    death: -1000,
+    category: "judge",
+    scriptureRef: "1 Sam 16–17; Ruth 4:17, 22",
+    blurb:
+      "Father of David; a Bethlehemite whose youngest son was anointed king by Samuel.",
+    parent: "obed",
+    lineage: "messianic",
   },
 
   // ═══════════════════════════════════════════════════════════════
@@ -545,6 +1092,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "1 Sam 16–1 Kgs 2",
     blurb:
       "Shepherd, warrior, and poet-king; united Israel and received the messianic covenant.",
+    parent: "jesse",
+    lineage: "messianic",
   },
   {
     id: "king-solomon",
@@ -557,11 +1106,14 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "1 Kgs 1–11",
     blurb:
       "Wisest king; built the First Temple but turned to idolatry in his later years.",
+    parent: "king-david",
+    lineage: "messianic",
   },
 
   // ═══════════════════════════════════════════════════════════════
   // KINGS OF ISRAEL — 1 Kings 12 – 2 Kings 17 (Thiele)
   // 19 kings. Birth = reignStart, death = reignEnd where unknown.
+  // Parent = political predecessor (not biological father).
   // ═══════════════════════════════════════════════════════════════
   {
     id: "jeroboam-i",
@@ -574,6 +1126,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "1 Kgs 11:26–14:20",
     blurb:
       "First king of the northern kingdom; set up golden calves at Dan and Bethel.",
+    parent: "king-solomon",
+    lineage: "israel-king",
   },
   {
     id: "nadab-israel",
@@ -585,6 +1139,8 @@ export const figures: TimelineFigure[] = [
     category: "israel-king",
     scriptureRef: "1 Kgs 15:25–32",
     blurb: "Son of Jeroboam I; assassinated by Baasha after reigning two years.",
+    parent: "jeroboam-i",
+    lineage: "israel-king",
   },
   {
     id: "baasha",
@@ -597,6 +1153,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "1 Kgs 15:33–16:7",
     blurb:
       "Seized the throne by killing Nadab; continued in the sins of Jeroboam.",
+    parent: "nadab-israel",
+    lineage: "israel-king",
   },
   {
     id: "elah-israel",
@@ -608,6 +1166,8 @@ export const figures: TimelineFigure[] = [
     category: "israel-king",
     scriptureRef: "1 Kgs 16:8–14",
     blurb: "Son of Baasha; killed while drunk by his servant Zimri.",
+    parent: "baasha",
+    lineage: "israel-king",
   },
   {
     id: "zimri",
@@ -620,6 +1180,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "1 Kgs 16:9–20",
     blurb:
       "Reigned only seven days; set the palace on fire around himself when Omri besieged Tirzah.",
+    parent: "elah-israel",
+    lineage: "israel-king",
   },
   {
     id: "omri",
@@ -632,6 +1194,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "1 Kgs 16:15–28",
     blurb:
       "Military commander who became king; built Samaria as the new capital.",
+    parent: "zimri",
+    lineage: "israel-king",
   },
   {
     id: "ahab",
@@ -644,6 +1208,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "1 Kgs 16:29–22:40",
     blurb:
       "Married Jezebel and promoted Baal worship; opposed by Elijah on Mount Carmel.",
+    parent: "omri",
+    lineage: "israel-king",
   },
   {
     id: "ahaziah-israel",
@@ -656,6 +1222,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "1 Kgs 22:51–2 Kgs 1:18",
     blurb:
       "Son of Ahab; fell through a lattice and died after consulting Baal-zebub.",
+    parent: "ahab",
+    lineage: "israel-king",
   },
   {
     id: "joram-israel",
@@ -668,6 +1236,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "2 Kgs 3–8",
     blurb:
       "Son of Ahab; killed by Jehu's arrow in Naboth's vineyard.",
+    parent: "ahaziah-israel",
+    lineage: "israel-king",
   },
   {
     id: "jehu",
@@ -680,6 +1250,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "2 Kgs 9–10",
     blurb:
       "Anointed by Elisha's servant; purged Baal worship and destroyed the house of Ahab.",
+    parent: "joram-israel",
+    lineage: "israel-king",
   },
   {
     id: "jehoahaz-israel",
@@ -692,6 +1264,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "2 Kgs 13:1–9",
     blurb:
       "Son of Jehu; Israel was greatly weakened by Aram during his reign.",
+    parent: "jehu",
+    lineage: "israel-king",
   },
   {
     id: "joash-israel",
@@ -704,6 +1278,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "2 Kgs 13:10–25",
     blurb:
       "Visited the dying Elisha; defeated Aram three times and recaptured Israelite cities.",
+    parent: "jehoahaz-israel",
+    lineage: "israel-king",
   },
   {
     id: "jeroboam-ii",
@@ -716,6 +1292,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "2 Kgs 14:23–29",
     blurb:
       "Restored Israel's borders to their greatest extent; reigned during Amos and Hosea's ministry.",
+    parent: "joash-israel",
+    lineage: "israel-king",
   },
   {
     id: "zechariah-israel",
@@ -728,6 +1306,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "2 Kgs 15:8–12",
     blurb:
       "Last king of Jehu's dynasty; assassinated by Shallum after six months.",
+    parent: "jeroboam-ii",
+    lineage: "israel-king",
   },
   {
     id: "shallum",
@@ -739,6 +1319,8 @@ export const figures: TimelineFigure[] = [
     category: "israel-king",
     scriptureRef: "2 Kgs 15:13–16",
     blurb: "Usurper who reigned only one month before Menahem killed him.",
+    parent: "zechariah-israel",
+    lineage: "israel-king",
   },
   {
     id: "menahem",
@@ -751,6 +1333,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "2 Kgs 15:14–22",
     blurb:
       "Brutal usurper; paid tribute to Assyria to secure his throne.",
+    parent: "shallum",
+    lineage: "israel-king",
   },
   {
     id: "pekahiah",
@@ -762,6 +1346,8 @@ export const figures: TimelineFigure[] = [
     category: "israel-king",
     scriptureRef: "2 Kgs 15:23–26",
     blurb: "Son of Menahem; assassinated by his officer Pekah after two years.",
+    parent: "menahem",
+    lineage: "israel-king",
   },
   {
     id: "pekah",
@@ -774,6 +1360,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "2 Kgs 15:27–31",
     blurb:
       "Rival king in Gilead from 752; allied with Aram against Judah in the Syro-Ephraimite War.",
+    parent: "pekahiah",
+    lineage: "israel-king",
   },
   {
     id: "hoshea",
@@ -786,6 +1374,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "2 Kgs 17:1–6",
     blurb:
       "Last king of Israel; Samaria fell to Assyria and the northern kingdom ended.",
+    parent: "pekah",
+    lineage: "israel-king",
   },
 
   // ═══════════════════════════════════════════════════════════════
@@ -804,6 +1394,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "1 Kgs 12–14",
     blurb:
       "Son of Solomon whose harshness caused the kingdom to split in two.",
+    parent: "king-solomon",
+    lineage: "messianic",
   },
   {
     id: "abijah-judah",
@@ -816,6 +1408,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "1 Kgs 15:1–8; 2 Chr 13",
     blurb:
       "Defeated Jeroboam I in battle despite being outnumbered two to one.",
+    parent: "rehoboam",
+    lineage: "messianic",
   },
   {
     id: "asa",
@@ -828,6 +1422,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "1 Kgs 15:9–24; 2 Chr 14–16",
     blurb:
       "Faithful reformer who removed idols; relied on Aram rather than God in his later years.",
+    parent: "abijah-judah",
+    lineage: "messianic",
   },
   {
     id: "jehoshaphat",
@@ -840,6 +1436,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "1 Kgs 22; 2 Chr 17–20",
     blurb:
       "Godly king who sent teachers throughout Judah; unwisely allied with Ahab's house.",
+    parent: "asa",
+    lineage: "messianic",
   },
   {
     id: "jehoram-judah",
@@ -852,6 +1450,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "2 Kgs 8:16–24; 2 Chr 21",
     blurb:
       "Married Ahab's daughter Athaliah; killed his brothers and led Judah into idolatry.",
+    parent: "jehoshaphat",
+    lineage: "messianic",
   },
   {
     id: "ahaziah-judah",
@@ -912,6 +1512,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "2 Kgs 15:1–7; 2 Chr 26",
     blurb:
       "Powerful king who built up Judah's military; struck with leprosy for usurping priestly duties.",
+    parent: "jehoram-judah",
+    lineage: "messianic",
   },
   {
     id: "jotham",
@@ -924,6 +1526,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "2 Kgs 15:32–38; 2 Chr 27",
     blurb:
       "Did what was right before the LORD; built the upper gate of the Temple.",
+    parent: "azariah",
+    lineage: "messianic",
   },
   {
     id: "ahaz",
@@ -936,6 +1540,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "2 Kgs 16; 2 Chr 28",
     blurb:
       "Wicked king who sacrificed his son; appealed to Assyria against Aram and Israel.",
+    parent: "jotham",
+    lineage: "messianic",
   },
   {
     id: "hezekiah",
@@ -948,6 +1554,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "2 Kgs 18–20; 2 Chr 29–32",
     blurb:
       "Great reformer who trusted God when Sennacherib besieged Jerusalem; granted 15 extra years.",
+    parent: "ahaz",
+    lineage: "messianic",
   },
   {
     id: "manasseh",
@@ -960,6 +1568,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "2 Kgs 21:1–18; 2 Chr 33:1–20",
     blurb:
       "Longest-reigning king at 55 years; deeply wicked but repented late in life.",
+    parent: "hezekiah",
+    lineage: "messianic",
   },
   {
     id: "amon",
@@ -971,6 +1581,8 @@ export const figures: TimelineFigure[] = [
     category: "judah-king",
     scriptureRef: "2 Kgs 21:19–26; 2 Chr 33:21–25",
     blurb: "Reverted to his father's early idolatry; assassinated by his own servants.",
+    parent: "manasseh",
+    lineage: "messianic",
   },
   {
     id: "josiah",
@@ -983,6 +1595,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "2 Kgs 22–23; 2 Chr 34–35",
     blurb:
       "Last great reformer; rediscovered the Book of the Law and renewed the covenant.",
+    parent: "amon",
+    lineage: "messianic",
   },
   {
     id: "jehoahaz-judah",
@@ -1009,15 +1623,17 @@ export const figures: TimelineFigure[] = [
   },
   {
     id: "jehoiachin",
-    name: "Jehoiachin",
+    name: "Jehoiachin (Jeconiah)",
     birth: -598,
     death: -597,
     reignStart: -598,
     reignEnd: -597,
     category: "judah-king",
-    scriptureRef: "2 Kgs 24:8–17; 25:27–30",
+    scriptureRef: "2 Kgs 24:8–17; 25:27–30; Matt 1:11–12",
     blurb:
       "Surrendered to Nebuchadnezzar after three months; later released from Babylonian prison.",
+    parent: "josiah",
+    lineage: "messianic",
   },
   {
     id: "zedekiah",
@@ -1189,6 +1805,20 @@ export const figures: TimelineFigure[] = [
     blurb:
       "Statesman and prophet in Babylon and Persia; survived the lions' den and received apocalyptic visions.",
   },
+
+  // ─── Messianic: Shealtiel → Zerubbabel ─────────────────────────
+  {
+    id: "shealtiel",
+    name: "Shealtiel",
+    birth: -595,
+    death: -540,
+    category: "exile-return",
+    scriptureRef: "1 Chr 3:17; Matt 1:12; Luke 3:27",
+    blurb:
+      "Son of Jeconiah; father of Zerubbabel who led the return from exile.",
+    parent: "jehoiachin",
+    lineage: "messianic",
+  },
   {
     id: "zerubbabel",
     name: "Zerubbabel",
@@ -1198,6 +1828,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "Ezra 1–6; Hag 1–2; Zech 4",
     blurb:
       "Davidic descendant who led the first return from exile and rebuilt the Temple foundation.",
+    parent: "shealtiel",
+    lineage: "messianic",
   },
   {
     id: "esther",
@@ -1209,6 +1841,117 @@ export const figures: TimelineFigure[] = [
     blurb:
       "Jewish queen of Persia who risked her life to save her people from Haman's genocide.",
   },
+
+  // ─── Messianic: Matt 1:13–15 (intertestamental, approximate) ──
+  {
+    id: "abiud",
+    name: "Abiud",
+    birth: -530,
+    death: -480,
+    category: "exile-return",
+    scriptureRef: "Matt 1:13",
+    blurb:
+      "Post-exilic messianic ancestor; little is known beyond the genealogy.",
+    parent: "zerubbabel",
+    lineage: "messianic",
+  },
+  {
+    id: "eliakim-lineage",
+    name: "Eliakim",
+    birth: -500,
+    death: -450,
+    category: "exile-return",
+    scriptureRef: "Matt 1:13",
+    blurb:
+      "Post-exilic messianic ancestor; little is known beyond the genealogy.",
+    parent: "abiud",
+    lineage: "messianic",
+  },
+  {
+    id: "azor",
+    name: "Azor",
+    birth: -470,
+    death: -420,
+    category: "exile-return",
+    scriptureRef: "Matt 1:13–14",
+    blurb:
+      "Post-exilic messianic ancestor; little is known beyond the genealogy.",
+    parent: "eliakim-lineage",
+    lineage: "messianic",
+  },
+  {
+    id: "zadok-lineage",
+    name: "Zadok",
+    birth: -440,
+    death: -390,
+    category: "exile-return",
+    scriptureRef: "Matt 1:14",
+    blurb:
+      "Post-exilic messianic ancestor; little is known beyond the genealogy.",
+    parent: "azor",
+    lineage: "messianic",
+  },
+  {
+    id: "achim",
+    name: "Achim",
+    birth: -410,
+    death: -360,
+    category: "exile-return",
+    scriptureRef: "Matt 1:14",
+    blurb:
+      "Post-exilic messianic ancestor; little is known beyond the genealogy.",
+    parent: "zadok-lineage",
+    lineage: "messianic",
+  },
+  {
+    id: "eliud",
+    name: "Eliud",
+    birth: -380,
+    death: -330,
+    category: "exile-return",
+    scriptureRef: "Matt 1:14–15",
+    blurb:
+      "Post-exilic messianic ancestor; little is known beyond the genealogy.",
+    parent: "achim",
+    lineage: "messianic",
+  },
+  {
+    id: "eleazar-lineage",
+    name: "Eleazar",
+    birth: -350,
+    death: -300,
+    category: "exile-return",
+    scriptureRef: "Matt 1:15",
+    blurb:
+      "Post-exilic messianic ancestor; little is known beyond the genealogy.",
+    parent: "eliud",
+    lineage: "messianic",
+  },
+  {
+    id: "matthan",
+    name: "Matthan",
+    birth: -300,
+    death: -250,
+    category: "exile-return",
+    scriptureRef: "Matt 1:15",
+    blurb:
+      "Post-exilic messianic ancestor; little is known beyond the genealogy.",
+    parent: "eleazar-lineage",
+    lineage: "messianic",
+  },
+  {
+    id: "jacob-of-joseph",
+    name: "Jacob",
+    birth: -120,
+    death: -50,
+    category: "exile-return",
+    scriptureRef: "Matt 1:15–16",
+    blurb:
+      "Father of Joseph, husband of Mary; last link before the Messiah in Matthew's genealogy.",
+    parent: "matthan",
+    lineage: "messianic",
+  },
+
   {
     id: "ezra",
     name: "Ezra",
@@ -1264,6 +2007,28 @@ export const figures: TimelineFigure[] = [
   // MESSIAH — Gospels
   // ═══════════════════════════════════════════════════════════════
   {
+    id: "joseph-husband",
+    name: "Joseph",
+    birth: -45,
+    death: 18,
+    category: "messiah",
+    scriptureRef: "Matt 1–2; Luke 1–2",
+    blurb:
+      "Husband of Mary and legal father of Jesus; a righteous man of David's line.",
+    parent: "jacob-of-joseph",
+    lineage: "messianic",
+  },
+  {
+    id: "mary",
+    name: "Mary",
+    birth: -20,
+    death: 40,
+    category: "messiah",
+    scriptureRef: "Luke 1–2; John 2; 19:25–27; Acts 1:14",
+    blurb:
+      "Mother of Jesus; chosen by God to bear the Messiah, present from the manger to the cross.",
+  },
+  {
     id: "john-the-baptist",
     name: "John the Baptist",
     birth: -5,
@@ -1282,5 +2047,7 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "Matt–John",
     blurb:
       "The promised Messiah; crucified under Pontius Pilate and risen on the third day.",
+    parent: "joseph-husband",
+    lineage: "messianic",
   },
 ];

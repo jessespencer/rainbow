@@ -10,12 +10,15 @@ import {
 } from "./lib/scale.ts";
 import { renderBars, repositionBars } from "./lib/renderBars.ts";
 import { initScrubber } from "./lib/scrubber.ts";
-import { initTooltip } from "./lib/tooltip.ts";
+import { initTooltip, showTooltip, hideTooltip } from "./lib/tooltip.ts";
 import { initMinimap } from "./lib/minimap.ts";
 import { initZoom } from "./lib/zoom.ts";
 import { ERA_BANDS } from "./lib/eras.ts";
 import { figures } from "./data/timeline.ts";
 import type { Category } from "./data/timeline.ts";
+import { onViewChange } from "./lib/viewState.ts";
+import { initHeader } from "./lib/header.ts";
+import { initLineageView } from "./lib/renderLineage.ts";
 
 // ─── Constants ───────────────────────────────────────────────────
 
@@ -48,6 +51,20 @@ const CATEGORY_NAMES: Record<Category, string> = {
   prophet: "Prophet",
   "exile-return": "Exile & Return",
   messiah: "Messiah",
+};
+
+const CATEGORY_DESCRIPTIONS: Record<Category, string> = {
+  antediluvian: "Before the Flood — Adam through the generation of Noah",
+  postdiluvian: "After the Flood — Noah's descendants through Terah",
+  patriarch: "The patriarchs of Israel — Abraham, Isaac, Jacob, and Joseph",
+  exodus: "The Exodus from Egypt — Moses and Aaron lead Israel out of slavery",
+  judge: "Tribal leaders who governed Israel before the monarchy",
+  "united-king": "Saul, David, and Solomon rule all twelve tribes",
+  "israel-king": "Kings of the Northern Kingdom after the split in 931 BC",
+  "judah-king": "Kings of the Southern Kingdom after the split in 931 BC",
+  prophet: "God's messengers during the monarchy and exile",
+  "exile-return": "The Babylonian exile and the return to rebuild Jerusalem",
+  messiah: "Jesus Christ — his birth, ministry, and resurrection",
 };
 
 interface EraMarker {
@@ -97,6 +114,9 @@ const { element: headerEl, controls: headerControls } = createHeader({
 });
 app.appendChild(headerEl);
 
+// -- Inject view toggle into header controls --
+initHeader(headerControls);
+
 // -- Axis row --
 const axisRow = el("div", "axis-row", app);
 el("div", "label-gutter", axisRow);
@@ -112,6 +132,11 @@ const laneLabelsInner = el("div", undefined, laneLabels);
 
 const mainViewport = el("div", "main-viewport", contentRow);
 const mainInner = el("div", "main-inner", mainViewport);
+
+// -- View containers (both live inside mainInner) --
+const timelineView = el("div", "timeline-view", mainInner);
+const lineageView = el("div", "lineage-view", mainInner);
+lineageView.style.display = "none";
 
 // ─── Set initial widths ──────────────────────────────────────────
 
@@ -139,7 +164,7 @@ interface EraBandEl {
 const eraBandEls: EraBandEl[] = [];
 
 for (const era of ERA_BANDS) {
-  const band = el("div", "era-band", mainInner);
+  const band = el("div", "era-band", timelineView);
   band.style.background = era.color;
   eraBandEls.push({ element: band, startYear: era.startYear, endYear: era.endYear });
 }
@@ -192,7 +217,7 @@ for (const era of ERA_MARKERS) {
   label.textContent = era.label;
   eraLabelEls.push({ element: label, year: era.year });
 
-  const line = el("div", "era-line", mainInner);
+  const line = el("div", "era-line", timelineView);
   eraLineEls.push({ element: line, year: era.year });
 }
 
@@ -220,19 +245,32 @@ for (const cat of CATEGORY_ORDER) {
   const text = el("span", "lane-label__text", row);
   text.textContent = CATEGORY_NAMES[cat];
 
+  text.addEventListener("mouseenter", () => {
+    const rect = text.getBoundingClientRect();
+    const html =
+      `<span class="tooltip__cat-title">` +
+        `<span class="tooltip__cat-dot" style="background:${cssVar(cat)}"></span>` +
+        `${CATEGORY_NAMES[cat]}` +
+      `</span>` +
+      `<p class="tooltip__blurb">${CATEGORY_DESCRIPTIONS[cat]}</p>`;
+    showTooltip(html, rect.right + 8, rect.top + rect.height / 2);
+  });
+
+  text.addEventListener("mouseleave", () => hideTooltip());
+
   labelElements.push(row);
 }
 
 // ─── Render Lanes ────────────────────────────────────────────────
 
 for (const cat of CATEGORY_ORDER) {
-  const lane = el("div", "lane", mainInner);
+  const lane = el("div", "lane", timelineView);
   lane.dataset.category = cat;
 }
 
 // ─── Render Figure Bars ──────────────────────────────────────────
 
-const { laneHeights, barMap } = renderBars(mainInner, figures);
+const { laneHeights, barMap } = renderBars(timelineView, figures);
 
 const syncLaneLabels = (heights: Map<Category, number>) => {
   CATEGORY_ORDER.forEach((cat, i) => {
@@ -244,6 +282,24 @@ const syncLaneLabels = (heights: Map<Category, number>) => {
 };
 
 syncLaneLabels(laneHeights);
+
+// ─── Lineage View ────────────────────────────────────────────────
+
+const lineageHandle = initLineageView(lineageView);
+
+// ─── View Switching ──────────────────────────────────────────────
+
+onViewChange((view) => {
+  if (view === "timeline") {
+    timelineView.style.display = "";
+    lineageView.style.display = "none";
+    laneLabels.style.display = "";
+  } else {
+    timelineView.style.display = "none";
+    lineageView.style.display = "";
+    laneLabels.style.display = "none";
+  }
+});
 
 // ─── Minimap ─────────────────────────────────────────────────────
 
@@ -267,8 +323,10 @@ const repositionAll = () => {
   positionTicks();
   positionEraMarkers();
 
-  const newHeights = repositionBars(mainInner, figures, barMap);
+  const newHeights = repositionBars(timelineView, figures, barMap);
   syncLaneLabels(newHeights);
+
+  lineageHandle.reposition();
 
   scrubber.reposition();
   minimap.syncScroll();
@@ -283,3 +341,10 @@ mainViewport.addEventListener("scroll", () => {
   laneLabels.scrollTop = mainViewport.scrollTop;
   minimap.syncScroll();
 });
+
+// Forward wheel events from lane labels to main viewport
+laneLabels.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  mainViewport.scrollTop += e.deltaY;
+  mainViewport.scrollLeft += e.deltaX;
+}, { passive: false });

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create:*)",
+      "Bash(curl -s http://localhost:5199/timeline/)",
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Bash(kill %1)"
+    ]
+  }
+}

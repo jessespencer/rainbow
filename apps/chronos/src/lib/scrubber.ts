@@ -5,6 +5,7 @@
  */
 
 import { yearToX, xToYear, formatYear, MIN_YEAR, MAX_YEAR } from "./scale.ts";
+import { formatLifespan, formatReign } from "./tooltip.ts";
 import type { TimelineFigure, Category } from "../data/timeline.ts";
 
 // ─── Category display order & names ──────────────────────────────
@@ -139,6 +140,18 @@ const renderPanel = (
       name.className = "panel__name";
       name.textContent = f.name;
       entry.appendChild(name);
+
+      const life = document.createElement("span");
+      life.className = "panel__life";
+      life.textContent = formatLifespan(f.birth, f.death);
+      entry.appendChild(life);
+
+      if (f.reignStart != null && f.reignEnd != null) {
+        const reign = document.createElement("span");
+        reign.className = "panel__reign";
+        reign.textContent = formatReign(f.reignStart, f.reignEnd);
+        entry.appendChild(reign);
+      }
 
       const ref = document.createElement("span");
       ref.className = "panel__ref";
