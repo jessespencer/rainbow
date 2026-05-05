@@ -54,7 +54,7 @@
   flex-direction: column;
   gap: 16px;
   padding: 24px 24px 0;
-  background: var(--bg-elevated);
+  background: transparent;
   flex-shrink: 0;
   position: relative;
 }

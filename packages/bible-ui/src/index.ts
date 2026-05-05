@@ -8,6 +8,8 @@
 export interface HeaderConfig {
   title: string;
   subtitle: string;
+  /** Background color for the header. Defaults to transparent. */
+  background?: string;
 }
 
 export interface HeaderHandle {
@@ -24,6 +26,9 @@ export interface HeaderHandle {
 export const createHeader = (config: HeaderConfig): HeaderHandle => {
   const header = document.createElement("header");
   header.className = "bui-header";
+  if (config.background) {
+    header.style.background = config.background;
+  }
 
   const row = document.createElement("div");
   row.className = "bui-header__row";
