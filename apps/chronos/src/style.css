@@ -1,0 +1,949 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Chronos-specific tokens (base tokens come from @jessespencer/bible-ui)
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Accent extension */
+  --accent-glow: rgba(100, 140, 220, 0.30);
+
+  /* Category palette — Chronos-specific */
+  --cat-antediluvian:  #d4a056;
+  --cat-postdiluvian:  #c48060;
+  --cat-patriarch:     #e87840;
+  --cat-exodus:        #e05252;
+  --cat-judge:         #8a9e52;
+  --cat-united-king:   #9b6dff;
+  --cat-israel-king:   #40b8a0;
+  --cat-judah-king:    #d4b84a;
+  --cat-prophet:       #5a9cf5;
+  --cat-exile-return:  #4aad6e;
+  --cat-messiah:       #e8e0d0;
+
+  /* Lineage palette */
+  --lineage-messianic:   #e8c06a;
+  --lineage-cainite:     #8a6050;
+  --lineage-nations:     #6a8a6a;
+  --lineage-ishmaelite:  #b89050;
+  --lineage-edomite:     #a06040;
+  --lineage-tribes:      #7090b0;
+  --lineage-israel-king: #40b8a0;
+
+  /* Narrative thread palette */
+  --thread-covenant:       #D4A84B;
+  --thread-kingdom-united: #6E4BA8;
+  --thread-kingdom-north:  #A85050;
+  --thread-kingdom-south:  #3B7A7A;
+  --thread-prophecy:       #9E8BC4;
+  --thread-exile:          #3A4452;
+  --thread-messianic:      #F4E8C8;
+
+  /* Layout */
+  --axis-h:    60px;
+  --label-w:   140px;
+  --lane-h:    80px;
+  --minimap-h: 36px;
+  --panel-w:   340px;
+}
+
+/* ─── Reset ───────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-ui);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── App Shell ───────────────────────────────────────────────── */
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* ─── Axis Row (top bar) ──────────────────────────────────────── */
+
+.axis-row {
+  display: flex;
+  height: var(--axis-h);
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-base);
+  z-index: 30;
+}
+
+.label-gutter {
+  width: var(--label-w);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Zoom Controls ───────────────────────────────────────────── */
+
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.zoom-btn {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-pill);
+  background: var(--fill-subtle);
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.zoom-btn:hover {
+  background: var(--fill-hover);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+
+.zoom-label {
+  min-width: 42px;
+  height: 26px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0 4px;
+  transition: color 0.15s;
+}
+
+.zoom-label:hover {
+  color: var(--text-secondary);
+}
+
+.axis-viewport {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.axis-inner {
+  position: relative;
+  height: 100%;
+}
+
+/* ─── Tick Marks ──────────────────────────────────────────────── */
+
+.tick {
+  position: absolute;
+  bottom: 0;
+  width: 1px;
+  background: var(--border-subtle);
+}
+
+.tick--minor {
+  height: 10px;
+}
+
+.tick--major {
+  height: 18px;
+  background: var(--border-default);
+}
+
+.tick__label {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+  font-family: var(--font-mono);
+}
+
+/* ─── Era Markers ─────────────────────────────────────────────── */
+
+.era-label {
+  position: absolute;
+  top: 6px;
+  transform: translateX(-100%) rotate(-32deg);
+  transform-origin: bottom right;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  white-space: nowrap;
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.era-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--accent-text);
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ─── Era Background Bands ────────────────────────────────────── */
+
+.era-band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  opacity: 0.10;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Content Row ─────────────────────────────────────────────── */
+
+.content-row {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ─── Lane Labels (fixed left column) ─────────────────────────── */
+
+.lane-labels {
+  width: var(--label-w);
+  flex-shrink: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--border-subtle);
+  background: var(--bg-base);
+  z-index: 10;
+}
+
+.lane-label {
+  height: var(--lane-h);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--border-faint);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.lane-label__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.lane-label__text {
+  color: var(--text-dim);
+  cursor: help;
+  border-bottom: 1px dashed transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.lane-label__text:hover {
+  color: var(--text-primary);
+  border-bottom-color: var(--text-dim);
+}
+
+/* ─── Main Scroll Viewport ────────────────────────────────────── */
+
+.main-viewport {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: auto;
+  touch-action: none;
+}
+
+.main-inner {
+  position: relative;
+}
+
+/* ─── Lanes ───────────────────────────────────────────────────── */
+
+.lane {
+  height: var(--lane-h);
+  border-bottom: 1px solid var(--border-faint);
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── Figure Bars ─────────────────────────────────────────────── */
+
+.figure-bar {
+  position: absolute;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--bar-color) 28%, transparent);
+  border: 1px solid color-mix(in srgb, var(--bar-color) 40%, transparent);
+  overflow: hidden;
+  cursor: pointer;
+  transition:
+    opacity 0.15s ease,
+    filter 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.figure-bar:hover {
+  filter: brightness(1.4);
+  z-index: 10;
+}
+
+.figure-bar--active {
+  opacity: 1;
+  box-shadow: 0 0 8px 1px var(--accent-glow);
+  z-index: 5;
+}
+
+.figure-bar--dimmed {
+  opacity: 0.18;
+  filter: saturate(0.25) brightness(0.8);
+}
+
+.figure-bar__name {
+  display: block;
+  padding: 0 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 22px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-primary);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+  position: relative;
+  z-index: 1;
+}
+
+.figure-bar__reign {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: color-mix(in srgb, var(--bar-color) 45%, transparent);
+  border-top: 2px solid var(--bar-color);
+  pointer-events: none;
+}
+
+/* ─── Tooltip ─────────────────────────────────────────────────── */
+
+.tooltip {
+  position: fixed;
+  z-index: 100;
+  max-width: 300px;
+  padding: 10px 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.tooltip--visible {
+  opacity: 1;
+}
+
+.tooltip__name {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-bright);
+  margin-bottom: 4px;
+}
+
+.tooltip__life,
+.tooltip__reign {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.tooltip__reign {
+  color: var(--accent-text);
+  opacity: 0.85;
+}
+
+.tooltip__ref {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.tooltip__blurb {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+.tooltip__cat-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.tooltip__cat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ─── Scrubber ────────────────────────────────────────────────── */
+
+.scrubber {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--accent-text);
+  z-index: 20;
+  pointer-events: none;
+  box-shadow: 0 0 8px 1px var(--accent-glow);
+  transform: translateX(-1px);
+}
+
+.scrubber--dragging {
+  box-shadow: 0 0 14px 3px rgba(100, 140, 220, 0.5);
+}
+
+.scrubber__label {
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translate(-50%, -100%);
+  background: var(--accent-fill);
+  border: 1px solid var(--accent-border);
+  color: var(--text-bright);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  letter-spacing: 0.02em;
+}
+
+/* ─── Floating Panel ──────────────────────────────────────────── */
+
+.panel {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: var(--panel-w);
+  max-height: calc(100vh - 200px);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 40;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.panel--hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(12px);
+}
+
+.panel__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--border-faint);
+  flex-shrink: 0;
+}
+
+.panel__header {
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
+.panel__close {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.panel__close:hover {
+  background: var(--fill-hover);
+  color: var(--text-primary);
+}
+
+.panel__list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0 12px;
+}
+
+.panel__list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.panel__list::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 2px;
+}
+
+.panel__empty {
+  padding: 24px 16px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-style: italic;
+}
+
+.panel__section {
+  padding: 16px 0;
+}
+
+.panel__section + .panel__section {
+  border-top: 1px solid var(--border-faint);
+}
+
+.panel__section-title {
+  padding: 0 16px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.panel__section-title::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 6px;
+  background: var(--dot-color);
+  vertical-align: middle;
+}
+
+.panel__entry {
+  padding: 16px 16px 16px 28px;
+}
+
+.panel__entry + .panel__entry {
+  border-top: 1px solid var(--border-faint);
+}
+
+.panel__name {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.panel__life,
+.panel__reign {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.panel__reign {
+  color: var(--accent-text);
+  opacity: 0.85;
+}
+
+.panel__ref {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.panel__blurb {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-top: 3px;
+}
+
+/* ─── Minimap ─────────────────────────────────────────────────── */
+
+.minimap {
+  height: var(--minimap-h);
+  flex-shrink: 0;
+  background: var(--bg-elevated);
+  border-top: 1px solid var(--border-subtle);
+  padding: 4px 8px;
+  cursor: pointer;
+  touch-action: none;
+  z-index: 30;
+}
+
+.minimap__track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-base);
+}
+
+.minimap__era {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  opacity: 0.55;
+}
+
+.minimap__viewport-rect {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+  cursor: grab;
+}
+
+.minimap__viewport-rect:active {
+  cursor: grabbing;
+  background: rgba(255, 255, 255, 0.10);
+}
+
+.minimap__scrubber {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--accent-text);
+  transform: translateX(-1px);
+  pointer-events: none;
+  box-shadow: 0 0 4px 1px var(--accent-glow);
+}
+
+/* ─── Scrollbar Styling ───────────────────────────────────────── */
+
+.main-viewport::-webkit-scrollbar {
+  height: 6px;
+  width: 4px;
+}
+
+.main-viewport::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.main-viewport::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 2px;
+}
+
+.main-viewport::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ─── View Toggle ─────────────────────────────────────────────── */
+
+.view-toggle {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-faint);
+  border-radius: 6px;
+  margin-right: 12px;
+}
+
+.view-toggle__btn {
+  padding: 4px 14px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.view-toggle__btn:hover {
+  color: var(--text-primary);
+}
+
+.view-toggle__btn--active {
+  background: var(--bg-elevated);
+  color: var(--text-bright, var(--text-primary));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── View Containers ─────────────────────────────────────────── */
+
+.timeline-view,
+.lineage-view,
+.narrative-view {
+  position: relative;
+  width: 100%;
+}
+
+/* ─── Lineage SVG ─────────────────────────────────────────────── */
+
+.lineage-svg {
+  display: block;
+}
+
+.lineage-svg text {
+  pointer-events: none;
+  user-select: none;
+}
+
+.lineage-svg circle {
+  cursor: pointer;
+  transition: r 0.15s, filter 0.15s;
+}
+
+.lineage-svg circle:hover {
+  filter: brightness(1.3);
+}
+
+.lineage--dimmed {
+  opacity: 0.15;
+  transition: opacity 0.2s;
+}
+
+.lineage--highlighted {
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Narrative Stream Graph
+   ═══════════════════════════════════════════════════════════════════ */
+
+.narrative-view {
+  min-height: 500px;
+}
+
+.narrative-svg {
+  display: block;
+}
+
+.narrative-svg path {
+  opacity: 0.85;
+  transition: opacity 0.15s ease;
+}
+
+.narrative--dimmed {
+  opacity: 0.15 !important;
+  transition: opacity 0.15s ease !important;
+}
+
+.narrative--highlighted {
+  opacity: 1 !important;
+  filter: brightness(1.1);
+  transition: opacity 0.15s ease !important;
+}
+
+/* ─── Entrance animation ─────────────────────────────────────────── */
+
+@keyframes narrative-fade-in {
+  from { opacity: 0; transform: scaleY(0.3); }
+  to   { opacity: 0.85; transform: scaleY(1); }
+}
+
+.narrative-path--animate {
+  animation: narrative-fade-in 600ms ease-out both;
+}
+
+/* ─── Era annotations ────────────────────────────────────────────── */
+
+.narrative-era-line {
+  stroke: var(--text-dim, #888);
+  stroke-width: 0.5;
+  opacity: 0.3;
+}
+
+.narrative-era-label {
+  font-family: var(--font-mono, "DM Mono", monospace);
+  font-size: 9px;
+  fill: var(--text-dim, #888);
+  opacity: 0.6;
+}
+
+/* ─── Legend ──────────────────────────────────────────────────────── */
+
+.narrative-legend {
+  position: fixed;
+  bottom: 52px;
+  left: 20px;
+  background: rgba(20, 22, 28, 0.88);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-faint, rgba(255, 255, 255, 0.08));
+  border-radius: 8px;
+  padding: 10px 14px;
+  z-index: 40;
+  pointer-events: auto;
+}
+
+.narrative-legend__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.narrative-legend__swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.narrative-legend__name {
+  font-family: var(--font-mono, "DM Mono", monospace);
+  font-size: 11px;
+  color: var(--text-dim, #888);
+}
+
+/* ─── Hover tooltip ──────────────────────────────────────────────── */
+
+.narrative-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(20, 22, 28, 0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-faint, rgba(255, 255, 255, 0.08));
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-family: var(--font-mono, "DM Mono", monospace);
+  font-size: 11px;
+  color: var(--text-primary, #ccc);
+  line-height: 1.5;
+  white-space: nowrap;
+  z-index: 50;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.narrative-tooltip--visible {
+  opacity: 1;
+}
+
+.narrative-tooltip__desc {
+  color: var(--text-dim, #888);
+  font-style: italic;
+}
+
+.narrative-tooltip__year {
+  color: var(--text-bright, #eee);
+}
+
+.narrative-tooltip__word {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ─── Story-at-this-moment (scrubber panel section) ──────────────── */
+
+.narrative-story {
+  border-bottom: 1px solid var(--border-faint, rgba(255, 255, 255, 0.08));
+  padding-bottom: 12px;
+  margin-bottom: 8px;
+}
+
+.narrative-story__title {
+  font-family: var(--font-mono, "DM Mono", monospace);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim, #888);
+  margin-bottom: 6px;
+}
+
+.narrative-story__entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.narrative-story__swatch {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.narrative-story__label {
+  font-family: var(--font-mono, "DM Mono", monospace);
+  font-size: 11px;
+  color: var(--text-primary, #ccc);
+}
