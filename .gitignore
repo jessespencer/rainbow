@@ -3,3 +3,4 @@ dist
 raw-data
 *.zip
 .vite
+.DS_Store

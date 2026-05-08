@@ -18,12 +18,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-      - run: npm ci
-      - run: npm run build
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:rainbow
+      - run: pnpm build:chronos
+      - name: Assemble Pages output
+        run: |
+          mkdir -p dist
+          cp -r apps/rainbow/dist/. dist/
+          mkdir -p dist/timeline
+          cp -r apps/chronos/dist/. dist/timeline/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
