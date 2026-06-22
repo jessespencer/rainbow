@@ -22,6 +22,7 @@
     "d3-transition": "^3.0.1",
     "d3-zoom": "^3.0.0",
     "lucide": "^0.577.0",
+    "three": "^0.184.0",
     "typescript": "^5.9.3",
     "vite": "^7.3.1"
   },
@@ -29,6 +30,7 @@
     "@types/d3-scale": "^4.0.9",
     "@types/d3-selection": "^3.0.11",
     "@types/d3-zoom": "^3.0.8",
+    "@types/three": "^0.184.1",
     "tsx": "^4.21.0"
   }
 }
