@@ -63,12 +63,19 @@ const DIM_ALPHA = 0.2; // a star dimmed because another verse is in focus — ke
 const FOCUS_MS = 850; // camera fly-to duration when a verse is selected
 const FIT_MS = 900; // camera re-frame duration for the Fit button
 
-// galaxy geometry — each book is a self-contained cluster floating at its own
-// spot on a sphere of "island" positions; no central convergence.
-const R_GALAXY = 120; // radius of the sphere the book-centers sit on
-const R_BOOK_BASE = 3; // smallest book blob radius
-const R_BOOK_PER = 0.16; // blob grows with sqrt(verse count)
-const R_BOOK_CAP = 13; // largest blob radius (keeps neighbours from merging)
+// galaxy geometry — a flat spiral disk (Milky-Way style). Reading order spirals
+// outward from a central bulge; the two Testaments are the two arms.
+const R_CORE = 10; // inner radius (bulge)
+const R_RIM = 150; // outer radius (disk edge)
+// Both arms wrap the SAME amount so they're point-symmetric (180° mirrors) and
+// spiral out to OPPOSITE rim tips — like a real two-arm grand-design spiral.
+// OT stays the brighter/denser arm simply because it has ~3x the verses.
+const WRAPS_OT = 1.1;
+const WRAPS_NT = 1.1;
+const ARM_W = 4.8; // arm half-width — tight, so dark lanes sit between the arms
+const DISK_T = 3.0; // disk half-thickness
+const BULGE = 3.0; // core puff
+const BULGE_FALLOFF = 0.045; // smaller = a tighter, more compact bulge the arms emerge from
 
 const easeInOutCubic = (t: number) =>
   t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -250,71 +257,62 @@ function buildGraph(refs: Reference[]): Graph {
   };
 }
 
-// ---- scattered island-galaxies layout ------------------------------------ //
+// ---- spiral-galaxy layout ------------------------------------------------ //
 function computeLayout(g: Graph): { pos: Float32Array; labelPos: Map<number, [number, number, number]> } {
   const { n } = g;
   const pos = new Float32Array(n * 3);
   const labelPos = new Map<number, [number, number, number]>();
 
-  // group node ids by book, then sort each book's verses canonically
-  const byBook: number[][] = Array.from({ length: 66 }, () => []);
-  for (let i = 0; i < n; i++) byBook[g.book[i]].push(i);
-  for (const ids of byBook) {
-    ids.sort((a, b) => g.chapter[a] - g.chapter[b] || g.verse[a] - g.verse[b]);
+  // Two arms = the two Testaments. Each arm's verses sorted in canonical reading
+  // order; their rank along the arm sets how far out the spiral they sit.
+  const arms: number[][] = [[], []];
+  for (let i = 0; i < n; i++) arms[g.book[i] < OT_COUNT ? 0 : 1].push(i);
+  const byCanon = (a: number, b: number) =>
+    g.book[a] - g.book[b] || g.chapter[a] - g.chapter[b] || g.verse[a] - g.verse[b];
+  arms.forEach((a) => a.sort(byCanon));
+
+  // cheap ~gaussian from a few uniforms, for soft arm/disk falloff
+  const gauss = (rnd: () => number) => (rnd() + rnd() + rnd() - 1.5) * 0.95;
+
+  // per-book centroid accumulators, for label placement
+  const sx = new Float64Array(66), sy = new Float64Array(66);
+  const sz = new Float64Array(66), cnt = new Float64Array(66);
+
+  for (let arm = 0; arm < 2; arm++) {
+    const ids = arms[arm];
+    const M = ids.length;
+    const off = arm * Math.PI; // the two arms sit opposite each other
+    const wraps = arm === 0 ? WRAPS_OT : WRAPS_NT;
+
+    for (let k = 0; k < M; k++) {
+      const i = ids[k];
+      const p = M > 1 ? k / (M - 1) : 0; // 0 at core -> 1 at rim
+      const r = R_CORE + (R_RIM - R_CORE) * Math.sqrt(p); // sqrt -> even areal density
+      const theta = off - wraps * 2 * Math.PI * p; // wind around as we go out (reversed handedness)
+      const ct = Math.cos(theta), st = Math.sin(theta);
+
+      const rnd = mulberry32((i + 1) * 0x9e3779b1);
+      // bulge: stars near the core puff out radially and vertically into a sphere
+      const bf = 1 + BULGE * Math.exp(-p / BULGE_FALLOFF);
+      const radial = gauss(rnd) * ARM_W * bf;     // across the arm
+      const tangent = gauss(rnd) * ARM_W * bf;    // along the arm
+      const rr = r + radial;
+      const x = ct * rr - st * tangent * 0.5;
+      const z = st * rr + ct * tangent * 0.5;
+      const y = gauss(rnd) * DISK_T * bf;          // disk thickness (tall at core)
+
+      pos[3 * i] = x;
+      pos[3 * i + 1] = y;
+      pos[3 * i + 2] = z;
+      const b = g.book[i];
+      sx[b] += x; sy[b] += y; sz[b] += z; cnt[b]++;
+    }
   }
 
-  const golden = Math.PI * (3 - Math.sqrt(5));
-  type V3 = [number, number, number];
-  const cross = (a: V3, b: V3): V3 => [
-    a[1] * b[2] - a[2] * b[1],
-    a[2] * b[0] - a[0] * b[2],
-    a[0] * b[1] - a[1] * b[0],
-  ];
-  const norm = (a: V3): V3 => {
-    const l = Math.hypot(a[0], a[1], a[2]) || 1;
-    return [a[0] / l, a[1] / l, a[2] / l];
-  };
-
+  // float each book label just above its centroid on the disk
   for (let b = 0; b < 66; b++) {
-    // Book CENTER: a point on the galaxy sphere. Canonical book order walks the
-    // Fibonacci spiral, so neighbouring books sit near each other. A little
-    // per-book radial jitter gives the field depth instead of a hard shell.
-    const y = 1 - (b / 65) * 2;
-    const rxy = Math.sqrt(Math.max(0, 1 - y * y));
-    const theta = b * golden;
-    const cdir = norm([Math.cos(theta) * rxy, y, Math.sin(theta) * rxy]);
-    const brnd = mulberry32((b + 9) * 0x85ebca77);
-    const R = R_GALAXY * (0.84 + 0.16 * brnd());
-    const cx = cdir[0] * R, cy = cdir[1] * R, cz = cdir[2] * R;
-
-    // a tangent axis, so verses can drift along reading order across the blob
-    const ref: V3 = Math.abs(cdir[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
-    const u = norm(cross(cdir, ref));
-
-    const ids = byBook[b];
-    const m = ids.length;
-    const rBook = Math.min(R_BOOK_CAP, R_BOOK_BASE + Math.sqrt(m) * R_BOOK_PER);
-
-    for (let j = 0; j < m; j++) {
-      const i = ids[j];
-      const t = m > 1 ? j / (m - 1) : 0; // canonical position 0..1
-      const rnd = mulberry32((i + 1) * 0x9e3779b1);
-      // a point inside the book's ball: random direction, cube-root radius for
-      // an even volume fill
-      const rr = rBook * 0.7 * Math.cbrt(rnd());
-      const az = rnd() * Math.PI * 2;
-      const zz = 2 * rnd() - 1;
-      const sxy = Math.sqrt(Math.max(0, 1 - zz * zz));
-      // plus a gentle drift along the tangent so reading order is faintly legible
-      const drift = (t - 0.5) * rBook * 0.8;
-      pos[3 * i] = cx + sxy * Math.cos(az) * rr + u[0] * drift;
-      pos[3 * i + 1] = cy + sxy * Math.sin(az) * rr + u[1] * drift;
-      pos[3 * i + 2] = cz + zz * rr + u[2] * drift;
-    }
-
-    // label floats just outside the blob, on the far side from the origin
-    const lo = rBook + 7;
-    labelPos.set(b, [cx + cdir[0] * lo, cy + cdir[1] * lo, cz + cdir[2] * lo]);
+    if (!cnt[b]) continue;
+    labelPos.set(b, [sx[b] / cnt[b], sy[b] / cnt[b] + 14, sz[b] / cnt[b]]);
   }
 
   return { pos, labelPos };
