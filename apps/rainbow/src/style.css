@@ -606,3 +606,219 @@ body {
   background: var(--border-default);
   border-radius: 2px;
 }
+
+/* ── Bible Universe (3D view) ─────────────────────────────────────────── */
+#universe-container {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+#universe-container.hidden { display: none; }
+
+/* In universe mode, swap out the 2D arc chrome */
+#app.universe-mode #main-canvas,
+#app.universe-mode #category-filters,
+#app.universe-mode #canvas-controls-left,
+#app.universe-mode #book-search,
+#app.universe-mode #clear-filters,
+#app.universe-mode #zoom-fit,
+#app.universe-mode #zoom-ot,
+#app.universe-mode #zoom-nt { display: none !important; }
+#app.universe-mode #universe-container { display: block; }
+#app.universe-mode #universe-panel,
+#app.universe-mode #up-fit { display: flex; }
+
+.universe-label {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
+  opacity: 0.78;
+  user-select: none;
+}
+
+/* ── Layers panel — styled after the Constellation viewer ───────────────── */
+#universe-panel {
+  --u-accent: #5fdcff;
+  --u-accent-soft: rgba(95, 220, 255, 0.14);
+  --u-text: #e6ecf6;
+  --u-muted: #9aa6bf;
+  --u-faint: #5f6b86;
+  --u-line: rgba(122, 150, 205, 0.16);
+  position: absolute;
+  top: 78px;
+  right: 24px;
+  z-index: 9;
+  width: 218px;
+  padding: 14px 15px 16px;
+  border-radius: 12px;
+  background: rgba(10, 14, 24, 0.78);
+  border: 1px solid var(--u-line);
+  -webkit-backdrop-filter: blur(9px);
+  backdrop-filter: blur(9px);
+  display: none;
+  flex-direction: column;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.5);
+}
+#universe-panel.hidden { display: none; }
+
+.u-head {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--u-text);
+  margin-bottom: 8px;
+}
+.u-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  cursor: pointer;
+  user-select: none;
+}
+.u-row svg { width: 16px; height: 16px; color: var(--u-faint); flex: none; }
+.u-row.active svg { color: var(--u-accent); }
+.u-label {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--u-muted);
+  flex: 1;
+}
+.u-row.active .u-label { color: var(--u-text); }
+.u-label em { color: var(--u-faint); font-style: normal; font-size: 11px; }
+
+.u-switch {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  border-radius: 10px;
+  background: rgba(122, 150, 205, 0.18);
+  flex: none;
+  transition: background 0.15s;
+}
+.u-switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #6c789a;
+  transition: transform 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.u-switch.on { background: rgba(95, 220, 255, 0.22); }
+.u-switch.on::after {
+  transform: translateX(14px);
+  background: var(--u-accent);
+  box-shadow: 0 0 8px rgba(95, 220, 255, 0.8);
+}
+
+.u-divider { height: 1px; background: var(--u-line); margin: 12px 0; }
+.u-sub {
+  font-family: var(--font-mono, monospace);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--u-faint);
+  margin-bottom: 8px;
+}
+.u-seg {
+  display: flex;
+  padding: 3px;
+  gap: 2px;
+  border-radius: 10px;
+  background: rgba(122, 150, 205, 0.08);
+  border: 1px solid var(--u-line);
+}
+.u-seg button {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--u-muted);
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 6px 0;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.12s, color 0.12s;
+}
+.u-seg button.on { background: var(--u-accent-soft); color: var(--u-accent); }
+
+.u-fit-btn {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  z-index: 9;
+  display: none;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 13px;
+  border-radius: 9px;
+  background: rgba(10, 14, 24, 0.78);
+  border: 1px solid var(--u-line, rgba(122, 150, 205, 0.16));
+  -webkit-backdrop-filter: blur(9px);
+  backdrop-filter: blur(9px);
+  color: #9aa6bf;
+  font-family: var(--font-mono, monospace);
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s;
+}
+.u-fit-btn svg { width: 15px; height: 15px; color: #5f6b86; transition: color 0.12s; }
+.u-fit-btn:hover { color: #e6ecf6; border-color: rgba(95, 220, 255, 0.35); }
+.u-fit-btn:hover svg { color: #5fdcff; }
+.u-fit-btn.hidden { display: none; }
+
+.tt-sub { display: block; font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.sp-title { margin: 0 0 8px; font-size: 18px; color: var(--text-bright); }
+.sp-meta { margin: 0 0 10px; font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+.sp-hint { margin: 8px 0 0; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+/* connected-verse list inside the universe side panel */
+.sp-neighbours {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 46vh;
+  overflow-y: auto;
+  margin: 0 -4px;
+  padding: 0 4px;
+}
+.sp-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--fill-subtle);
+  color: var(--text-secondary);
+  font-family: var(--font-mono, monospace);
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.sp-link:hover {
+  background: var(--fill-hover);
+  border-color: rgba(95, 220, 255, 0.4);
+  color: var(--text-bright);
+}
+.sp-link-ref { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sp-link-deg {
+  flex: none;
+  font-size: 11px;
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+.sp-link:hover .sp-link-deg { color: #5fdcff; opacity: 1; }

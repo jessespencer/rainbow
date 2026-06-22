@@ -9,6 +9,7 @@ import { buildHeatmapData, renderHeatmap, heatmapHitTest, type HeatmapData } fro
 import { showBinTooltip, showHeatmapTooltip, hideTooltip, showSidePanel, hideSidePanel } from './lib/tooltip';
 import { setupZoom, zoomTo, type ZoomState } from './lib/zoom';
 import type { Bin, Reference, WorkerResult } from './lib/dataWorker';
+import type { UniverseHandle, ColorMode } from './lib/universe';
 
 // State
 let bins: Bin[] = [];
@@ -25,7 +26,9 @@ let highlightBook: number | null = null;
 let selectedBook: number | null = null;
 let hoveredBin: Bin | null = null;
 let selectedBin: Bin | null = null;
-let viewMode: 'arcs' | 'heatmap' = 'arcs';
+let viewMode: 'arcs' | 'heatmap' | 'universe' = 'arcs';
+let universe: UniverseHandle | null = null;
+let universeLoading = false;
 let shuffleActive = false;
 let shuffleRef: Reference | null = null;
 let animFrame: number | null = null;
@@ -351,20 +354,125 @@ function setupZoomPresets() {
 function setupViewToggle() {
   const arcBtn = document.getElementById('view-arcs')!;
   const heatBtn = document.getElementById('view-heatmap')!;
+  const uniBtn = document.getElementById('view-universe')!;
+  const container = document.getElementById('app')!;
+
+  const setActive = (active: HTMLElement) => {
+    [arcBtn, heatBtn, uniBtn].forEach((b) => b.classList.toggle('active', b === active));
+  };
 
   arcBtn.addEventListener('click', () => {
     viewMode = 'arcs';
-    arcBtn.classList.add('active');
-    heatBtn.classList.remove('active');
+    setActive(arcBtn);
+    container.classList.remove('universe-mode');
     scheduleRender();
   });
 
   heatBtn.addEventListener('click', () => {
     viewMode = 'heatmap';
-    heatBtn.classList.add('active');
-    arcBtn.classList.remove('active');
+    setActive(heatBtn);
+    container.classList.remove('universe-mode');
     scheduleRender();
   });
+
+  uniBtn.addEventListener('click', async () => {
+    viewMode = 'universe';
+    setActive(uniBtn);
+    container.classList.add('universe-mode');
+    await ensureUniverse();
+    universe?.resize();
+    universe?.fit();
+  });
+}
+
+async function ensureUniverse() {
+  if (universe || universeLoading || references.length === 0) return;
+  universeLoading = true;
+  const host = document.getElementById('universe-container')!;
+  const { createUniverse } = await import('./lib/universe');
+  universe = createUniverse(host, references, {
+    onHover: (info, screen) => {
+      const tip = document.getElementById('tooltip')!;
+      if (!info) { tip.classList.add('hidden'); return; }
+      tip.innerHTML =
+        `<strong>${info.label}</strong><span class="tt-sub">${info.degree} connection${info.degree === 1 ? '' : 's'}</span>`;
+      tip.style.left = `${screen[0] + 14}px`;
+      tip.style.top = `${screen[1] + 14}px`;
+      tip.classList.remove('hidden');
+    },
+    onSelect: (info, neighbours) => {
+      const panel = document.getElementById('side-panel')!;
+      const content = document.getElementById('side-panel-content')!;
+      if (!info) { panel.classList.add('hidden'); return; }
+      const shown = neighbours.slice(0, 80);
+      const items = shown.map((nb) =>
+        `<button class="sp-link" data-id="${nb.id}">` +
+        `<span class="sp-link-ref">${nb.label}</span>` +
+        `<span class="sp-link-deg">${nb.degree}</span></button>`).join('');
+      content.innerHTML =
+        `<h3 class="sp-title">${info.label}</h3>` +
+        `<p class="sp-meta">${info.degree} cross-reference${info.degree === 1 ? '' : 's'} — ` +
+        `lit in white. Click any verse below to fly to it.</p>` +
+        `<div class="sp-neighbours">${items}</div>` +
+        (neighbours.length > shown.length
+          ? `<p class="sp-hint">+${neighbours.length - shown.length} more connections</p>` : '');
+      panel.classList.remove('hidden');
+      content.querySelectorAll<HTMLElement>('.sp-link').forEach((el) => {
+        el.addEventListener('click', () => universe?.focusNode(Number(el.dataset.id)));
+      });
+    },
+  });
+  universeLoading = false;
+  setupUniversePanel();
+}
+
+function setupUniversePanel() {
+  if (!universe) return;
+  const edgesRow = document.querySelector('[data-layer="edges"]')!;
+  const bridgesRow = document.querySelector('[data-layer="bridges"]')!;
+  const labelsRow = document.querySelector('[data-layer="labels"]')!;
+  const colorSeg = document.getElementById('up-color')!;
+  const sizeSeg = document.getElementById('up-size')!;
+  const fitBtn = document.getElementById('up-fit')!;
+
+  const setRow = (row: Element, on: boolean) => {
+    row.classList.toggle('active', on);
+    row.setAttribute('aria-checked', String(on));
+    row.querySelector('.u-switch')!.classList.toggle('on', on);
+  };
+  const isOn = (row: Element) => row.classList.contains('active');
+
+  edgesRow.addEventListener('click', () => {
+    const on = !isOn(edgesRow);
+    setRow(edgesRow, on);
+    if (on && isOn(bridgesRow)) setRow(bridgesRow, false); // mutually exclusive
+    universe!.setBridgesOnly(isOn(bridgesRow));
+    universe!.setShowEdges(on);
+  });
+  bridgesRow.addEventListener('click', () => {
+    const on = !isOn(bridgesRow);
+    setRow(bridgesRow, on);
+    setRow(edgesRow, !on); // edges <-> bridges are the two faces of one control
+    universe!.setBridgesOnly(on);
+  });
+  labelsRow.addEventListener('click', () => {
+    const on = !isOn(labelsRow);
+    setRow(labelsRow, on);
+    universe!.setShowLabels(on);
+  });
+  fitBtn.addEventListener('click', () => universe!.fit());
+
+  const wireSeg = (seg: HTMLElement, apply: (mode: string) => void) => {
+    seg.querySelectorAll('button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        seg.querySelectorAll('button').forEach((b) => b.classList.remove('on'));
+        btn.classList.add('on');
+        apply(btn.dataset.mode!);
+      });
+    });
+  };
+  wireSeg(colorSeg, (m) => universe!.setColorMode(m as ColorMode));
+  wireSeg(sizeSeg, (m) => universe!.setSizeMode(m as 'uniform' | 'connections'));
 }
 
 function setupSearch() {
@@ -599,6 +707,7 @@ function setupInteraction() {
   document.getElementById('side-panel-close')!.addEventListener('click', () => {
     selectedBin = null;
     hideSidePanel();
+    universe?.clearSelection();
     updateClearButton();
     scheduleRender();
   });
@@ -700,6 +809,7 @@ async function main() {
     resizeCanvas();
     layout = computeLayout(width, height);
     if (bins.length > 0) fitRainbowToView(false);
+    universe?.resize();
     scheduleRender();
   });
 }
