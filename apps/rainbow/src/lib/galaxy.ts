@@ -1,4 +1,4 @@
-// Bible Universe — a 3D node-graph view of cross-references.
+// Bible Galaxy — a 3D node-graph view of cross-references.
 //
 // Each verse that participates in at least one cross-reference becomes a star.
 // Each of the 66 books is a "galaxy": a cone of stars radiating outward on a
@@ -19,7 +19,7 @@ import type { Reference } from './dataWorker';
 export type ColorMode = 'category' | 'testament' | 'heat' | 'book';
 export type SizeMode = 'uniform' | 'connections';
 
-export interface UniverseHandle {
+export interface GalaxyHandle {
   setColorMode(mode: ColorMode): void;
   setSizeMode(mode: SizeMode): void;
   setShowEdges(on: boolean): void;
@@ -32,7 +32,7 @@ export interface UniverseHandle {
   dispose(): void;
 }
 
-export interface UniverseCallbacks {
+export interface GalaxyCallbacks {
   onHover?(info: VerseInfo | null, screen: [number, number]): void;
   // neighbours are the verses this one links to, sorted by their own connection count
   onSelect?(info: VerseInfo | null, neighbours: VerseInfo[]): void;
@@ -319,11 +319,11 @@ function computeLayout(g: Graph): { pos: Float32Array; labelPos: Map<number, [nu
 }
 
 // ---- the view ------------------------------------------------------------ //
-export function createUniverse(
+export function createGalaxy(
   container: HTMLElement,
   refs: Reference[],
-  cb: UniverseCallbacks = {},
-): UniverseHandle {
+  cb: GalaxyCallbacks = {},
+): GalaxyHandle {
   const g = buildGraph(refs);
   const { pos, labelPos } = computeLayout(g);
   const n = g.n;
@@ -534,7 +534,7 @@ export function createUniverse(
     const anchor = labelPos.get(b);
     if (!anchor) continue;
     const el = document.createElement('div');
-    el.className = 'universe-label';
+    el.className = 'galaxy-label';
     el.textContent = BOOKS[b].name;
     el.style.color = BOOKS[b].testament === 'OT' ? '#9bb8e0' : '#e8c98a';
     const obj = new CSS2DObject(el);
@@ -648,10 +648,22 @@ export function createUniverse(
   }
   resize();
 
-  // ---- fit: re-frame the whole universe and drop any selection ---- //
+  // ---- fit: re-frame the whole galaxy and drop any selection ---- //
   function fit() {
     clearSelection();
     startCamTween(cen.clone(), cen.clone().add(restView), FIT_MS, true);
+  }
+
+  // ---- first-view intro: ease the camera in from a touch further out while it
+  // spins, so the galaxy settles gently into frame (ported from Constellation) --
+  const INTRO_MS = 1800;
+  const restDist = restView.length();
+  const introStartDist = restDist * 1.28;
+  const playIntro = !(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false);
+  const introT0 = performance.now();
+  if (playIntro) {
+    const dir = camera.position.clone().sub(controls.target).normalize();
+    camera.position.copy(controls.target).addScaledVector(dir, introStartDist);
   }
 
   let raf = 0;
@@ -664,6 +676,17 @@ export function createUniverse(
     if (ca) {
       camera.position.lerpVectors(ca.fromPos, ca.toPos, ck);
       if (ck >= 1) { controls.autoRotate = ca.resumeAuto; camAnim = null; }
+    }
+    // intro dolly-in: recompute distance each frame so the auto-rotate spin is
+    // preserved while the camera eases from introStartDist down to restDist
+    if (playIntro && !camAnim) {
+      const e = (performance.now() - introT0) / INTRO_MS;
+      if (e < 1) {
+        const k = 1 - Math.pow(1 - e, 3); // easeOutCubic
+        const dist = introStartDist + (restDist - introStartDist) * k;
+        const dir = camera.position.clone().sub(controls.target).normalize();
+        camera.position.copy(controls.target).addScaledVector(dir, dist);
+      }
     }
     renderer.render(scene, camera);
     labelRenderer.render(scene, camera);

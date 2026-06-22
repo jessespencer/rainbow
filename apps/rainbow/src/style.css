@@ -607,28 +607,28 @@ body {
   border-radius: 2px;
 }
 
-/* ── Bible Universe (3D view) ─────────────────────────────────────────── */
-#universe-container {
+/* ── Bible Galaxy (3D view) ─────────────────────────────────────────── */
+#galaxy-container {
   position: absolute;
   inset: 0;
   z-index: 1;
 }
-#universe-container.hidden { display: none; }
+#galaxy-container.hidden { display: none; }
 
-/* In universe mode, swap out the 2D arc chrome */
-#app.universe-mode #main-canvas,
-#app.universe-mode #category-filters,
-#app.universe-mode #canvas-controls-left,
-#app.universe-mode #book-search,
-#app.universe-mode #clear-filters,
-#app.universe-mode #zoom-fit,
-#app.universe-mode #zoom-ot,
-#app.universe-mode #zoom-nt { display: none !important; }
-#app.universe-mode #universe-container { display: block; }
-#app.universe-mode #universe-panel,
-#app.universe-mode #up-fit { display: flex; }
+/* In galaxy mode, swap out the 2D arc chrome */
+#app.galaxy-mode #main-canvas,
+#app.galaxy-mode #category-filters,
+#app.galaxy-mode #canvas-controls-left,
+#app.galaxy-mode #book-search,
+#app.galaxy-mode #clear-filters,
+#app.galaxy-mode #zoom-fit,
+#app.galaxy-mode #zoom-ot,
+#app.galaxy-mode #zoom-nt { display: none !important; }
+#app.galaxy-mode #galaxy-container { display: block; }
+#app.galaxy-mode #galaxy-panel,
+#app.galaxy-mode #up-fit { display: flex; }
 
-.universe-label {
+.galaxy-label {
   font-family: var(--font-mono, monospace);
   font-size: 11px;
   letter-spacing: 0.04em;
@@ -639,7 +639,7 @@ body {
 }
 
 /* ── Layers panel — styled after the Constellation viewer ───────────────── */
-#universe-panel {
+#galaxy-panel {
   --u-accent: #5fdcff;
   --u-accent-soft: rgba(95, 220, 255, 0.14);
   --u-text: #e6ecf6;
@@ -661,7 +661,7 @@ body {
   flex-direction: column;
   box-shadow: 0 10px 34px rgba(0, 0, 0, 0.5);
 }
-#universe-panel.hidden { display: none; }
+#galaxy-panel.hidden { display: none; }
 
 .u-head {
   font-family: var(--font-mono, monospace);
@@ -782,7 +782,7 @@ body {
 .sp-meta { margin: 0 0 10px; font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
 .sp-hint { margin: 8px 0 0; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
 
-/* connected-verse list inside the universe side panel */
+/* connected-verse list inside the galaxy side panel */
 .sp-neighbours {
   display: flex;
   flex-direction: column;
