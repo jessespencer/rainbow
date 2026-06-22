@@ -16,7 +16,7 @@ import { BOOKS, OT_COUNT } from '../data/books';
 import { CATEGORY_COLORS } from '../data/categories';
 import type { Reference } from './dataWorker';
 
-export type ColorMode = 'category' | 'testament' | 'heat';
+export type ColorMode = 'category' | 'testament' | 'heat' | 'book';
 export type SizeMode = 'uniform' | 'connections';
 
 export interface UniverseHandle {
@@ -396,7 +396,7 @@ export function createUniverse(
   const colorAttr = new THREE.BufferAttribute(new Float32Array(n * 3), 3);
   geom.setAttribute('aColor', colorAttr);
   const sizeArr = new Float32Array(n);
-  for (let i = 0; i < n; i++) sizeArr[i] = BASE3D * g.nodeScale[i];
+  for (let i = 0; i < n; i++) sizeArr[i] = BASE3D * 1.05; // default: uniform star size
   geom.setAttribute('size', new THREE.BufferAttribute(sizeArr, 1));
   const alphaAttr = new THREE.BufferAttribute(new Float32Array(n).fill(REST_ALPHA), 1);
   geom.setAttribute('aAlpha', alphaAttr);
@@ -547,6 +547,14 @@ export function createUniverse(
   let colorMode: ColorMode = 'category';
   // precompute degree heat (log-scaled) for the heat mode
   const logMax = Math.log(Math.max(...g.degree) + 1) || 1;
+  // a distinct hue per book — a rainbow across the canon (Genesis -> Revelation),
+  // with alternating lightness so neighbouring books stay separable
+  const bookColors: THREE.Color[] = [];
+  for (let b = 0; b < 66; b++) {
+    const c = new THREE.Color();
+    c.setHSL(b / 66, 0.62, 0.6 + (b % 2 ? 0.07 : -0.07));
+    bookColors.push(c);
+  }
   function applyColors() {
     const col = new THREE.Color();
     for (let i = 0; i < n; i++) {
@@ -554,6 +562,8 @@ export function createUniverse(
         heatRGB(Math.log(g.degree[i] + 1) / logMax, col);
       } else if (colorMode === 'testament') {
         col.copy(g.book[i] < OT_COUNT ? TESTAMENT_OT : TESTAMENT_NT);
+      } else if (colorMode === 'book') {
+        col.copy(bookColors[g.book[i]]);
       } else {
         col.set(CATEGORY_COLORS[g.dominantCat[i]]);
       }
