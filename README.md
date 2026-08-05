@@ -21,9 +21,12 @@ Vanilla TypeScript + Vite for both apps. No framework. The shared `bible-ui` pac
 ```bash
 pnpm install
 pnpm dev:rainbow      # http://localhost:5173/rainbow/
-pnpm dev:chronos      # http://localhost:5173/rainbow/timeline/
+pnpm dev:chronos      # http://localhost:5174/rainbow/timeline/
 pnpm build            # builds both apps
 ```
+
+Dev ports are pinned (`strictPort`) so the header's app switcher can link
+across the two dev servers. Run both to move between apps locally.
 
 ## Deployment
 

@@ -728,6 +728,7 @@ async function main() {
     title: 'Rainbow Reference',
     subtitle: 'The world\'s first hyperlinked Text — The Bible',
     background: 'var(--bg-base)',
+    appId: 'rainbow',
   });
 
   // Create zoom preset buttons inside the shared header controls slot

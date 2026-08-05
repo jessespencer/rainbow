@@ -112,6 +112,7 @@ loadFonts();
 const { element: headerEl, controls: headerControls } = createHeader({
   title: "Chronos",
   subtitle: "A Visual History of the Bible",
+  appId: "chronos",
 });
 app.appendChild(headerEl);
 

@@ -43,8 +43,11 @@ body {
 }
 
 /* ─── HEADER OVERRIDES ───────────────────────────────────── */
+/* The z-index makes the header its own stacking context, so the app
+   switcher dropdown can never escape it — keep this above the canvas
+   chrome (10) and side panel (50), below the shuffle overlay (80). */
 .bui-header {
-  z-index: 10;
+  z-index: 60;
 }
 
 /* ─── CONTROLS ───────────────────────────────────────────── */
