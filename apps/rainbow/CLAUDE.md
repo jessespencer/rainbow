@@ -1,7 +1,7 @@
 # Rainbow — Bible Cross-Reference Visualization
 
 ## Project Overview
-Interactive canvas-based visualization of 63,000+ Bible cross-references. Vanilla TypeScript (no framework), rendered on HTML5 Canvas, with D3 for zoom/pan. Sibling project to [Chronos](https://github.com/jessespencer/chronos).
+Interactive canvas-based visualization of 63,000+ Bible cross-references. Vanilla TypeScript (no framework), rendered on HTML5 Canvas, with D3 for zoom/pan. Sibling project to [Chronos](../chronos).
 
 ## Stack
 - TypeScript + Vite (dev & build)
@@ -11,13 +11,13 @@ Interactive canvas-based visualization of 63,000+ Bible cross-references. Vanill
 - Deployed as static site at `/rainbow/` base path
 
 ## Shared Design System
-Both Rainbow and Chronos use the [`@jessespencer/bible-ui`](../bible-ui) package for:
+Both Rainbow and Chronos use the [`@jessespencer/bible-ui`](../../packages/bible-ui) package for:
 - Site header component (`createHeader()`) — title, subtitle, gradient bar, controls slot
 - Design tokens — colors, fills, borders, text hierarchy, radii (CSS custom properties)
 - Typography — Fraunces (serif, UI) + DM Mono (monospace, data)
 - Font loading (`loadFonts()`)
 
-The shared package is a local dependency at `../bible-ui`. Rainbow's `src/style.css` layers app-specific tokens on top of the shared base.
+The shared package is a local dependency at `../../packages/bible-ui`. Rainbow's `src/style.css` layers app-specific tokens on top of the shared base.
 
 ## Architecture
 - **No framework** — vanilla TS with direct DOM manipulation

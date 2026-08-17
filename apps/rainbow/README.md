@@ -134,7 +134,7 @@ The arc shape follows a simple semicircle rather than a cubic Bézier, which Har
 
 ## 🤝 Shared Design System
 
-Rainbow Reference is part of a Bible visualization ecosystem alongside [Chronos](https://github.com/jessespencer/chronos) (interactive timeline). Both apps share the [`@jessespencer/bible-ui`](../bible-ui) package, which provides:
+Rainbow Reference is part of a Bible visualization ecosystem alongside [Chronos](../chronos) (interactive timeline). Both apps share the [`@jessespencer/bible-ui`](../../packages/bible-ui) package, which provides:
 
 - **Site header** — `createHeader()` with title, subtitle, rainbow gradient bar, and controls slot
 - **Design tokens** — navy-toned palette, opacity-based borders, fill states, text hierarchy (CSS custom properties)

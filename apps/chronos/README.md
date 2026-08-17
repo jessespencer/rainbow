@@ -4,7 +4,7 @@
 
 Chronos is an interactive horizontal-scrolling Bible timeline — Adam through the resurrection of Jesus (~AD 33). Drag a scrubber across millennia to see who was alive at any given moment. Zoom from bird's-eye to individual king reigns.
 
-Built with vanilla TypeScript and Vite. Chronology follows Ussher (pre-monarchy) and Thiele (divided kingdom). Part of a shared Bible visualization ecosystem with [Rainbow Reference](https://github.com/jessespencer/rainbow-reference).
+Built with vanilla TypeScript and Vite. Chronology follows Ussher (pre-monarchy) and Thiele (divided kingdom). Part of a shared Bible visualization ecosystem with [Rainbow Reference](../rainbow).
 
 ---
 
@@ -20,7 +20,7 @@ Built with vanilla TypeScript and Vite. Chronology follows Ussher (pre-monarchy)
 
 ## Shared Design System
 
-Chronos uses [`@jessespencer/bible-ui`](../bible-ui) for its header, design tokens, and typography — the same package used by Rainbow Reference. Both apps share Fraunces + DM Mono typography, the navy-toned color palette, and the rainbow gradient header bar.
+Chronos uses [`@jessespencer/bible-ui`](../../packages/bible-ui) for its header, design tokens, and typography — the same package used by Rainbow Reference. Both apps share Fraunces + DM Mono typography, the navy-toned color palette, and the rainbow gradient header bar.
 
 ## Scripts
 

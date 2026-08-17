@@ -1,6 +1,6 @@
 # Chronos — Bible Timeline
 
-Interactive horizontal-scrolling Bible timeline visualization. Sibling project to [Rainbow Reference](https://github.com/jessespencer/rainbow-reference). Both share the [`@jessespencer/bible-ui`](../bible-ui) design system.
+Interactive horizontal-scrolling Bible timeline visualization. Sibling project to [Rainbow Reference](../rainbow). Both share the [`@jessespencer/bible-ui`](../../packages/bible-ui) design system.
 
 Scope: Adam through Jesus's resurrection (~AD 33). No apostolic age yet.
 
@@ -14,7 +14,7 @@ Scope: Adam through Jesus's resurrection (~AD 33). No apostolic age yet.
 
 ## Shared Design System
 
-The `@jessespencer/bible-ui` package (local dep at `../bible-ui`) provides:
+The `@jessespencer/bible-ui` workspace package (`packages/bible-ui`) provides:
 - `createHeader()` — site header with title, subtitle, gradient bar, controls slot
 - `loadFonts()` — injects Google Fonts (Fraunces + DM Mono)
 - `style.css` — design tokens (colors, fills, borders, text hierarchy, radii)

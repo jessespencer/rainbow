@@ -41,7 +41,9 @@ The workflow builds each app and assembles a combined `dist/` with chronos neste
 
 This repo absorbed two previously-separate repositories:
 
-- [`jessespencer/chronos`](https://github.com/jessespencer/chronos) → `apps/chronos/`
-- [`jessespencer/bible-ui`](https://github.com/jessespencer/bible-ui) → `packages/bible-ui/`
+- `jessespencer/chronos` → `apps/chronos/`
+- `jessespencer/bible-ui` → `packages/bible-ui/`
 
-Their original git histories live in those repos.
+Both have been deleted. Their git histories were rewritten under the paths
+above and grafted in, so this repo is the sole source of truth — use
+`git log --follow <path>` to read a file's history from before the move.

@@ -1,6 +1,6 @@
 # @jessespencer/bible-ui
 
-Shared design system and UI components for Bible visualization apps — [Rainbow Reference](https://github.com/jessespencer/rainbow-reference) and [Chronos](https://github.com/jessespencer/chronos).
+Shared design system and UI components for Bible visualization apps — [Rainbow Reference](../../apps/rainbow) and [Chronos](../../apps/chronos).
 
 ## What's included
 
@@ -40,8 +40,12 @@ controls.appendChild(btn);
 
 ## Install
 
-Local dependency (sibling directory):
+Workspace package — apps in this monorepo depend on it via pnpm:
 
-```bash
-npm install ../bible-ui
+```json
+"dependencies": {
+  "@jessespencer/bible-ui": "workspace:*"
+}
 ```
+
+No build step: `main` points at `src/index.ts` and Vite compiles the raw TS.
