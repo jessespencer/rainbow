@@ -1,167 +1,166 @@
 # 🌈 Rainbow Reference
 
-> *63,000 threads woven through 66 books. Every arc a conversation across millennia.*
+> *344,799 threads woven through 66 books. Every arc a conversation across millennia.*
 
-Rainbow Reference is an interactive visualization of the Bible's internal cross-reference network — the hidden web of allusions, callbacks, prophecies, and echoes that bind scripture together. Inspired by [Chris Harrison's](https://www.chrisharrison.net/index.php/visualizations/BibleViz) landmark arc diagram, this app brings that structure to life as an explorable, filterable, living diagram.
+**▶ [Open Rainbow Reference](https://jessespencer.github.io/rainbow/)**
 
-Each arc represents a documented cross-reference. Each color a theological thread. Together, they reveal something remarkable: the Bible is not a collection of independent texts, but a single document in deep conversation with itself across thousands of years of authorship.
+## Why this exists
 
----
+Readers of the Bible have always followed cross-references: the small notes in the margin that send you from one passage to another that echoes, quotes, or fulfills it. On paper you follow them one at a time, so the bigger picture stays hidden.
 
-## ✨ Features
+Rainbow Reference draws all of them at once. Start with the whole Bible as a single rainbow, then read both ends of any arc. It's a picture of how deeply scripture speaks to itself, and a way to actually read those connections.
 
-### Two Ways to See the Whole
+It's free and open source, and inspired by [Chris Harrison's](https://www.chrisharrison.net/index.php/visualizations/BibleViz) landmark arc diagram.
 
-**Arc View** renders the canonical Bible as a single horizontal axis — Genesis at the left, Revelation at the right — with semi-circular arcs leaping between connected verses. The density of arcs over Isaiah, Psalms, and the Gospels is immediately visible. So is the relative silence of certain books. The diagram doesn't editorialize; it simply shows what's there.
+## What you can do
 
-**Heatmap View** collapses that same data into a 66×66 matrix, where each cell's intensity reflects the volume of cross-references between two books. It's the difference between watching individual conversations and seeing a social graph: different information, equally revealing.
+### See the whole Bible at once
 
-### 8 Theological Categories
+All 31,102 verses sit on one line, Genesis at the left and Revelation at the right, and every cross-reference is an arc. The weight of Psalms, Isaiah, and the Gospels is immediately visible. So is the quiet of the smaller books. Zoom in to go from books to chapters to single verses.
 
-Every cross-reference is classified into one of eight categories, each with its own color in the spectrum:
+### Read both ends of a connection
 
-| Color | Category | What it tracks |
-|-------|----------|----------------|
-| 🔴 Crimson | Sin & Redemption | The arc from fall to restoration |
-| 🟡 Gold | Messianic Prophecy | Predictions and their fulfillments |
-| 🟠 Amber | Praise & Worship | Liturgical echoes and doxology |
-| 🟢 Sage | Wisdom | Proverbs, teaching, and moral instruction |
-| 🔵 Teal | Creation | Cosmology and the natural order |
-| 🟣 Violet | Historical Parallel | Typology and mirrored events |
-| 🩵 Sky | Law & Covenant | Legal codes and their restatements |
-| ⚪ Pearl | Prophecy & Apocalyptic | Eschatological vision and symbol |
+Tap an arc and both passages open together, joined by a line in their section colors, with the reader votes behind the link. Page through every connection between those two books, strongest first.
 
-### Exploration Tools
+### Read a passage with its connections
 
-- **Book Search** — type any book name or common abbreviation to instantly highlight and filter to its connections
-- **Click-to-Filter** — click any book label to isolate just its arcs; click again to release
-- **Hover Tooltips** — pause over any arc for verse references and category details
-- **Side Panel** — click an arc to open a full detail view: curated sample references, connection counts, and the theological thread it belongs to
-- **Shuffle Mode** — randomly surface a cross-reference pair, ideal for discovery and devotional use
-- **Preset Views** — jump instantly to Fit All, Old Testament only, or New Testament only
+Tap a verse, chapter, or book on the axis to bring its arcs forward while the rest fade back. The panel beside it shows the text, then splits its links into what it references and what references it, grouped by book with the strongest first. Point at a verse in the list and its arc lights up on the rainbow. Step to the next verse or chapter, copy any verse with a link, or use Read in context to see it in its chapter.
 
-### Performance Architecture
+### See it as a matrix
 
-With over 63,000 reference pairs, naive DOM rendering isn't an option. Rainbow Reference uses:
+The heatmap collapses the same links into a 66×66 grid, where each cell's brightness shows how many links join two books. Tap a cell to open the strongest one.
 
-- **HTML5 Canvas** for all arc and heatmap rendering — thousands of elements drawn in a single paint pass
-- **Web Worker** for data loading and binning, keeping the main thread free during initialization
-- **D3 zoom/pan** layered on top of Canvas for smooth, native-feeling navigation
-- **Spatial hit-testing** on click and hover so interactivity stays sharp even at full data density
+### Find, filter, and share
 
----
+- **Search** for `John 3:16`, `ps 23`, `1 cor 13:4-7`, or a book name.
+- **Filter by votes** from 100 down to every link.
+- **Filter by section** to bring forward Law, History, Poetry & Wisdom, Prophets, Gospels, Acts, Epistles, or Revelation while the rest fade back.
+- **Shuffle** to land on a random connection with both verses in front of you.
+- **Share** any view. Everything you've selected lives in the address:
 
-## 🗂 Project Structure
+| Parameter | Example | Meaning |
+| --- | --- | --- |
+| `ref` | `?ref=John.3.16`, `?ref=Ps.23`, `?ref=Isa` | A verse, chapter, or book |
+| `to` | `?ref=John.3.16&to=Rom.5.8` | The other end of a connection |
+| `votes` | `?votes=25` | Minimum reader votes |
+| `genre` | `?genre=gospels` | Section filter |
+| `view` | `?view=heatmap` | Open the heatmap |
 
+On a keyboard, `⌘K` or `Ctrl K` jumps to search, `←` and `→` step to the previous or next verse, chapter, or connection, and `Esc` clears everything.
+
+### Use it on your phone
+
+The panel becomes a bottom sheet you can drag up to read and pull down to close. Slide a finger along the book strip to preview passages. Everywhere else, drag to pan and pinch to zoom.
+
+## How to read it
+
+**Votes rank, they don't prove.** OpenBible.info readers vote on how helpful each link is. By default you see links with at least 4 votes: 154,386 of them, about 45%. That hides the loosest links and the 1,231 that readers voted down. The filter brings them back.
+
+**Colors show where, not what.** Each arc fades between the colors of the two sections it joins, so the rainbow runs left to right through the canon. The source data doesn't sort links by theme, so the colors don't claim to.
+
+| Section | Books | Color |
+| --- | --- | --- |
+| Law | Genesis–Deuteronomy | Crimson |
+| History | Joshua–Esther | Ember |
+| Poetry & Wisdom | Job–Song of Solomon | Saffron |
+| Prophets | Isaiah–Malachi | Moss |
+| Gospels | Matthew–John | Fern |
+| Acts | Acts | Verdigris |
+| Epistles | Romans–Jude | Blue |
+| Revelation | Revelation | Iris |
+
+## Data
+
+| Dataset | Source | License |
+| --- | --- | --- |
+| Cross-references | [OpenBible.info](https://www.openbible.info/labs/cross-references/), 2026-10-26 snapshot, drawn mainly from the public-domain *Treasury of Scripture Knowledge* | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| Bible text | [Berean Standard Bible](https://berean.bible/) | [Public domain](https://berean.bible/terms.htm) |
+
+A few notes on how these are handled:
+
+- **Numbering:** verses follow the KJV numbering of 31,102 verses. OpenBible and the BSB split 3 John into 15 verses, so verse 15 folds into verse 14.
+- **Omitted verses:** the BSB leaves out 16 verses, such as Matthew 17:21, that the earliest manuscripts don't have. The links to them still appear, and the app says why the text is missing.
+- **Ranges:** many links point to a range of verses. The arc lands on the first verse, and the panel shows the whole range.
+
+The build fails if a row can't be parsed or the verse count isn't 31,102, so a bad upstream file can't ship quietly.
+
+## Development
+
+Requires [Node.js](https://nodejs.org/) 22 or newer and [pnpm](https://pnpm.io/). Run these from the repository root:
+
+```bash
+pnpm install
+pnpm dev:rainbow
 ```
-rainbow-reference/
-├── public/
-│   └── references.json          # Pre-built cross-reference dataset (63,000+ pairs)
-├── src/
-│   ├── main.ts                  # App state, event wiring, animation loop
-│   ├── style.css                # Dark theme, CSS design tokens
-│   ├── data/
-│   │   ├── books.ts             # Metadata for all 66 canonical books
-│   │   ├── categories.ts        # 8 theological categories with color assignments
-│   │   └── sampleReferences.ts  # Curated verse pairs for the side panel
-│   └── lib/
-│       ├── dataWorker.ts        # Web Worker: fetch, parse, and bin references
-│       ├── layout.ts            # Canvas coordinate system and book positioning
-│       ├── renderer.ts          # Arc drawing, color mapping, hit testing
-│       ├── heatmap.ts           # Matrix view: cell rendering and interaction
-│       ├── tooltip.ts           # Hover tooltip and side panel UI logic
-│       └── zoom.ts              # D3-based zoom/pan behavior and preset transitions
+
+Then open <http://localhost:5173/rainbow/>. The path matters: the app is served under `/rainbow/`, as it is on GitHub Pages.
+
+| Command | Purpose |
+| --- | --- |
+| `pnpm dev:rainbow` | Start the Vite dev server |
+| `pnpm build:rainbow` | Build the site into `apps/rainbow/dist/` |
+| `pnpm build` | Build every app in the monorepo |
+
+The datasets are committed, so you don't need to download anything to run the app. To rebuild them from source, for example to pick up new OpenBible votes:
+
+```bash
+cd apps/rainbow
+pnpm build:data
+```
+
+`raw-data/` is ignored by git, and an existing file there isn't downloaded again. Delete it to fetch fresh copies.
+
+### Project structure
+
+```text
+apps/rainbow/
+├── public/data/
+│   ├── links.bin                # All cross-references, strongest first
+│   └── bsb.json                 # Berean Standard Bible text by verse
 ├── scripts/
-│   ├── download-data.ts         # Download raw cross-reference data from openbible.info
-│   ├── parse-crossrefs.ts       # Parse TSV into JSON with theme classification
-│   └── generateReferences.ts    # Categorize and emit references.json
-├── index.html
-├── vite.config.ts
-└── tsconfig.json
+│   ├── bible-metadata.ts        # Books and verse counts, shared with the app
+│   ├── download-data.ts         # Fetch the raw OpenBible and BSB files
+│   └── parse-crossrefs.ts       # Validate and build the datasets
+└── src/
+    ├── main.ts                  # App state, URL, event wiring
+    ├── style.css                # Dark theme and phone layout
+    ├── data/
+    │   ├── books.ts             # The 66 canonical books
+    │   └── genres.ts            # The 8 sections and their colors
+    └── lib/
+        ├── arcGl.ts             # WebGL arc renderer
+        ├── renderer.ts          # Axis, highlighted arcs, hit testing
+        ├── links.ts             # Link store, filters, per-verse index
+        ├── verses.ts            # Verse numbering and reference parsing
+        ├── companion.ts         # Passage and connection panel
+        ├── sheet.ts             # Phone bottom sheet
+        ├── heatmap.ts           # Matrix view
+        ├── layout.ts            # World coordinates
+        ├── tooltip.ts           # Hover tooltip
+        └── zoom.ts              # D3-based zoom and pan
 ```
 
----
+### How it's built
 
-## 🚀 Getting Started
+Vanilla TypeScript and Vite, with no UI framework.
 
-### Prerequisites
+- **Arcs are WebGL 2.** Each link is one instanced line strip, and the shader computes its semicircle. A Canvas 2D layer on top draws the axis, highlights, and heatmap, and takes the input.
+- **Links are 8 bytes each.** `links.bin` holds Int16 rows of `[from, toStart, toEnd, votes]`, sorted by votes, so a lower id always means a stronger link. A per-verse index built on load makes finding a passage's links instant.
+- **The world is fixed.** Arcs live in a coordinate space that doesn't depend on the screen, so resizing or opening the panel keeps your place.
 
-- Node.js 18+
-- npm or yarn
+The site deploys to GitHub Pages from `main` through [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml).
 
-### Install
+## Part of a family
 
-```bash
-git clone https://github.com/jessespencer/rainbow.git
-cd rainbow
-npm install
-```
+Rainbow Reference lives alongside [Chronos](https://jessespencer.github.io/rainbow/timeline/), a horizontal Bible timeline from Adam to the resurrection. Both share the [`@jessespencer/bible-ui`](../../packages/bible-ui) design system: Fraunces and DM Mono type, a navy palette, and the rainbow gradient.
 
-### Develop
+## Credits
 
-```bash
-npm run dev
-# → http://localhost:5173/rainbow/
-```
+Arc diagram concept by [Chris Harrison](https://www.chrisharrison.net/index.php/visualizations/BibleViz). Built by [jessedestroys.com](https://www.jessedestroys.com).
 
-### Build
-
-```bash
-npm run build
-# Production output → dist/
-```
-
-### Data Pipeline
-
-The cross-reference dataset is pre-built and committed to `public/references.json`. If you want to regenerate it from source:
-
-```bash
-npm run build:data   # Fetch raw data from openbible.info
-npm run generate     # Parse, classify, and write references.json
-```
-
-The raw data comes from the [OpenBible.info cross-reference dataset](https://www.openbible.info/labs/cross-references/), which aggregates references from multiple scholarly sources. The classification step assigns each pair to one of the eight theological categories based on keyword analysis and book-level heuristics.
-
----
-
-## 🎨 Design Notes
-
-The color scheme is drawn directly from visible light — a literal rainbow mapped to theological spectrum. The dark background is intentional: arcs are luminous against darkness, the same way meaning emerges from the surrounding silence of a text.
-
-Typography uses Fraunces (a warm variable serif) for content and DM Mono for verse references and UI labels — two registers kept visually distinct: meaning vs. metadata.
-
-The arc shape follows a simple semicircle rather than a cubic Bézier, which Harrison's original used. The tradeoff: slightly less visual elegance for significantly better hit-testing accuracy at high zoom levels.
-
-## 🤝 Shared Design System
-
-Rainbow Reference is part of a Bible visualization ecosystem alongside [Chronos](https://github.com/jessespencer/chronos) (interactive timeline). Both apps share the [`@jessespencer/bible-ui`](../bible-ui) package, which provides:
-
-- **Site header** — `createHeader()` with title, subtitle, rainbow gradient bar, and controls slot
-- **Design tokens** — navy-toned palette, opacity-based borders, fill states, text hierarchy (CSS custom properties)
-- **Typography** — Fraunces + DM Mono via Google Fonts, with `loadFonts()` helper
-
----
-
-## 📚 Data Source & Attribution
-
-Cross-reference data: [OpenBible.info](https://www.openbible.info/labs/cross-references/) — compiled by Chris Kimball from *Treasury of Scripture Knowledge*, *The New Treasury of Scripture Knowledge*, and other scholarly sources. Used under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
-
-Arc diagram concept originally visualized by [Chris Harrison](https://www.chrisharrison.net/index.php/visualizations/BibleViz) at Carnegie Mellon University.
-
----
-
-## 🛠 Tech Stack
-
-| Layer | Library |
-|-------|---------|
-| Build | Vite + TypeScript |
-| Rendering | HTML5 Canvas API |
-| Interaction | D3 (scale, selection, transition, zoom) |
-| Concurrency | Web Worker (data loading) |
-| Icons | Lucide |
-
----
+> Cross-reference data: OpenBible.info (CC BY 4.0), largely from the public-domain *Treasury of Scripture Knowledge*. Modified: re-indexed to KJV verse numbering.
+> Scripture text: Berean Standard Bible (BSB), dedicated to the public domain.
 
 ## License
 
-MIT — see `LICENSE` for details.
+The code is released under the MIT License. The data keeps its own licenses, listed above.

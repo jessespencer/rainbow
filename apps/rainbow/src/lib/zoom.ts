@@ -7,26 +7,36 @@ export interface ZoomState {
   k: number;
   tx: number;
   ty: number;
+  // Where the baseline stays while the reader zooms, so the axis never leaves the screen.
+  baselineY: number | null;
 }
 
 export function setupZoom(
   canvas: HTMLCanvasElement,
-  onZoom: (k: number, tx: number, ty: number) => void,
+  onZoom: (byUser: boolean) => void,
+  allowsGesture: (event: TouchEvent) => boolean,
 ): ZoomState {
   const state: ZoomState = {
     behavior: null!,
     k: 1,
     tx: 0,
     ty: 0,
+    baselineY: null,
   };
 
   state.behavior = zoom<HTMLCanvasElement, unknown>()
-    .scaleExtent([0.3, 20])
+    .scaleExtent([0.1, 800])
+    .clickDistance(6)
+    .filter((event: MouseEvent | TouchEvent) => {
+      if (event.type === 'touchstart') return allowsGesture(event as TouchEvent);
+      return (!event.ctrlKey || event.type === 'wheel') && !(event as MouseEvent).button;
+    })
     .on('zoom', (event: D3ZoomEvent<HTMLCanvasElement, unknown>) => {
       state.k = event.transform.k;
       state.tx = event.transform.x;
-      state.ty = event.transform.y;
-      onZoom(state.k, state.tx, state.ty);
+      const byUser = event.sourceEvent !== null && event.sourceEvent !== undefined;
+      state.ty = byUser && state.baselineY !== null ? state.baselineY : event.transform.y;
+      onZoom(byUser);
     });
 
   select(canvas).call(state.behavior);
