@@ -65,6 +65,110 @@
   gap: 24px;
 }
 
+.bui-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* ─── App Switcher ────────────────────────────────────────────── */
+
+.bui-appswitch {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.bui-appswitch__trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 8px 8px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--fill-subtle);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.bui-appswitch__trigger:hover,
+.bui-appswitch--open .bui-appswitch__trigger {
+  background: var(--fill-hover);
+  border-color: var(--border-default);
+  color: var(--text-primary);
+}
+
+.bui-appswitch__mark {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: linear-gradient(
+    135deg,
+    rgb(154, 61, 55) 0%,
+    rgb(182, 148, 74) 33%,
+    rgb(74, 118, 88) 66%,
+    rgb(93, 56, 135) 100%
+  );
+}
+
+.bui-appswitch__chevron {
+  font-size: 10px;
+  line-height: 1;
+  color: currentColor;
+}
+
+.bui-appswitch__menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  padding: 6px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+.bui-appswitch__menu[hidden] {
+  display: none;
+}
+
+.bui-appswitch__item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: background 120ms ease;
+}
+
+.bui-appswitch__item:hover {
+  background: var(--fill-hover);
+}
+
+.bui-appswitch__item--current {
+  background: var(--fill-selected);
+}
+
+.bui-appswitch__item-label {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.bui-appswitch__item-tagline {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
 .bui-header__title-group {
   display: flex;
   flex-direction: column;
@@ -115,4 +219,121 @@
     rgb(53, 88, 124) 85.096%,
     rgb(93, 56, 135) 100%
   );
+}
+
+/* ─── Compact Header ──────────────────────────────────────────── */
+/* #app outranks this sheet's load order against each app's own CSS. */
+
+#app .bui-header--compact {
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--border-faint);
+  z-index: 60;
+}
+
+/* Equal outer columns keep the center slot in the true center of the page. */
+#app .bui-header--compact .bui-header__row {
+  display: grid;
+  grid-template-columns: 1fr minmax(180px, 420px) 1fr;
+  gap: 20px;
+}
+
+#app .bui-header--compact .bui-header__title {
+  font-size: 20px;
+  line-height: 28px;
+}
+
+#app .bui-header--compact .bui-header__subtitle {
+  display: none;
+}
+
+#app .bui-header--compact .bui-header__gradient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 2px;
+}
+
+#app .bui-header--compact .bui-appswitch__trigger {
+  padding: 5px 6px 5px 7px;
+}
+
+@media (max-width: 760px) {
+  #app .bui-header--compact {
+    padding: 8px 16px;
+  }
+
+  #app .bui-header--compact .bui-header__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  #app .bui-header--compact .bui-header__brand {
+    margin-right: auto;
+  }
+
+  #app .bui-header--compact .bui-header__title {
+    font-size: 18px;
+  }
+
+  #app .bui-header--compact .bui-header__controls {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+  }
+
+  #app .bui-header--compact .bui-header__center {
+    order: 1;
+    flex: 1 1 100%;
+  }
+}
+
+/* ─── Bottom Sheet ────────────────────────────────────────────── */
+/* Docked at desktop widths by the app; below 760px, a two-height sheet. */
+
+.bui-sheet__handle {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .bui-sheet {
+    --sheet-height: 86dvh;
+    --sheet-peek: 44dvh;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--sheet-height);
+    border-left: none;
+    border-top: 1px solid var(--border-default);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.5);
+    transform: translateY(calc(var(--drag, 0px)));
+    transition: transform 0.25s ease;
+  }
+
+  .bui-sheet[data-sheet="peek"] {
+    /* The lower part is off screen in peek, so the scroll area must stop at the screen edge. */
+    padding-bottom: calc(var(--sheet-height) - var(--sheet-peek));
+    transform: translateY(calc(var(--sheet-height) - var(--sheet-peek) + var(--drag, 0px)));
+  }
+
+  .bui-sheet.dragging {
+    transition: none;
+  }
+
+  .bui-sheet__handle {
+    display: flex;
+    justify-content: center;
+    padding: 10px 0 8px;
+    flex-shrink: 0;
+    cursor: grab;
+    touch-action: none;
+  }
+
+  .bui-sheet__handle span {
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border-strong);
+  }
 }

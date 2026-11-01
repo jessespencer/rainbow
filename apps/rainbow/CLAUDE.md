@@ -12,12 +12,13 @@ Interactive visualization of all 344,799 OpenBible.info cross-references, with B
 
 ## Shared Design System
 Both Rainbow and Chronos use the [`@jessespencer/bible-ui`](../bible-ui) package for:
-- Site header component (`createHeader()`) — title, subtitle, gradient bar, controls slot
+- Site header component (`createHeader()`) — title, subtitle, gradient bar, controls slot, app switcher
+- Book and verse numbering (`@jessespencer/bible-ui/bible`), re-exported by `scripts/bible-metadata.ts`
 - Design tokens — colors, fills, borders, text hierarchy, radii (CSS custom properties)
 - Typography — Fraunces (serif, UI) + DM Mono (monospace, data)
 - Font loading (`loadFonts()`)
 
-The shared package is a local dependency at `../bible-ui`. Rainbow's `src/style.css` layers app-specific tokens on top of the shared base. Rainbow puts its toolbar in the header's controls slot and compacts the header with `#app`-scoped CSS, so Chronos keeps the full header.
+The shared package is a local dependency at `../bible-ui`. Rainbow's `src/style.css` layers app-specific tokens on top of the shared base. Rainbow puts its toolbar in the header's controls slot and compacts the header with `#app`-scoped CSS. Chronos uses the same layout through bible-ui's `compact` option; move Rainbow onto it, and onto bible-ui's `setupSheet`, in place of its own copies.
 
 ## Architecture
 - **No framework** — vanilla TS with direct DOM manipulation
@@ -61,7 +62,7 @@ The shared package is a local dependency at `../bible-ui`. Rainbow's `src/style.
 - Pipeline: `pnpm build:data` downloads to `raw-data/` (ignored) and rebuilds both files
 
 ## Scripts
-- `pnpm dev` — Vite dev server
+- `pnpm dev` — Vite dev server, pinned to port 5173 so the app switcher can reach it
 - `pnpm build` — production build to `dist/`
 - `pnpm build:data` — download raw sources and rebuild the datasets
 

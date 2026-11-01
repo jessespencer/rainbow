@@ -1,6 +1,6 @@
 # @jessespencer/bible-ui
 
-Shared design system and UI components for Bible visualization apps — [Rainbow Reference](https://github.com/jessespencer/rainbow-reference) and [Chronos](https://github.com/jessespencer/chronos).
+Shared design system and UI components for Bible visualization apps — [Rainbow Reference](../../apps/rainbow) and [Chronos](../../apps/chronos).
 
 ## What's included
 
@@ -14,7 +14,10 @@ Shared design system and UI components for Bible visualization apps — [Rainbow
 - Typography (`--font-ui`: Fraunces, `--font-mono`: DM Mono)
 
 ### Components
-- `createHeader({ title, subtitle })` — site header with title, subtitle, rainbow gradient bar, and a `controls` slot for app-specific buttons
+- `createHeader({ title, subtitle, appId, compact })` — site header with title, subtitle, rainbow gradient bar, and a `controls` slot for app-specific buttons. `appId` adds the app switcher. `compact` gives the one-bar layout, with a `center` slot for search
+- `APPS`, `appHref(app)` — the app registry and a URL to each app that works in dev and production
+- `setupSheet(panel, handle, onClose)` (from `/sheet`) — the two-height phone bottom sheet. Give the panel `.bui-sheet` and the handle `.bui-sheet__handle`
+- `books`, `bookOffsets`, `totalVerses` (from `/bible`) — the 66 books and KJV verse numbering, 31,102 verses
 - `loadFonts()` — injects Google Fonts stylesheet for Fraunces + DM Mono
 
 ## Usage
@@ -36,12 +39,4 @@ document.getElementById("app")!.appendChild(element);
 const btn = document.createElement("button");
 btn.textContent = "Zoom";
 controls.appendChild(btn);
-```
-
-## Install
-
-Local dependency (sibling directory):
-
-```bash
-npm install ../bible-ui
 ```
