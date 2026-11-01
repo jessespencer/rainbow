@@ -179,7 +179,7 @@ export const App = () => {
       translation={place.translation}
       progress={progress}
       theme={theme}
-      onBook={(code) => setPlace({ ...place, book: code, chapter: 1 })}
+      onBook={(code, chapter = 1) => setPlace({ ...place, book: code, chapter })}
       onChapter={(chapter) => setPlace({ ...place, chapter })}
       onTranslation={(translation) => setPlace({ ...place, translation })}
       onTheme={(origin) => revealFrom(origin, () => setTheme((t) => (t === 'light' ? 'dark' : 'light')))}

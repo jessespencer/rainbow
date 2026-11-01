@@ -109,6 +109,39 @@ export const getTranslation = (id: string) =>
 
 export const getBook = (code: string) => BOOKS.find((b) => b.code === code) ?? BOOKS[48]
 
+const squash = (text: string) => text.toLowerCase().replace(/[^a-z0-9]/g, '')
+
+const isScatteredIn = (letters: string, word: string) => {
+  let found = 0
+  for (const letter of word) if (letter === letters[found]) found++
+  return found === letters.length
+}
+
+// Lower is closer. Scattered letters catch abbreviations like "mk", and the shortest name wins.
+const closeness = (book: Book, query: string) => {
+  const name = squash(book.name)
+  if (name.startsWith(query)) return 0
+  if (book.name.toLowerCase().split(' ').some((word) => word.startsWith(query))) return 1
+  if (book.code.toLowerCase().startsWith(query)) return 2
+  return isScatteredIn(query, name) ? 3 + name.length / 100 : undefined
+}
+
+// "rom 8", "1 cor" and "john 3:16" all work. A leading number belongs to the book's name.
+export const findBooks = (query: string) => {
+  const [, name = query, chapter] = query.trim().match(/^(.*[a-z])\s*(\d+)(?::\d+)?$/i) ?? []
+  const scored = BOOKS.map((book) => ({ book, score: closeness(book, squash(name)) })).filter(
+    (found): found is { book: Book; score: number } => found.score !== undefined,
+  )
+  // Scattered letters are only a fallback, or "1 th" would also ink 1 Corinthians.
+  const clean = scored.filter((found) => found.score < 3)
+  const kept = clean.length ? clean : scored
+  const best = kept.reduce<(typeof kept)[number] | undefined>(
+    (closest, found) => (!closest || found.score < closest.score ? found : closest),
+    undefined,
+  )
+  return { matches: kept.map((found) => found.book), best: best?.book, chapter: Number(chapter) || undefined }
+}
+
 export class MissingKeyError extends Error {}
 
 const keyStore = (t: Translation) => (t.apiBibleId ? 'byheart.apiBibleKey' : 'byheart.esvKey')

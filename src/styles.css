@@ -60,8 +60,7 @@ a {
 }
 
 button,
-input,
-select {
+input {
   font: inherit;
   color: inherit;
 }
@@ -153,6 +152,7 @@ kbd {
 }
 
 .masthead {
+  position: relative;
   display: flex;
   align-items: baseline;
   gap: 1.1rem;
@@ -169,27 +169,255 @@ kbd {
   color: var(--rubric);
 }
 
-.picker select {
-  appearance: none;
-  background: none;
-  border: 0;
-  max-width: 7.5rem;
-  text-overflow: ellipsis;
-  cursor: pointer;
+.pick-trigger {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  min-width: 0;
   font-variant-caps: all-small-caps;
   letter-spacing: 0.08em;
+  white-space: nowrap;
   color: var(--soft);
   padding: 0.2rem 0;
   border-bottom: 1px solid var(--hair);
+  transition: color 0.2s ease;
 }
 
-.picker select:hover {
+.pick-trigger span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pick-trigger svg {
+  flex: none;
+  width: 0.5em;
+  height: 0.3em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.25s var(--spring);
+}
+
+.pick-trigger:hover,
+.pick-trigger[aria-expanded='true'] {
   color: var(--rubric);
 }
 
-.picker option {
-  background: var(--paper);
-  color: var(--ink);
+/* Stays above the scrim so a second press closes what the first one opened. */
+.pick-trigger[aria-expanded='true'] {
+  position: relative;
+  z-index: 7;
+}
+
+.pick-trigger[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+
+.pick-scrim {
+  position: fixed;
+  z-index: 6;
+  inset: 0;
+  background: color-mix(in srgb, var(--paper) 55%, transparent);
+  animation: veil-in 0.14s ease-out backwards;
+}
+
+/* Like the dock, a slip of the other theme laid on the page. It opens fast, being opened often. */
+.pick-panel {
+  position: absolute;
+  z-index: 7;
+  top: calc(100% - 0.35rem);
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 4.5rem);
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--slip);
+  color: var(--slip-ink);
+  box-shadow: 0 10px 18px rgb(10 12 30 / 0.34);
+  transform-origin: top right;
+  animation: unfold 0.16s var(--ease-out) backwards;
+}
+
+.pick-panel > div {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.pick-panel [role='listbox'] {
+  outline: none;
+}
+
+.pick-panel kbd {
+  opacity: 0.6;
+}
+
+.pick-books {
+  left: 0;
+}
+
+.pick-versions {
+  width: min(100%, 25rem);
+}
+
+.pick-versions [role='listbox'] {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.pick-find {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.5rem 1.05rem 0.45rem;
+  border-bottom: 1px dashed color-mix(in srgb, var(--slip-ink) 38%, transparent);
+}
+
+.pick-find input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  outline: none;
+  padding: 0;
+  font-family: var(--display);
+  font-size: 1.3rem;
+  caret-color: var(--slip-accent);
+}
+
+.pick-find input::placeholder {
+  font-style: italic;
+  color: color-mix(in srgb, var(--slip-ink) 50%, transparent);
+}
+
+.pick-goes {
+  flex: none;
+  font-style: italic;
+  color: var(--slip-accent);
+}
+
+/* Every book keeps its place, even while searching, so the hand learns where each one lives. */
+.pick-contents {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(17, auto);
+  grid-auto-columns: minmax(0, 1fr);
+  column-gap: 0.4rem;
+  padding: 0.55rem 0.6rem 0.7rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block: 4.5rem;
+}
+
+.pick-testament {
+  display: contents;
+}
+
+.pick-head {
+  align-self: end;
+  padding: 0 0.45rem 0.1rem;
+  font-size: 0.95rem;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--slip-ink) 62%, transparent);
+}
+
+.pick-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.03rem 0.45rem 0.07rem;
+  border-radius: 2px;
+  font-family: var(--display);
+  font-size: 1.14rem;
+  line-height: 1.38;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: opacity 0.14s ease;
+}
+
+.pick-row small,
+.pick-version small {
+  font-family: var(--book);
+  font-size: 0.72em;
+  color: var(--slip-accent);
+}
+
+.pick-row.on,
+.pick-version.on strong {
+  font-style: italic;
+  color: var(--slip-accent);
+}
+
+.pick-row.faint {
+  opacity: 0.26;
+}
+
+.pick-row.active,
+.pick-version.active,
+.pick-row.active small,
+.pick-version.active small,
+.pick-version.active.on strong {
+  background: var(--slip-accent);
+  color: var(--slip);
+}
+
+.pick-version {
+  display: grid;
+  grid-template-columns: 1.1rem 3.5rem 1fr auto;
+  align-items: baseline;
+  padding: 0.22rem 1.05rem 0.27rem;
+  cursor: pointer;
+}
+
+.pick-version:first-child {
+  margin-top: 0.4rem;
+}
+
+.pick-version:last-child {
+  margin-bottom: 0.4rem;
+}
+
+.pick-version kbd {
+  font-size: 0.8rem;
+  color: var(--slip-accent);
+  opacity: 1;
+}
+
+.pick-version.active kbd {
+  color: inherit;
+}
+
+.pick-version strong {
+  font-family: var(--display);
+  font-size: 1.2rem;
+  font-weight: 400;
+}
+
+.pick-version span {
+  font-style: italic;
+  white-space: nowrap;
+}
+
+.pick-version small {
+  padding-left: 0.6rem;
+}
+
+@media (hover: none) {
+  .pick-version {
+    grid-template-columns: 3.5rem 1fr auto;
+    padding-block: 0.6rem;
+  }
+
+  .pick-version kbd {
+    display: none;
+  }
 }
 
 .theme {
@@ -1274,6 +1502,20 @@ kbd {
   }
 }
 
+@keyframes unfold {
+  from {
+    opacity: 0;
+    transform: translateY(-0.3rem) scale(0.985);
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(1.5rem);
+    opacity: 0;
+  }
+}
+
 @keyframes slip-in {
   from {
     opacity: 0;
@@ -1356,8 +1598,30 @@ kbd {
     gap: 0.75rem;
   }
 
-  .picker select {
-    max-width: 5.6rem;
+  /* On a phone the slip becomes a sheet, in two columns within reach of a thumb. */
+  .pick-panel {
+    position: fixed;
+    inset: auto 0 0;
+    width: auto;
+    max-height: 84dvh;
+    padding-bottom: env(safe-area-inset-bottom);
+    border-radius: 4px 4px 0 0;
+    transform-origin: bottom;
+    animation-name: rise;
+    animation-duration: 0.22s;
+  }
+
+  .pick-contents {
+    grid-template-rows: repeat(34, auto);
+  }
+
+  .pick-row {
+    align-items: center;
+    min-height: 2.75rem;
+  }
+
+  .pick-find input {
+    font-size: 1.2rem;
   }
 
   .session-head .back {

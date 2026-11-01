@@ -5,7 +5,12 @@ A typographic app for memorizing Scripture, up to whole books. The chapter is pr
 ```bash
 npm install
 npm run dev
+npm test
 ```
+
+## Getting around
+
+Press `b` for the contents and `t` for translations. In the contents, type to narrow the books (`eph`, `mk`, `1 cor`), or add a chapter to go straight there (`rom 8`), then press Enter. Number keys pick a translation.
 
 ## Structure map
 

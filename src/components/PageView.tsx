@@ -1,8 +1,9 @@
 import { useEffect, useState, type CSSProperties } from 'react'
-import { BOOKS, MissingKeyError, TRANSLATIONS, fetchChapter, getKey, getTranslation, setKey, type Book, type Translation, type Verse } from '../lib/bible'
+import { MissingKeyError, fetchChapter, getKey, getTranslation, setKey, type Book, type Translation, type Verse } from '../lib/bible'
 import { inkLevel, isDue, verseKey, type Progress } from '../lib/memory'
 import { prefersStillness } from '../lib/motion'
 import { Footnotes } from './Footnotes'
+import { BookPicker, TranslationPicker } from './Picker'
 import type { SessionItem } from './Session'
 
 interface PageViewProps {
@@ -11,7 +12,7 @@ interface PageViewProps {
   translation: string
   progress: Progress
   theme: 'light' | 'dark'
-  onBook: (code: string) => void
+  onBook: (code: string, chapter?: number) => void
   onChapter: (chapter: number) => void
   onTranslation: (id: string) => void
   onTheme: (origin: HTMLElement) => void
@@ -98,26 +99,8 @@ export const PageView = (props: PageViewProps) => {
     <div className="page">
       <header className="masthead">
         <span className="wordmark">By Heart</span>
-        <label className="picker">
-          <span className="sr-only">Book</span>
-          <select value={book.code} onChange={(e) => props.onBook(e.target.value)}>
-            {BOOKS.map((b) => (
-              <option key={b.code} value={b.code}>
-                {b.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="picker">
-          <span className="sr-only">Translation</span>
-          <select value={translation} onChange={(e) => props.onTranslation(e.target.value)}>
-            {TRANSLATIONS.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.id} · {t.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <BookPicker book={book} translation={translation} progress={progress} onPick={props.onBook} />
+        <TranslationPicker translation={translation} progress={progress} onPick={props.onTranslation} />
         <button type="button" className="quiet theme" onClick={(e) => props.onTheme(e.currentTarget)} aria-label="Switch between day and night">
           {theme === 'light' ? '☾' : '☼'}
         </button>
