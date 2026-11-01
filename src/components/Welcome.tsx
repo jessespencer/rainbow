@@ -1,14 +1,16 @@
 import { useState } from 'react'
-import { BOOKS, TRANSLATIONS, getTranslation } from '../lib/bible'
+import { getBook, getTranslation } from '../lib/bible'
+import { BookPicker, TranslationPicker } from './Picker'
 
 interface WelcomeProps {
   book: string
   translation: string
-  onBegin: (book: string, translation: string) => void
+  onBegin: (book: string, translation: string, chapter: number) => void
 }
 
 export const Welcome = ({ book, translation, onBegin }: WelcomeProps) => {
   const [chosenBook, setChosenBook] = useState(book)
+  const [chosenChapter, setChosenChapter] = useState(1)
   const [chosenTranslation, setChosenTranslation] = useState(translation)
   return (
     <main className="welcome">
@@ -17,29 +19,26 @@ export const Welcome = ({ book, translation, onBegin }: WelcomeProps) => {
       <form
         onSubmit={(e) => {
           e.preventDefault()
-          onBegin(chosenBook, chosenTranslation)
+          onBegin(chosenBook, chosenTranslation, chosenChapter)
         }}
       >
-        <label className="welcome-choice">
+        <div className="welcome-choice">
           <span>The book of</span>
-          <select value={chosenBook} onChange={(e) => setChosenBook(e.target.value)}>
-            {BOOKS.map((b) => (
-              <option key={b.code} value={b.code}>
-                {b.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="welcome-choice">
+          <BookPicker
+            book={getBook(chosenBook)}
+            chapter={chosenChapter}
+            translation={chosenTranslation}
+            progress={{}}
+            onPick={(code, chapter = 1) => {
+              setChosenBook(code)
+              setChosenChapter(chapter)
+            }}
+          />
+        </div>
+        <div className="welcome-choice">
           <span>In the</span>
-          <select value={chosenTranslation} onChange={(e) => setChosenTranslation(e.target.value)}>
-            {TRANSLATIONS.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-        </label>
+          <TranslationPicker translation={chosenTranslation} progress={{}} spelledOut onPick={setChosenTranslation} />
+        </div>
         {getTranslation(chosenTranslation).keySource && (
           <p className="welcome-key">The {chosenTranslation} needs a free key, which you add on the next page.</p>
         )}

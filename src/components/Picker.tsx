@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react'
-import { BOOKS, TRANSLATIONS, findBooks, type Book } from '../lib/bible'
+import { BOOKS, TRANSLATIONS, findBooks, getTranslation, type Book } from '../lib/bible'
 import type { Progress } from '../lib/memory'
 
 const kept = (progress: Progress) =>
@@ -34,6 +34,19 @@ const Picker = ({ label, value, hotkey, panel, children }: PickerProps) => {
     setOpen(false)
     trigger.current?.focus()
   }
+
+  // Caught on the way down, so it works wherever focus has wandered and the page never sees it.
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      e.stopPropagation()
+      setOpen(false)
+      trigger.current?.focus()
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [open])
 
   useEffect(() => {
     const onKey = (e: globalThis.KeyboardEvent) => {
@@ -76,13 +89,20 @@ const Picker = ({ label, value, hotkey, panel, children }: PickerProps) => {
 
 interface BookPickerProps {
   book: Book
+  // Shown beside the name when a place past the first chapter is chosen but not yet open.
+  chapter?: number
   translation: string
   progress: Progress
   onPick: (code: string, chapter?: number) => void
 }
 
 export const BookPicker = (props: BookPickerProps) => (
-  <Picker label="Book" value={props.book.name} hotkey="b" panel="pick-books">
+  <Picker
+    label="Book"
+    value={props.chapter && props.chapter > 1 ? `${props.book.name} ${props.chapter}` : props.book.name}
+    hotkey="b"
+    panel="pick-books"
+  >
     {(close) => <Contents {...props} onClose={close} />}
   </Picker>
 )
@@ -138,7 +158,6 @@ const Contents = ({ book, translation, progress, onPick, onClose }: BookPickerPr
       ArrowDown: () => move(matches[at + 1]),
       ArrowUp: () => move(matches[at - 1]),
       Enter: () => target && pick(target),
-      Escape: onClose,
       Tab: onClose,
       ...(!searching && { ArrowRight: () => across(1), ArrowLeft: () => across(-1) }),
     }
@@ -164,7 +183,7 @@ const Contents = ({ book, translation, progress, onPick, onClose }: BookPickerPr
           aria-autocomplete="list"
           aria-activedescendant={target && optionId(target)}
           value={query}
-          placeholder="Find a book, or rom 8"
+          placeholder="Find a book or chapter, like Romans 8"
           autoComplete="off"
           spellCheck={false}
           onChange={(e) => {
@@ -176,15 +195,18 @@ const Contents = ({ book, translation, progress, onPick, onClose }: BookPickerPr
           }}
         />
         <span className="pick-goes" aria-live="polite">
-          {searching &&
-            (target ? (
-              <>
-                {target.name}
-                {chapter && ` ${Math.min(chapter, target.chapters)}`} <kbd aria-hidden="true">↵</kbd>
-              </>
-            ) : (
-              'No book by that name'
-            ))}
+          {!searching ? (
+            <kbd className="pick-esc" aria-hidden="true">
+              esc
+            </kbd>
+          ) : target ? (
+            <>
+              {target.name}
+              {chapter && ` ${Math.min(chapter, target.chapters)}`} <kbd aria-hidden="true">↵</kbd>
+            </>
+          ) : (
+            'No book by that name'
+          )}
         </span>
       </div>
       <div ref={list} id="pick-book-list" className="pick-contents" role="listbox" aria-label="Book" tabIndex={-1}>
@@ -219,11 +241,17 @@ const Contents = ({ book, translation, progress, onPick, onClose }: BookPickerPr
 interface TranslationPickerProps {
   translation: string
   progress: Progress
+  spelledOut?: boolean
   onPick: (id: string) => void
 }
 
 export const TranslationPicker = (props: TranslationPickerProps) => (
-  <Picker label="Translation" value={props.translation} hotkey="t" panel="pick-versions">
+  <Picker
+    label="Translation"
+    value={props.spelledOut ? getTranslation(props.translation).name : props.translation}
+    hotkey="t"
+    panel="pick-versions"
+  >
     {(close) => <Versions {...props} onClose={close} />}
   </Picker>
 )
@@ -246,7 +274,6 @@ const Versions = ({ translation, progress, onPick, onClose }: TranslationPickerP
       ArrowDown: () => setActive((active + 1) % TRANSLATIONS.length),
       ArrowUp: () => setActive((active - 1 + TRANSLATIONS.length) % TRANSLATIONS.length),
       Enter: () => pick(active),
-      Escape: onClose,
       Tab: onClose,
     }
     const numbered = TRANSLATIONS[Number(e.key) - 1] && (() => pick(Number(e.key) - 1))

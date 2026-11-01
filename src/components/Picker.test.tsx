@@ -158,6 +158,15 @@ describe('BookPicker', () => {
     expect(trigger).toHaveFocus()
   })
 
+  it('closes on Escape even when focus has left the panel', async () => {
+    const { user } = renderBooks()
+    await user.keyboard('b')
+    ;(document.activeElement as HTMLElement).blur()
+    expect(document.body).toHaveFocus()
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+  })
+
   it('closes on a second press of the trigger', async () => {
     const { user, trigger } = renderBooks()
     await user.click(trigger)
@@ -206,6 +215,19 @@ describe('TranslationPicker', () => {
     await user.keyboard('2')
     expect(onPick).toHaveBeenCalledExactlyOnceWith('NIV')
     expect(trigger).toHaveFocus()
+  })
+
+  it('closes on Escape from the t key, and when focus has left the list', async () => {
+    const { user, trigger } = renderVersions()
+    await user.keyboard('t')
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+    expect(trigger).toHaveFocus()
+
+    await user.keyboard('t')
+    ;(document.activeElement as HTMLElement).blur()
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
   })
 
   it('numbers only the rows a single key can reach', async () => {

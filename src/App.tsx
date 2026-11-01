@@ -101,9 +101,9 @@ export const App = () => {
       <Welcome
         book={place.book}
         translation={place.translation}
-        onBegin={(chosenBook, translation) =>
+        onBegin={(chosenBook, translation, chapter) =>
           withTransition('screen', () => {
-            setPlace({ ...place, book: chosenBook, translation })
+            setPlace({ ...place, book: chosenBook, translation, chapter })
             setWelcoming(false)
           })
         }

@@ -8,6 +8,9 @@
   --slip: #101b3d;
   --slip-ink: #efe7d6;
   --slip-accent: #e8b64c;
+  --sheet: #101b3d;
+  --sheet-ink: #efe7d6;
+  --sheet-accent: #e8b64c;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --spring: linear(0, 0.06 3%, 0.22 7%, 0.62 15%, 0.92 23%, 1.03 30%, 1.05 36%, 1.03 46%, 1.005 58%, 0.998 70%, 1);
   --book: 'EB Garamond Variable', 'EB Garamond', Garamond, Georgia, serif;
@@ -16,13 +19,14 @@
 }
 
 :root[data-theme='dark'] {
-  --paper: #101b3d;
+  --paper: #0b1430;
   --ink: #efe7d6;
   --rubric: #e8b64c;
   --ghost: 0.46;
   --slip: #f5f0e6;
   --slip-ink: #17140f;
   --slip-accent: #c8321e;
+  --sheet: #182449;
   color-scheme: dark;
 }
 
@@ -223,7 +227,7 @@ kbd {
   animation: veil-in 0.14s ease-out backwards;
 }
 
-/* Like the dock, a slip of the other theme laid on the page. It opens fast, being opened often. */
+/* A night-blue sheet in either theme, lifted off the page by night. It opens fast, being opened often. */
 .pick-panel {
   position: absolute;
   z-index: 7;
@@ -234,8 +238,8 @@ kbd {
   max-height: calc(100dvh - 4.5rem);
   overflow: hidden;
   border-radius: 4px;
-  background: var(--slip);
-  color: var(--slip-ink);
+  background: var(--sheet);
+  color: var(--sheet-ink);
   box-shadow: 0 10px 18px rgb(10 12 30 / 0.34);
   transform-origin: top right;
   animation: unfold 0.16s var(--ease-out) backwards;
@@ -274,7 +278,7 @@ kbd {
   align-items: baseline;
   gap: 1rem;
   padding: 0.5rem 1.05rem 0.45rem;
-  border-bottom: 1px dashed color-mix(in srgb, var(--slip-ink) 38%, transparent);
+  border-bottom: 1px dashed color-mix(in srgb, var(--sheet-ink) 38%, transparent);
 }
 
 .pick-find input {
@@ -286,18 +290,30 @@ kbd {
   padding: 0;
   font-family: var(--display);
   font-size: 1.3rem;
-  caret-color: var(--slip-accent);
+  caret-color: var(--sheet-accent);
 }
 
 .pick-find input::placeholder {
   font-style: italic;
-  color: color-mix(in srgb, var(--slip-ink) 50%, transparent);
+  color: color-mix(in srgb, var(--sheet-ink) 50%, transparent);
+}
+
+.pick-esc {
+  font-style: normal;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+}
+
+@media (hover: none) {
+  .pick-esc {
+    display: none;
+  }
 }
 
 .pick-goes {
   flex: none;
   font-style: italic;
-  color: var(--slip-accent);
+  color: var(--sheet-accent);
 }
 
 /* Every book keeps its place, even while searching, so the hand learns where each one lives. */
@@ -324,7 +340,7 @@ kbd {
   font-variant-caps: all-small-caps;
   letter-spacing: 0.1em;
   white-space: nowrap;
-  color: color-mix(in srgb, var(--slip-ink) 62%, transparent);
+  color: color-mix(in srgb, var(--sheet-ink) 62%, transparent);
 }
 
 .pick-row {
@@ -346,13 +362,13 @@ kbd {
 .pick-version small {
   font-family: var(--book);
   font-size: 0.72em;
-  color: var(--slip-accent);
+  color: var(--sheet-accent);
 }
 
 .pick-row.on,
 .pick-version.on strong {
   font-style: italic;
-  color: var(--slip-accent);
+  color: var(--sheet-accent);
 }
 
 .pick-row.faint {
@@ -364,13 +380,13 @@ kbd {
 .pick-row.active small,
 .pick-version.active small,
 .pick-version.active.on strong {
-  background: var(--slip-accent);
-  color: var(--slip);
+  background: var(--sheet-accent);
+  color: var(--sheet);
 }
 
 .pick-version {
   display: grid;
-  grid-template-columns: 1.1rem 3.5rem 1fr auto;
+  grid-template-columns: 1.1rem 4rem 1fr auto;
   align-items: baseline;
   padding: 0.22rem 1.05rem 0.27rem;
   cursor: pointer;
@@ -386,7 +402,7 @@ kbd {
 
 .pick-version kbd {
   font-size: 0.8rem;
-  color: var(--slip-accent);
+  color: var(--sheet-accent);
   opacity: 1;
 }
 
@@ -411,7 +427,7 @@ kbd {
 
 @media (hover: none) {
   .pick-version {
-    grid-template-columns: 3.5rem 1fr auto;
+    grid-template-columns: 4rem 1fr auto;
     padding-block: 0.6rem;
   }
 
@@ -772,49 +788,47 @@ kbd {
 }
 
 .welcome-choice {
-  position: relative;
-  display: block;
   margin-bottom: 1rem;
 }
 
-.welcome-choice span {
+.welcome-choice > span {
   font-style: italic;
   color: var(--soft);
 }
 
-.welcome-choice::after {
-  content: '';
-  position: absolute;
-  right: 0.3rem;
-  bottom: 1.05rem;
-  width: 0.5rem;
-  height: 0.5rem;
-  border: solid var(--rubric);
-  border-width: 0 1px 1px 0;
-  transform: rotate(45deg);
-  pointer-events: none;
-}
-
-.welcome-choice select {
-  appearance: none;
-  display: block;
+.welcome .pick-trigger {
+  display: flex;
+  justify-content: space-between;
   width: 100%;
-  padding: 0.1rem 1.5rem 0.25rem 0;
-  background: none;
-  border: 0;
-  border-bottom: 1px solid var(--hair);
-  border-radius: 0;
+  padding: 0.1rem 0.15rem 0.25rem 0;
   font-family: var(--display);
   font-size: 1.75rem;
+  font-variant-caps: normal;
+  letter-spacing: 0;
   line-height: 1.25;
+  text-align: left;
   color: var(--rubric);
-  text-overflow: ellipsis;
-  cursor: pointer;
 }
 
-.welcome-choice option {
-  background: var(--paper);
-  color: var(--ink);
+.welcome .pick-trigger svg {
+  width: 0.42em;
+  height: 0.26em;
+}
+
+/* The choices sit mid-page with no room to hang the contents below them, so it opens centred. */
+@media (min-width: 34rem) {
+  .welcome .pick-panel {
+    position: fixed;
+    inset: 50% auto auto 50%;
+    width: min(42rem, 100vw - 2rem);
+    max-height: calc(100dvh - 2rem);
+    translate: -50% -50%;
+    transform-origin: center;
+  }
+
+  .welcome .pick-versions {
+    width: 25rem;
+  }
 }
 
 .welcome-key {
