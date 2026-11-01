@@ -1,6 +1,10 @@
 # bible-viz
 
-Monorepo for Bible visualization tools sharing a common design system.
+Tools for seeing the Bible whole, sharing one design system.
+
+**▶ [Open Rainbow Reference](https://jessespencer.github.io/rainbow/)** · **[Open Chronos](https://jessespencer.github.io/rainbow/timeline/)**
+
+Read the [Rainbow Reference README](apps/rainbow/README.md) for what it does, how the data works, and how to run it.
 
 > **Note:** the GitHub repo is currently named `rainbow` for historical reasons. It will likely be renamed once a permanent parent name lands. The internal package name is `bible-viz` as a placeholder.
 
@@ -8,7 +12,7 @@ Monorepo for Bible visualization tools sharing a common design system.
 
 | Path | Package | Description |
 |---|---|---|
-| `apps/rainbow` | `rainbow` | Rainbow Reference — interactive arc visualization of 63k+ Bible cross-references. |
+| `apps/rainbow` | `rainbow` | Rainbow Reference — interactive arc visualization of all 344,799 Bible cross-references, with verse text. |
 | `apps/chronos` | `chronos` | Chronos — horizontal-scrolling Bible timeline (Adam → resurrection). |
 | `packages/bible-ui` | `@jessespencer/bible-ui` | Shared header, fonts, and design tokens. |
 

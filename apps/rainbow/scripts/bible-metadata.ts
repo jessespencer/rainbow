@@ -59,7 +59,7 @@ const booksRaw: [string, string, string, 'OT' | 'NT', number[]][] = [
   ['John', 'John', 'John', 'NT', [51,25,36,54,47,71,53,59,41,42,57,50,38,31,27,33,26,40,42,31,25]],
   ['Acts', 'Acts', 'Acts', 'NT', [26,47,26,37,42,15,60,40,43,48,30,25,52,28,41,40,34,28,41,38,40,30,35,27,27,32,44,31]],
   ['Romans', 'Rom', 'Rom', 'NT', [32,29,31,25,21,23,25,39,33,21,36,21,14,23,33,27]],
-  ['1 Corinthians', '1Cor', '1Cor', 'NT', [31,16,23,21,13,20,40,13,27,33,34,31,13,40,58,10]],
+  ['1 Corinthians', '1Cor', '1Cor', 'NT', [31,16,23,21,13,20,40,13,27,33,34,31,13,40,58,24]],
   ['2 Corinthians', '2Cor', '2Cor', 'NT', [24,17,18,18,21,18,16,24,15,18,33,21,14]],
   ['Galatians', 'Gal', 'Gal', 'NT', [24,21,29,31,26,18]],
   ['Ephesians', 'Eph', 'Eph', 'NT', [23,22,21,32,33,24]],
@@ -147,20 +147,3 @@ export function verseIndexToRef(idx: number): string {
   }
   return `${book.name} ${chapter}:${remaining + 1}`;
 }
-
-// Theme definitions
-export const THEMES = [
-  { id: 'christology', label: 'Christology', color: '#e94560' },
-  { id: 'prophecy', label: 'Prophecy', color: '#f5a623' },
-  { id: 'eschatology', label: 'Eschatology', color: '#f7dc6f' },
-  { id: 'law', label: 'Law', color: '#1abc9c' },
-  { id: 'salvation', label: 'Salvation', color: '#2980b9' },
-  { id: 'creation', label: 'Creation', color: '#27ae60' },
-  { id: 'worship', label: 'Worship', color: '#8e44ad' },
-  { id: 'wisdom', label: 'Wisdom', color: '#e84393' },
-  { id: 'other', label: 'Other', color: '#636e72' },
-] as const;
-
-export type ThemeId = typeof THEMES[number]['id'];
-export const themeToIndex: Record<string, number> = {};
-THEMES.forEach((t, i) => { themeToIndex[t.id] = i; });

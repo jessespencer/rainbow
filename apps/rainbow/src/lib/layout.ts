@@ -1,55 +1,39 @@
-import { BOOKS, OT_COUNT, TOTAL_BOOKS } from '../data/books';
+import { bookOffsets } from '../../scripts/bible-metadata';
+import { TOTAL_BOOKS } from '../data/books';
+import { OT_VERSES, TOTAL_VERSES } from './verses';
 
-export interface BookPosition {
+// Arcs live in a fixed world, independent of the screen: baseline at y = 0, Genesis to Revelation
+// across WORLD_WIDTH, so a resize keeps the reader's place.
+export const WORLD_WIDTH = 1000;
+const OT_NT_GAP = 14;
+const WORLD_PER_VERSE = (WORLD_WIDTH - OT_NT_GAP) / TOTAL_VERSES;
+const OT_END = OT_VERSES * WORLD_PER_VERSE;
+
+export interface BookSpan {
   index: number;
-  centerX: number;
   left: number;
-  width: number;
+  right: number;
 }
 
-export interface Layout {
-  books: BookPosition[];
-  baselineY: number;
-  totalWidth: number;
-  bookWidth: number;
-  otNtGap: number;
+export function xOfVerse(verse: number): number {
+  return (verse + 0.5) * WORLD_PER_VERSE + (verse >= OT_VERSES ? OT_NT_GAP : 0);
 }
 
-const OT_NT_GAP_RATIO = 0.03; // gap as fraction of total width
-
-export function computeLayout(canvasWidth: number, canvasHeight: number): Layout {
-  const baselineY = Math.floor(canvasHeight * 0.78);
-  const otNtGap = canvasWidth * OT_NT_GAP_RATIO;
-  const bookWidth = (canvasWidth - otNtGap) / TOTAL_BOOKS;
-  const totalWidth = canvasWidth;
-
-  const books: BookPosition[] = [];
-  for (let i = 0; i < TOTAL_BOOKS; i++) {
-    const gapOffset = i >= OT_COUNT ? otNtGap : 0;
-    const left = i * bookWidth + gapOffset;
-    books.push({
-      index: i,
-      centerX: left + bookWidth / 2,
-      left,
-      width: bookWidth,
-    });
-  }
-
-  return { books, baselineY, totalWidth, bookWidth, otNtGap };
+export function verseAtX(x: number): number {
+  const shifted = x >= OT_END + OT_NT_GAP / 2 ? x - OT_NT_GAP : x;
+  return Math.min(TOTAL_VERSES - 1, Math.max(0, Math.floor(shifted / WORLD_PER_VERSE)));
 }
 
-export function getArcControlPoint(
-  x1: number, x2: number, baselineY: number,
-): { cpX: number; cpY: number; height: number } {
-  const midX = (x1 + x2) / 2;
-  const dist = Math.abs(x2 - x1);
-  const height = dist * 0.5;
-  return { cpX: midX, cpY: baselineY - height, height };
-}
+export const BOOK_SPANS: BookSpan[] = Array.from({ length: TOTAL_BOOKS }, (_, index) => {
+  const end = index + 1 < TOTAL_BOOKS ? bookOffsets[index + 1] : TOTAL_VERSES;
+  return {
+    index,
+    left: xOfVerse(bookOffsets[index]) - WORLD_PER_VERSE / 2,
+    right: xOfVerse(end - 1) + WORLD_PER_VERSE / 2,
+  };
+});
 
-export function bookIndexFromX(x: number, layout: Layout): number {
-  for (let i = layout.books.length - 1; i >= 0; i--) {
-    if (x >= layout.books[i].left) return i;
-  }
-  return 0;
-}
+export const OT_RIGHT = BOOK_SPANS[38].right;
+export const NT_LEFT = BOOK_SPANS[39].left;
+
+export const pixelsPerVerse = (k: number) => WORLD_PER_VERSE * k;
