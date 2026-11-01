@@ -120,6 +120,7 @@ const createBar = (placement: Placement): HTMLDivElement => {
   bar.dataset.category = figure.category;
   bar.dataset.id = figure.id;
   bar.style.setProperty("--bar-color", `var(--cat-${figure.category})`);
+  bar.classList.toggle("figure-bar--open-end", figure.deathUnknown === true);
 
   // His bar is too short to name at most zooms, so his label rides beside it.
   if (figure.id === CHRIST_ID) {

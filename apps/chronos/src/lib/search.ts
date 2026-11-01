@@ -5,9 +5,10 @@
 
 import { formatYear, MAX_YEAR, MIN_YEAR } from "./scale.ts";
 import { el } from "./dom.ts";
+import { formatDates } from "./tooltip.ts";
 import { ERA_BANDS } from "./eras.ts";
 import type { EraBand } from "./eras.ts";
-import { figures } from "../data/timeline.ts";
+import { allFigures } from "./renderLineage.ts";
 import type { TimelineFigure } from "../data/timeline.ts";
 
 const MAX_RESULTS = 8;
@@ -31,7 +32,7 @@ const findResults = (text: string): SearchResult[] => {
   if (!query) return [];
 
   const year = parseYear(query);
-  const people = figures
+  const people = allFigures
     .filter((f) => f.name.toLowerCase().includes(query))
     .sort(
       (a, b) =>
@@ -56,8 +57,7 @@ const resultLabel = (result: SearchResult): [string, string] => {
     const { name, startYear, endYear } = result.era;
     return [name, `${formatYear(startYear)} – ${formatYear(endYear)}`];
   }
-  const { name, birth, death } = result.figure;
-  return [name, `${formatYear(birth)} – ${formatYear(death)}`];
+  return [result.figure.name, formatDates(result.figure)];
 };
 
 export const initSearch = (parent: HTMLElement, onPick: (result: SearchResult) => void) => {

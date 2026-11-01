@@ -12,6 +12,7 @@ Chronos is an interactive Bible timeline, from Adam to the resurrection of Jesus
 - **People.** Select anyone to read about them, with BSB scripture and everyone alive alongside them.
 - **Years.** Pick any year to see who was alive. Drag across the lanes with a mouse, or along the date strip with a finger.
 - **Two views.** Timeline shows lifespans and reigns. Lineage is a subway map of the generations, with the Messianic line running to Jesus.
+- **King and Priest.** Follow the royal line from Judah and the priestly line from Levi, both leading to Jesus, one by descent and the other by God's oath.
 - **Search.** Find a person, a year like 586 BC, or an era. Press ⌘K or Ctrl K from anywhere.
 - **Links into Rainbow.** Open any passage in [Rainbow Reference](../rainbow) to see its cross-references.
 - **Shareable.** Every selection has its own address, such as `?figure=king-david` or `?year=-586`.
@@ -39,6 +40,8 @@ Run `pnpm dev:rainbow` too if you want the links into Rainbow to work locally.
 | Divided kingdom | Edwin R. Thiele, *The Mysterious Numbers of the Hebrew Kings* (3rd ed., 1983) |
 
 These are particular chronologies, not a scholarly consensus. Prophets' lifespans and some genealogical dates are estimates, and for some kings the reign stands in for an unknown birth and death.
+
+Priests' dates are estimates spaced by generation, since scripture gives almost none.
 
 Scripture text is the [Berean Standard Bible](https://berean.bible/), dedicated to the public domain.
 

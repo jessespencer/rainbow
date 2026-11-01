@@ -6,14 +6,13 @@
 import { APPS, appHref } from "@jessespencer/bible-ui";
 import { setupSheet } from "@jessespencer/bible-ui/sheet";
 import { formatYear } from "./scale.ts";
-import { formatLifespan, formatReign } from "./tooltip.ts";
+import { describeLife, formatDates, formatReign } from "./tooltip.ts";
 import { el } from "./dom.ts";
 import { CATEGORY_NAMES, CATEGORY_ORDER } from "./categories.ts";
 import { loadBible, locate, parseScripture } from "./scripture.ts";
 import type { Passage } from "./scripture.ts";
 import { ERA_BANDS } from "./eras.ts";
-import { childrenOf } from "./renderLineage.ts";
-import { figures } from "../data/timeline.ts";
+import { allFigures, childrenOf } from "./renderLineage.ts";
 import type { Category, TimelineFigure } from "../data/timeline.ts";
 
 const PREVIEW_VERSES = 6;
@@ -57,7 +56,7 @@ const figureRow = (parent: HTMLElement, figure: TimelineFigure, onFigure: (id: s
   const row = el("button", "cp-row", parent);
   row.style.setProperty("--dot-color", `var(--cat-${figure.category})`);
   el("span", "cp-row__name", row).textContent = figure.name;
-  el("span", "cp-row__dates", row).textContent = `${formatYear(figure.birth)} – ${formatYear(figure.death)}`;
+  el("span", "cp-row__dates", row).textContent = formatDates(figure);
   el("span", "cp-row__blurb", row).textContent = figure.blurb;
   row.addEventListener("click", () => onFigure(figure.id));
 };
@@ -144,13 +143,13 @@ export const initCompanion = (
         headingEl,
         CATEGORY_NAMES[figure.category],
         figure.name,
-        `${formatLifespan(figure.birth, figure.death)}${reign}`,
+        `${describeLife(figure)}${reign}`,
         `var(--cat-${figure.category})`,
       );
       body.replaceChildren();
       el("p", "cp-text cp-lead", el("div", "cp-quote", body)).textContent = figure.blurb;
       renderScripture(figure);
-      const parent = figures.find((f) => f.id === figure.parent);
+      const parent = allFigures.find((f) => f.id === figure.parent);
       const family = [...(parent ? [parent] : []), ...childrenOf(figure)];
       if (family.length > 0) {
         const root = section(body, "Family line", family.length);

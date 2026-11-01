@@ -7,9 +7,16 @@
 
 import { yearToX, getTimelineWidth, formatYear, getPixelsPerYear, END_PADDING_PX } from "./scale.ts";
 import { el } from "./dom.ts";
+import { formatDates } from "./tooltip.ts";
 import { CHRIST_ID } from "./renderBars.ts";
+import type { LineMode } from "./lineToggle.ts";
 import { figures } from "../data/timeline.ts";
 import type { TimelineFigure, Lineage } from "../data/timeline.ts";
+import {
+  LAST_RECORDED_PRIEST_ID,
+  RECORD_RESUMES_ID,
+  priestlyLine,
+} from "../data/priests.ts";
 
 // ─── Layout constants ────────────────────────────────────────────
 
@@ -17,6 +24,8 @@ const NS = "http://www.w3.org/2000/svg";
 const MIN_H = 440;
 /** Clears the controls in the top right corner. */
 const PAD_TOP = 76;
+/** Phones stack two rows of controls across the top. */
+const PAD_TOP_NARROW = 100;
 const PAD_BOTTOM = 16;
 const FADE_PX = 60;
 const MIN_CURVE_PX = 30;
@@ -38,7 +47,7 @@ const MAX_BLURB_W = 250;
 const BLURB_CHAR_PX = 5.8;
 const BLURB_LINE_PX = 16.5;
 /** Below this lane height, a description would run into the next lane. */
-const MIN_BLURB_LANE_PX = 72;
+const MIN_BLURB_LANE_PX = 56;
 const MAX_TRIBE_ROW_PX = 18;
 const MIN_NAMED_TRIBE_ROW_PX = 11;
 const TRIBE_NAME_PPY = 3;
@@ -60,6 +69,7 @@ const LANES: LaneDef[] = [
   { lineage: "cainite", name: "Line of Cain", weight: 1, color: "var(--lineage-cainite)", ending: "The Flood" },
   { lineage: "nations", name: "The nations", weight: 1, color: "var(--lineage-nations)", ending: "Continues →" },
   { lineage: "ishmaelite", name: "Ishmael", weight: 1, color: "var(--lineage-ishmaelite)", ending: "Continues →" },
+  { lineage: "priestly", name: "Priestly line", weight: 1.3, color: "var(--lineage-priestly)" },
   { lineage: "messianic", name: "Messianic line", weight: 1.7, color: "var(--lineage-messianic)" },
   { lineage: "edomite", name: "Edom", weight: 1, color: "var(--lineage-edomite)", ending: "Continues →" },
   { lineage: "tribes", name: "Twelve tribes", weight: 1.8, color: "var(--lineage-tribes)", ending: "Tribes continue →" },
@@ -71,6 +81,8 @@ const HARD_STOP_LINEAGES: Set<Lineage> = new Set(["cainite", "israel-king"]);
 
 /** The line leads to Jesus: his station and label outrank everything else on the map. */
 const CHRIST_NAME_H = 28;
+const CHRIST_TITLE_H = 16;
+const CHRIST_TITLE_CHAR_PX = 6.6;
 /** How far past his station's center a flipped label ends: the edge of the dot. */
 const CHRIST_LABEL_REACH_PX = 11;
 const CHRIST_CHAR_PX = 13;
@@ -80,19 +92,37 @@ const KEY_FIGURES = new Set([
   "adam", "noah", "abraham", "isaac", "jacob", "judah", "king-david", "king-solomon",
   "hezekiah", "josiah", "zerubbabel", "mary", "jesus",
   "cain", "ham", "ishmael", "esau", "jeroboam-i",
+  "levi", "aaron", "phinehas", "zadok-priest", "hilkiah", "jeshua", "jaddua",
+  "john-the-baptist",
 ]);
+
+/** What Jesus is called at the end of each line. */
+const CHRIST_TITLES: Record<LineMode, string> = {
+  all: "",
+  royal: "King of Kings",
+  priestly: "Great High Priest",
+  both: "A priest on His throne",
+};
+
+const NARROW_MAP_PX = 700;
+/** The priestly link comes in around the right of his station, past his label. */
+const CHRIST_ARRIVAL_X_PX = 11;
+const CHRIST_ARRIVAL_BOW_PX = 36;
 
 // ─── Data helpers ────────────────────────────────────────────────
 
-const figureMap = new Map(figures.map((f) => [f.id, f]));
+/** Everyone on the map. The priests appear in Lineage but not on the Timeline. */
+export const allFigures = [...figures, ...priestlyLine];
+
+const figureMap = new Map(allFigures.map((f) => [f.id, f]));
 
 const figuresByLineage = (lineage: Lineage): TimelineFigure[] =>
-  figures
+  allFigures
     .filter((f) => f.lineage === lineage)
     .sort((a, b) => a.birth - b.birth);
 
 const childrenOf = (figure: TimelineFigure): TimelineFigure[] =>
-  figures
+  allFigures
     .filter((f) => f.parent === figure.id)
     .sort((a, b) => a.birth - b.birth);
 
@@ -199,6 +229,8 @@ export interface LineageHandle {
   reposition: (height: number) => void;
   /** Lights these people and dims the rest. `null` clears it. */
   setFocus: (lit: Set<string> | null, selectedId: string | null) => void;
+  /** Follows one line to Jesus, or shows them all. */
+  setMode: (mode: LineMode) => void;
 }
 
 export const initLineageView = (
@@ -215,6 +247,7 @@ export const initLineageView = (
   svgEl("stop", { offset: "0%", "stop-color": "var(--lineage-christ)", "stop-opacity": 0.75 }, glow);
   svgEl("stop", { offset: "45%", "stop-color": "var(--lineage-christ)", "stop-opacity": 0.22 }, glow);
   svgEl("stop", { offset: "100%", "stop-color": "var(--lineage-christ)", "stop-opacity": 0 }, glow);
+  const routeGroup = svgEl("g", {}, svg);
   const branchGroup = svgEl("g", {}, svg);
   const trunkGroup = svgEl("g", {}, svg);
   const stationGroup = svgEl("g", {}, svg);
@@ -225,6 +258,7 @@ export const initLineageView = (
   const gutterNames = new Map<Lineage, HTMLElement>();
   const endings = new Map<Lineage, Ending>();
   let halo: SVGCircleElement | null = null;
+  let christTitle: HTMLElement | null = null;
 
   const addStation = (figure: TimelineFigure, lineage: Lineage, row = 0) => {
     const isTrunk = lineage === "messianic";
@@ -250,8 +284,9 @@ export const initLineageView = (
     if (lineage === "tribes") label.classList.add("lineage-label--tribe");
     if (isChrist) label.classList.add("lineage-label--christ");
     el("span", "lineage-label__name", label).textContent = figure.name;
+    if (isChrist) christTitle = el("span", "lineage-label__title", label);
     const dates = el("span", "lineage-label__dates", label);
-    dates.textContent = `${formatYear(figure.birth)} – ${formatYear(figure.death)}`;
+    dates.textContent = formatDates(figure);
     const blurb = el("span", "lineage-label__blurb", label);
     blurb.textContent = figure.blurb;
 
@@ -316,8 +351,9 @@ export const initLineageView = (
     const from = branchFig ? figureMap.get(branchFig.parent!) : undefined;
     const isHardStop = HARD_STOP_LINEAGES.has(lineage);
     const isTrunk = lineage === "messianic";
+    const isPriestly = lineage === "priestly";
 
-    const fade = isHardStop || isTrunk ? null : addFade(`fade-${lineage}`, color);
+    const fade = isHardStop || isTrunk || isPriestly ? null : addFade(`fade-${lineage}`, color);
 
     const strokeWidth = isTrunk ? 4 : 2.5;
     const connector = from
@@ -340,6 +376,43 @@ export const initLineageView = (
     for (const figure of figs) addStation(figure, lineage);
   }
 
+  // ─── King and Priest ─────────────────────────────────────────
+
+  const route = (kind: "royal" | "priestly") => {
+    const path = svgEl("path", { pathLength: 1 }, routeGroup);
+    path.classList.add("lineage-route", `lineage-route--${kind}`);
+    return path;
+  };
+  const royalRoute = route("royal");
+  const priestlyRoute = route("priestly");
+
+  const dashed = (className: string) => {
+    const path = svgEl("path", {}, branchGroup);
+    path.classList.add(className);
+    path.dataset.lineage = "priestly";
+    return path;
+  };
+  /** The years between Jaddua and Zechariah, where the record falls silent. */
+  const recordGap = dashed("lineage-gap");
+  /** John to Jesus: a calling, not a bloodline, so it's never drawn solid. */
+  const priestlyLink = dashed("lineage-link");
+
+  const peopleOf = (test: (f: TimelineFigure) => boolean) =>
+    new Set(allFigures.filter(test).map((f) => f.id));
+
+  const judah = figureMap.get("judah")!;
+  const isRoyal = (f: TimelineFigure) => f.lineage === "messianic" && f.birth >= judah.birth;
+  const isPriestly = (f: TimelineFigure) => f.lineage === "priestly";
+
+  const MODE_LIT: Record<LineMode, Set<string> | null> = {
+    all: null,
+    royal: peopleOf(isRoyal),
+    priestly: peopleOf((f) => isPriestly(f) || f.id === CHRIST_ID),
+    both: peopleOf((f) => isRoyal(f) || isPriestly(f) || f.id === "jacob"),
+  };
+
+  let mode: LineMode = "all";
+
   // ─── Focus state ─────────────────────────────────────────────
 
   let lit: Set<string> | null = null;
@@ -348,19 +421,23 @@ export const initLineageView = (
   let hoveredLineage: string | null = null;
   let lastHeight = MIN_H;
 
+  /** A selection wins over the chosen line, so people stay explorable in every mode. */
+  const litNow = () => lit ?? MODE_LIT[mode];
+
   const priority = ({ figure, lineage }: Station): number => {
     if (figure.id === CHRIST_ID) return -1;
     if (figure.id === selectedId) return 0;
     if (figure.id === hoveredId) return 1;
-    if (lit?.has(figure.id)) return KEY_FIGURES.has(figure.id) ? 2 : 3;
+    if (litNow()?.has(figure.id)) return KEY_FIGURES.has(figure.id) ? 2 : 3;
     if (KEY_FIGURES.has(figure.id)) return 4;
     return lineage === "messianic" ? 5 : 6;
   };
 
   const paintFocus = () => {
-    svg.classList.toggle("lineage-svg--focused", lit !== null);
+    const active = litNow();
+    svg.classList.toggle("lineage-svg--focused", active !== null);
     for (const { figure, dot, label } of stations) {
-      const dim = lit !== null && !lit.has(figure.id) && figure.id !== CHRIST_ID;
+      const dim = active !== null && !active.has(figure.id) && figure.id !== CHRIST_ID;
       dot.classList.toggle("lineage-station--dimmed", dim);
       label.classList.toggle("lineage-label--dimmed", dim);
       const selected = figure.id === selectedId;
@@ -368,17 +445,20 @@ export const initLineageView = (
       label.classList.toggle("lineage-label--selected", selected);
     }
     const litLineages = new Set(
-      stations.filter((s) => lit?.has(s.figure.id)).map((s) => s.lineage as string),
+      // He's lit in every mode, so he shouldn't light the whole trunk with him.
+      stations
+        .filter((s) => active?.has(s.figure.id) && s.figure.id !== CHRIST_ID)
+        .map((s) => s.lineage as string),
     );
     for (const { lineage, label } of endings.values()) {
-      label.classList.toggle("lineage-ending--dimmed", lit !== null && !litLineages.has(lineage));
+      label.classList.toggle("lineage-ending--dimmed", active !== null && !litLineages.has(lineage));
     }
     svg.querySelectorAll<SVGElement>("[data-lineage]").forEach((node) => {
       const lineage = node.dataset.lineage!;
       node.classList.toggle("lineage-line--lit", litLineages.has(lineage));
       node.classList.toggle(
         "lineage--dimmed",
-        lit === null && hoveredLineage !== null && lineage !== hoveredLineage,
+        active === null && hoveredLineage !== null && lineage !== hoveredLineage,
       );
     });
   };
@@ -450,8 +530,9 @@ export const initLineageView = (
       const charPx = isChrist
         ? CHRIST_CHAR_PX
         : lineage === "messianic" ? TRUNK_CHAR_PX : BRANCH_CHAR_PX;
-      const nameH = isChrist ? CHRIST_NAME_H : NAME_H;
-      const width = figure.name.length * charPx + LABEL_GAP_PX;
+      const titleW = isChrist ? CHRIST_TITLES[mode].length * CHRIST_TITLE_CHAR_PX : 0;
+      const nameH = isChrist ? CHRIST_NAME_H + (titleW ? CHRIST_TITLE_H : 0) : NAME_H;
+      const width = Math.max(figure.name.length * charPx + LABEL_GAP_PX, titleW);
       const stationX = yearToX(figure.birth);
       const christW = Math.max(width, DATES_W);
       const flips = isChrist && stationX + christW > getTimelineWidth() + END_PADDING_PX;
@@ -479,7 +560,9 @@ export const initLineageView = (
       const nameW = claim.rect.right - claim.rect.left;
       const isChrist = figure.id === CHRIST_ID;
       const isSelected = figure.id === selectedId;
-      const nameH = isChrist ? CHRIST_NAME_H : NAME_H;
+      const nameH = isChrist
+        ? CHRIST_NAME_H + (CHRIST_TITLES[mode] ? CHRIST_TITLE_H : 0)
+        : NAME_H;
       const maxLines = lineage === "messianic" ? 3 : 2;
       const lines = Math.min(maxLines, Math.ceil((figure.blurb.length * BLURB_CHAR_PX) / MAX_BLURB_W));
       const blurbH = nameH + DATES_H + lines * BLURB_LINE_PX;
@@ -532,6 +615,32 @@ export const initLineageView = (
     ending.label.style.transform = `translate(${x}px, ${labelY}px) translateY(-50%)`;
   };
 
+  const scrollWidth = () => container.closest(".main-viewport")?.clientWidth ?? 0;
+
+  const positionRoutes = (trunkY: number, priestY: number, silenceStart: number, silenceEnd: number) => {
+    const jesusX = yearToX(figureMap.get(CHRIST_ID)!.birth);
+    const jacobX = yearToX(figureMap.get("jacob")!.birth);
+    const leviX = Math.max(yearToX(figureMap.get("levi")!.birth), jacobX + MIN_CURVE_PX);
+    const johnX = yearToX(figureMap.get("john-the-baptist")!.birth);
+    const arrivalX = jesusX + CHRIST_ARRIVAL_X_PX;
+    const bowX = jesusX + CHRIST_ARRIVAL_BOW_PX;
+    const link = `C ${bowX} ${priestY}, ${bowX} ${trunkY}, ${arrivalX} ${trunkY}`;
+
+    royalRoute.setAttribute("d", `M ${yearToX(judah.birth)} ${trunkY} L ${jesusX} ${trunkY}`);
+    priestlyRoute.setAttribute("d", `${curve(jacobX, trunkY, leviX, priestY)} L ${johnX} ${priestY} ${link}`);
+    recordGap.setAttribute("d", `M ${silenceStart} ${priestY} L ${silenceEnd} ${priestY}`);
+    priestlyLink.setAttribute("d", `M ${johnX} ${priestY} ${link}`);
+  };
+
+  const redrawRoutes = () => {
+    for (const path of [royalRoute, priestlyRoute]) {
+      path.classList.remove("lineage-route--drawing");
+      // Reading layout restarts the animation when the class comes back.
+      void path.getBoundingClientRect();
+      path.classList.add("lineage-route--drawing");
+    }
+  };
+
   const reposition = (height: number) => {
     lastHeight = height;
     const h = Math.max(height, MIN_H);
@@ -542,10 +651,11 @@ export const initLineageView = (
     container.style.height = `${h}px`;
 
     const totalWeight = LANES.reduce((sum, l) => sum + l.weight, 0);
-    const unit = (h - PAD_TOP - PAD_BOTTOM) / totalWeight;
+    const padTop = scrollWidth() < NARROW_MAP_PX ? PAD_TOP_NARROW : PAD_TOP;
+    const unit = (h - padTop - PAD_BOTTOM) / totalWeight;
     const laneYs = new Map<Lineage, number>();
     const laneHeights = new Map<Lineage, number>();
-    let top = PAD_TOP;
+    let top = padTop;
     for (const { lineage, weight } of LANES) {
       const y = top + (unit * weight) / 2;
       laneYs.set(lineage, y);
@@ -555,6 +665,9 @@ export const initLineageView = (
     }
 
     const trunkY = laneYs.get("messianic")!;
+    const priestY = laneYs.get("priestly")!;
+    const silenceStart = yearToX(figureMap.get(LAST_RECORDED_PRIEST_ID)!.death);
+    const silenceEnd = yearToX(figureMap.get(RECORD_RESUMES_ID)!.birth);
 
     for (const b of branches) {
       const laneY = laneYs.get(b.lineage)!;
@@ -568,7 +681,13 @@ export const initLineageView = (
         b.connector.setAttribute("d", curve(fromX, trunkY, startX, laneY));
       }
       // A tiny offset keeps the bounding box from collapsing on a flat line.
-      b.line.setAttribute("d", `M ${startX} ${laneY} L ${Math.max(endX, startX + 1)} ${laneY}`);
+      const lineEnd = Math.max(endX, startX + 1);
+      b.line.setAttribute(
+        "d",
+        b.lineage === "priestly"
+          ? `M ${startX} ${laneY} L ${silenceStart} ${laneY} M ${silenceEnd} ${laneY} L ${lineEnd} ${laneY}`
+          : `M ${startX} ${laneY} L ${lineEnd} ${laneY}`,
+      );
       if (b.fade) {
         b.fade.setAttribute("x1", String(Math.max(startX, endX - FADE_PX)));
         b.fade.setAttribute("x2", String(endX));
@@ -582,6 +701,8 @@ export const initLineageView = (
       }
       placeEnding(b.lineage, endX, laneY);
     }
+
+    positionRoutes(trunkY, priestY, silenceStart, silenceEnd);
 
     const tribeBand = laneHeights.get("tribes")! - 14;
     const tribeCount = stems.length;
@@ -645,6 +766,19 @@ export const initLineageView = (
       selectedId = nextSelected;
       paintFocus();
       reposition(lastHeight);
+    },
+    setMode: (next) => {
+      mode = next;
+      for (const name of ["royal", "priestly", "both"]) {
+        svg.classList.toggle(`lineage-svg--${name}`, name === next);
+      }
+      if (christTitle) {
+        christTitle.textContent = CHRIST_TITLES[next];
+        christTitle.parentElement!.classList.toggle("lineage-label--titled", next !== "all");
+      }
+      paintFocus();
+      reposition(lastHeight);
+      redrawRoutes();
     },
   };
 };

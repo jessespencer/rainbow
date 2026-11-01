@@ -24,7 +24,9 @@ import { figures } from "./data/timeline.ts";
 import type { Category, TimelineFigure } from "./data/timeline.ts";
 import { onViewChange, getView, setView } from "./lib/viewState.ts";
 import { initHeader } from "./lib/header.ts";
-import { familyLine, initLineageView } from "./lib/renderLineage.ts";
+import { allFigures, familyLine, initLineageView } from "./lib/renderLineage.ts";
+import { initLineToggle, parseLineMode } from "./lib/lineToggle.ts";
+import type { LineMode } from "./lib/lineToggle.ts";
 
 // ─── Constants ───────────────────────────────────────────────────
 
@@ -109,10 +111,9 @@ lineageView.style.display = "none";
 // -- Canvas overlays --
 const overlays = el("div", "canvas-status", canvasArea);
 const statusRow = el("div", "status-row", overlays);
-el("span", undefined, statusRow).textContent = `${figures.length} lives`;
-const eraControl = el("label", "era-control", statusRow);
-el("span", undefined, eraControl).textContent = "Jump to";
-const eraSelect = el("select", "era-select", eraControl);
+const livesCount = el("span", undefined, statusRow);
+livesCount.textContent = `${figures.length} lives`;
+const eraSelect = el("select", "era-select", statusRow);
 eraSelect.setAttribute("aria-label", "Jump to an era");
 el("option", undefined, eraSelect).textContent = "Era";
 eraSelect.options[0]!.value = "";
@@ -121,7 +122,7 @@ ERA_BANDS.forEach((era, i) => {
   option.value = String(i);
   option.textContent = era.name;
 });
-const zoomControls = el("div", "zoom-controls", overlays);
+const zoomControls = el("div", "zoom-controls", statusRow);
 
 const credits = el("footer", "canvas-credits", app);
 const aboutButton = el("button", "about-button", credits);
@@ -305,6 +306,8 @@ onViewChange((view) => {
   lineageView.style.display = view === "lineage" ? "" : "none";
   laneLabels.style.display = view === "timeline" ? "" : "none";
   lineageGutter.style.display = view === "lineage" ? "" : "none";
+  lineToggle.setVisible(view === "lineage");
+  livesCount.textContent = `${(view === "lineage" ? allFigures : figures).length} lives`;
   hideTooltip();
   reposition();
   syncAddress();
@@ -326,12 +329,15 @@ type Selection =
 let selection: Selection = null;
 
 const byBirth = [...figures].sort((a, b) => a.birth - b.birth);
+const allByBirth = [...allFigures].sort((a, b) => a.birth - b.birth);
+/** The priests are only on the Lineage map, so only that view counts them. */
+const people = () => (getView() === "lineage" ? allByBirth : byBirth);
 
 const aliveAt = (year: number) =>
-  byBirth.filter((f) => f.birth <= year && year <= f.death);
+  people().filter((f) => f.birth <= year && year <= f.death);
 
 const overlapping = (figure: TimelineFigure) =>
-  byBirth.filter(
+  people().filter(
     (f) => f !== figure && f.birth <= figure.death && figure.birth <= f.death,
   );
 
@@ -347,11 +353,21 @@ const paintBars = (lit: TimelineFigure[] | null, selected: TimelineFigure | null
 const syncAddress = () => {
   const params = new URLSearchParams();
   if (getView() !== "timeline") params.set("view", getView());
+  if (getView() === "lineage" && lineMode !== "all") params.set("line", lineMode);
   if (selection?.kind === "figure") params.set("figure", selection.figure.id);
   if (selection?.kind === "year") params.set("year", String(selection.year));
   const query = params.toString();
   history.replaceState(null, "", query ? `?${query}` : location.pathname);
 };
+
+let lineMode: LineMode = "all";
+
+const lineToggle = initLineToggle(overlays, canvasArea, (mode) => {
+  lineMode = mode;
+  lineageHandle.setMode(mode);
+  syncAddress();
+});
+lineToggle.setVisible(false);
 
 const select = (next: Selection) => {
   selection = next;
@@ -380,7 +396,7 @@ const select = (next: Selection) => {
 };
 
 const selectFigure = (id: string) => {
-  const figure = figures.find((f) => f.id === id);
+  const figure = allFigures.find((f) => f.id === id);
   if (figure) select({ kind: "figure", figure });
 };
 
@@ -392,7 +408,8 @@ const step = (direction: -1 | 1) => {
   if (selection?.kind === "year") {
     selectYear(selection.year + direction * YEAR_STEP);
   } else if (selection?.kind === "figure") {
-    const next = byBirth[byBirth.indexOf(selection.figure) + direction];
+    const order = people();
+    const next = order[order.indexOf(selection.figure) + direction];
     if (next) {
       select({ kind: "figure", figure: next });
       centerOnFigure(next);
@@ -484,6 +501,8 @@ eraSelect.addEventListener("change", () => {
 
 initSearch(headerCenter!, (result: SearchResult) => {
   if (result.kind === "figure") {
+    // Some priests have no Timeline bar, so they open on the map that has them.
+    if (!barMap.has(result.figure.id)) setView("lineage");
     select({ kind: "figure", figure: result.figure });
     focusFigure(result.figure);
   } else if (result.kind === "year") {
@@ -531,8 +550,12 @@ laneLabels.addEventListener("wheel", (e) => {
 
 const params = new URLSearchParams(location.search);
 const initialView = params.get("view");
-const initialFigure = figures.find((f) => f.id === params.get("figure"));
+const initialFigure = allFigures.find((f) => f.id === params.get("figure"));
 const initialYear = Number(params.get("year"));
+
+lineMode = parseLineMode(params.get("line"));
+lineToggle.setMode(lineMode);
+if (lineMode !== "all") lineageHandle.setMode(lineMode);
 
 if (initialView === "lineage") setView(initialView);
 
