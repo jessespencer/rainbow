@@ -89,6 +89,7 @@ body {
 #category-filters > *,
 #canvas-status button,
 #canvas-status label,
+#canvas-status summary,
 #canvas-credits button,
 #canvas-credits a {
   pointer-events: auto;
@@ -461,6 +462,107 @@ body {
 #arc-canvas.hidden { display: none; }
 
 #main-canvas { touch-action: none; }
+
+/* ─── GALAXY ─────────────────────────────────────────────── */
+#galaxy-container {
+  position: absolute;
+  inset: 0;
+  display: none;
+  overflow: hidden;
+}
+
+#app.galaxy-mode #galaxy-container { display: block; }
+
+/* The arc overlay keeps its box so Shuffle can still measure it. */
+#app.galaxy-mode #main-canvas { visibility: hidden; }
+
+#app.galaxy-mode .preset-btn { display: none; }
+
+.galaxy-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.galaxy-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: var(--text-secondary);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  white-space: nowrap;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  background: rgba(11, 13, 18, 0.65);
+}
+
+.galaxy-label.selected { color: var(--text-bright); }
+
+#galaxy-status {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--text-dim);
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 16px;
+}
+
+#galaxy-status.hidden { display: none; }
+
+#galaxy-layers {
+  position: relative;
+  display: none;
+}
+
+#app.galaxy-mode #galaxy-layers { display: block; }
+
+#galaxy-layers summary {
+  list-style: none;
+}
+
+#galaxy-layers summary::-webkit-details-marker { display: none; }
+
+#galaxy-layers[open] summary {
+  background: var(--fill-selected);
+  color: var(--text-bright);
+}
+
+#galaxy-layers-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 200px;
+  padding: 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+}
+
+#galaxy-layers-panel label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+}
+
+#galaxy-layers-panel select {
+  flex: 1;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-faint);
+  background: var(--fill-subtle);
+  color: var(--text-secondary);
+  font: inherit;
+}
 
 /* ─── TOOLTIP ────────────────────────────────────────────── */
 #tooltip {
@@ -1069,7 +1171,8 @@ body {
     gap: 8px;
   }
 
-  #app .bui-header__title-group { margin-right: auto; }
+  /* Leaves room for Shuffle alone, so search and the view toggle wrap to the next row. */
+  #app .bui-header__title-group { flex: 1 0 calc(100% - 44px); }
 
   #app .bui-header__title {
     font-size: 18px;
@@ -1079,7 +1182,12 @@ body {
   /* Flatten the slot so the buttons share the title's row and search wraps below. */
   #toolbar-actions { display: contents; }
 
-  #view-toggle button { padding: 0 10px; }
+  #view-toggle {
+    order: 3;
+    flex-shrink: 0;
+  }
+
+  #view-toggle button { padding: 0 8px; }
 
   #btn-shuffle {
     gap: 0;
@@ -1089,7 +1197,8 @@ body {
 
   #search-box {
     order: 1;
-    flex: 1 1 60%;
+    flex: 1 1 0;
+    min-width: 100px;
   }
 
   #book-search {
