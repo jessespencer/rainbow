@@ -83,7 +83,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 8px 8px 10px;
+  padding: 5px 6px 5px 7px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   background: var(--fill-subtle);
@@ -253,10 +253,6 @@
   height: 2px;
 }
 
-#app .bui-header--compact .bui-appswitch__trigger {
-  padding: 5px 6px 5px 7px;
-}
-
 @media (max-width: 760px) {
   #app .bui-header--compact {
     padding: 8px 16px;
@@ -268,22 +264,25 @@
     gap: 8px;
   }
 
+  /* Matches Rainbow's rows: brand on top, search and view toggle below. */
   #app .bui-header--compact .bui-header__brand {
-    margin-right: auto;
+    flex: 1 0 100%;
   }
 
   #app .bui-header--compact .bui-header__title {
     font-size: 18px;
   }
 
-  #app .bui-header--compact .bui-header__controls {
-    flex: 0 0 auto;
-    flex-wrap: nowrap;
-  }
-
   #app .bui-header--compact .bui-header__center {
     order: 1;
-    flex: 1 1 100%;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  #app .bui-header--compact .bui-header__controls {
+    order: 2;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
   }
 }
 
@@ -335,5 +334,30 @@
     height: 4px;
     border-radius: 2px;
     background: var(--border-strong);
+  }
+}
+
+/* ─── Moving Between Apps ─────────────────────────────────────── */
+/* A quick crossfade, with the header held in place, where the browser supports it. */
+
+@view-transition {
+  navigation: auto;
+}
+
+.bui-header {
+  view-transition-name: bui-header;
+}
+
+::view-transition-group(*),
+::view-transition-old(*),
+::view-transition-new(*) {
+  animation-duration: 0.16s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none;
   }
 }

@@ -1464,9 +1464,7 @@ a:focus-visible {
   }
 
   .view-toggle__btn {
-    height: 26px;
     padding: 0 8px;
-    font-size: 10px;
   }
 
   .canvas-status {

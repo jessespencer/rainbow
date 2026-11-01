@@ -199,7 +199,7 @@ export const createHeader = (config: HeaderConfig): HeaderHandle => {
 
 /** Google Fonts URL for Fraunces + DM Mono. */
 export const FONT_URL =
-  "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,100..900,0..100,0..1&display=swap";
+  "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,100..900,0..100,0..1&display=block";
 
 /**
  * Injects the Google Fonts stylesheet link if not already present.
