@@ -48,9 +48,11 @@ THREE.ColorManagement.enabled = false;
 const EDGE_CAP = 6000;
 const FOCUS_EDGE_CAP = 4000;
 
-const FOV = 50;
-const FIT_WIDTH = 1.1;
-const FIT_HEIGHT = 0.95;
+// A narrow lens from further back keeps the near rim from swelling past the far one.
+const FOV = 32;
+const FIT_WIDTH = 1.08;
+const FIT_HEIGHT = 0.72;
+const VISUAL_RADIUS = 0.8;
 const BASE_SIZE = 2.2;
 const FOCUS_SIZE = 4;
 const FOCUS_SMALL_VERSES = 200;
@@ -64,7 +66,7 @@ const FOCUS_EDGE_LIGHT = 90;
 const FOCUS_MS = 850;
 const FIT_MS = 900;
 const INTRO_MS = 1800;
-const INSET_EASE = 0.18;
+const SHIFT_EASE = 0.18;
 const AUTO_ROTATE_SPEED = -0.4;
 const SELECTED_LABEL_OFFSETS = [0, -28, 28, -56, 56];
 
@@ -254,6 +256,16 @@ export function createGalaxy(
   );
   const restDirection = new THREE.Vector3(0, 0.62, 0.78).normalize();
 
+  // Perspective draws the near rim lower than the far rim rises, so the resting view lifts to balance them.
+  const restLift = () => {
+    const rim = radius * VISUAL_RADIUS;
+    const distance = fitDistance();
+    const tangent = Math.tan(halfFov);
+    const near = (restDirection.y * rim) / ((distance - restDirection.z * rim) * tangent);
+    const far = (restDirection.y * rim) / ((distance + restDirection.z * rim) * tangent);
+    return height * (near - far) / 4;
+  };
+
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_DPR));
@@ -331,7 +343,7 @@ export function createGalaxy(
   let drawn = 0;
   let width = 0;
   let height = 0;
-  let inset = 0;
+  let shift = 0;
   let insetTarget = 0;
   let hovered = -1;
   // Spin belongs to the untouched view: once the reader moves the camera it stays where they left it.
@@ -526,7 +538,7 @@ export function createGalaxy(
     const w = container.clientWidth;
     const h = container.clientHeight;
     const tangent = Math.tan(halfFov) * Math.min(w, h - insetTarget) / h;
-    const distance = THREE.MathUtils.clamp(spread / Math.sin(Math.atan(tangent)), radius * 0.42, fitDistance());
+    const distance = THREE.MathUtils.clamp(spread / Math.sin(Math.atan(tangent)), radius * 0.6, fitDistance());
     const direction = camera.position.clone().sub(controls.target).normalize();
     flyTo(middle, middle.clone().addScaledVector(direction, distance), FOCUS_MS, false);
   }
@@ -536,9 +548,9 @@ export function createGalaxy(
     flyTo(center.clone(), position, FIT_MS, true);
   }
 
-  function applyInset() {
+  function applyShift() {
     // Shifting the view keeps the focus centered in what the phone's sheet leaves showing.
-    if (inset > 0.5) camera.setViewOffset(width, height, 0, inset / 2, width, height);
+    if (shift > 0.5) camera.setViewOffset(width, height, 0, shift, width, height);
     else camera.clearViewOffset();
   }
 
@@ -547,7 +559,7 @@ export function createGalaxy(
     height = container.clientHeight;
     if (!width || !height) return;
     camera.aspect = width / height;
-    applyInset();
+    applyShift();
     camera.updateProjectionMatrix();
     renderer.setSize(width, height);
     if (!leftRest) {
@@ -640,7 +652,7 @@ export function createGalaxy(
     const occupied: { x: number; y: number; width: number }[] = [];
     const zoom = wideFitDistance / camera.position.distanceTo(controls.target);
     const maxLabels = Math.min(30, Math.max(4, Math.round(10 * zoom * Math.min(1, width / 800))));
-    const floor = height - inset - 14;
+    const floor = height - insetTarget - 14;
 
     for (const label of labelOrder) {
       let placed = false;
@@ -672,13 +684,11 @@ export function createGalaxy(
     raf = requestAnimationFrame(frame);
     const now = performance.now();
 
-    if (Math.abs(insetTarget - inset) > 0.5) {
-      inset = reducedMotion ? insetTarget : inset + (insetTarget - inset) * INSET_EASE;
-      applyInset();
-      needsRender = true;
-    } else if (inset !== insetTarget) {
-      inset = insetTarget;
-      applyInset();
+    const shiftTarget = insetTarget / 2 + (focus ? 0 : restLift());
+    if (shift !== shiftTarget) {
+      const gap = shiftTarget - shift;
+      shift = reducedMotion || Math.abs(gap) < 0.5 ? shiftTarget : shift + gap * SHIFT_EASE;
+      applyShift();
       needsRender = true;
     }
 
