@@ -7,16 +7,18 @@ import {
   getTimelineWidth,
   MIN_YEAR,
   MAX_YEAR,
+  getPixelsPerYear,
 } from "./lib/scale.ts";
 import { renderBars, repositionBars } from "./lib/renderBars.ts";
 import { initScrubber } from "./lib/scrubber.ts";
 import { initTooltip, showTooltip, hideTooltip } from "./lib/tooltip.ts";
 import { initMinimap } from "./lib/minimap.ts";
+import { setupReader } from "./lib/reader.ts";
 import { initZoom } from "./lib/zoom.ts";
 import { ERA_BANDS } from "./lib/eras.ts";
 import { figures } from "./data/timeline.ts";
 import type { Category } from "./data/timeline.ts";
-import { onViewChange, getView } from "./lib/viewState.ts";
+import { onViewChange, getView, setView, type ViewMode } from "./lib/viewState.ts";
 import { initHeader } from "./lib/header.ts";
 import { initLineageView } from "./lib/renderLineage.ts";
 import { initNarrativeView } from "./lib/renderNarrative.ts";
@@ -119,9 +121,43 @@ app.appendChild(headerEl);
 // -- Inject view toggle into header controls --
 initHeader(headerControls);
 
+// -- Orientation and destinations --
+const navigation = el("div", "story-navigation", app);
+const wholeStory = el("button", "story-navigation__button", navigation);
+wholeStory.textContent = "Whole story";
+const eraLabel = el("label", "story-navigation__label", navigation);
+eraLabel.textContent = "Jump to era";
+const eraSelect = el("select", "story-navigation__select", eraLabel);
+const placeholder = el("option", undefined, eraSelect);
+placeholder.value = "";
+placeholder.textContent = "Choose an era…";
+ERA_BANDS.forEach((era, index) => {
+  const option = el("option", undefined, eraSelect);
+  option.value = String(index);
+  option.textContent = era.name;
+});
+const yearLabel = el('label','story-navigation__label',navigation);
+yearLabel.textContent = 'Year (negative = BC)';
+const yearInput = el('input','story-navigation__select',yearLabel);
+yearInput.type = 'number'; yearInput.min = String(MIN_YEAR); yearInput.max = String(MAX_YEAR);
+yearInput.step = '1'; yearInput.style.width = '100px';
+const viewDescription = el("p", "story-description", navigation);
+viewDescription.setAttribute("aria-live", "polite");
+const descriptions = {
+  timeline: "Bars show lifespans and reigns. Select a year to see who was alive. Dates follow this project’s chronology and include estimates.",
+  lineage: "Lines connect generations. Explore family relationships across the chronology; some dates are estimated.",
+  narrative: "Ribbons show interpreted thematic emphasis across the story, not measured quantities. Choose an era to explore.",
+};
+viewDescription.textContent = descriptions.timeline;
+const readerButton = el('button','story-navigation__button',navigation);readerButton.textContent='Explore people';
+const sources = el('details','chronology-sources',app);
+const summary = el('summary',undefined,sources);summary.textContent='About the chronology and estimated dates';
+const sourceText = el('p',undefined,sources);
+sourceText.textContent='Pre-monarchy dates follow James Ussher’s Annals of the World (1650); divided-kingdom dates follow Edwin R. Thiele (1983). These are particular interpretive chronologies, not a universal scholarly consensus. Prophet lifespans and some genealogical dates are estimated. For some kings, reign boundaries stand in for unknown birth/death dates. Narrative ribbon widths are editorial emphasis. Event dates shown here are not the dates the biblical texts were composed.';
+
 // -- Axis row --
 const axisRow = el("div", "axis-row", app);
-el("div", "label-gutter", axisRow);
+const axisGutter = el("div", "label-gutter", axisRow);
 
 const axisViewport = el("div", "axis-viewport", axisRow);
 const axisInner = el("div", "axis-inner", axisViewport);
@@ -297,11 +333,32 @@ const narrativeHandle = initNarrativeView(narrativeView);
 
 // ─── View Switching ──────────────────────────────────────────────
 
+const viewPositions = new Map<ViewMode, { ppy: number; left: number; top: number }>();
+let previousView: ViewMode = getView();
 onViewChange((view) => {
+  viewPositions.set(previousView, {
+    ppy: getPixelsPerYear(), left: mainViewport.scrollLeft, top: mainViewport.scrollTop,
+  });
+  previousView = view;
+  viewDescription.textContent = descriptions[view];
+  eraSelect.value = "";
+  hideTooltip();
   timelineView.style.display = view === "timeline" ? "" : "none";
   lineageView.style.display = view === "lineage" ? "" : "none";
   narrativeView.style.display = view === "narrative" ? "" : "none";
   laneLabels.style.display = view === "timeline" ? "" : "none";
+  axisGutter.style.display = view === "timeline" ? "" : "none";
+  scrubber.hidePanel();
+  const saved = viewPositions.get(view);
+  if (saved) {
+    zoom.restore(saved.ppy, saved.left);
+    mainViewport.scrollTop = saved.top;
+  } else {
+    zoom.fitRange(MIN_YEAR, MAX_YEAR);
+    mainViewport.scrollTop = 0;
+  }
+  axisViewport.scrollLeft = mainViewport.scrollLeft;
+  minimap.syncScroll();
 });
 
 // ─── Minimap ─────────────────────────────────────────────────────
@@ -360,7 +417,13 @@ const renderNarrativeExtra = (list: HTMLElement, year: number) => {
 
 const scrubber = initScrubber(mainViewport, figures, (year) => {
   minimap.setScrubberYear(year);
+  yearInput.value = String(year);
 }, renderNarrativeExtra);
+scrubber.hidePanel();
+
+yearInput.addEventListener('change', () => {
+  if (yearInput.value !== '' && yearInput.validity.valid) scrubber.setYear(Number(yearInput.value));
+});
 
 // ─── Tooltip ─────────────────────────────────────────────────────
 
@@ -384,7 +447,46 @@ const repositionAll = () => {
   minimap.syncScroll();
 };
 
-initZoom(mainViewport, headerControls, repositionAll);
+const zoom = initZoom(mainViewport, headerControls, repositionAll);
+wholeStory.addEventListener("click", () => {
+  scrubber.hidePanel();
+  eraSelect.value = "";
+  zoom.fitRange(MIN_YEAR, MAX_YEAR);
+  mainViewport.scrollTop = 0;
+  axisViewport.scrollLeft = mainViewport.scrollLeft;
+  minimap.syncScroll();
+});
+eraSelect.addEventListener("change", () => {
+  if (!eraSelect.value) return;
+  const era = ERA_BANDS[Number(eraSelect.value)];
+  if (!era) return;
+  scrubber.setYear(Math.round((era.startYear + era.endYear) / 2));
+  scrubber.hidePanel();
+  zoom.fitRange(era.startYear, era.endYear);
+  axisViewport.scrollLeft = mainViewport.scrollLeft;
+  minimap.syncScroll();
+});
+
+setupReader(readerButton,(birth,death)=>{
+  zoom.fitRange(Math.max(MIN_YEAR,birth-30),Math.min(MAX_YEAR,death+30));
+  scrubber.setYear(birth);
+  axisViewport.scrollLeft=mainViewport.scrollLeft;
+});
+const updateAddress = () => {
+  const p=new URLSearchParams();p.set('view',getView());
+  if(eraSelect.value) p.set('era',eraSelect.value);
+  history.replaceState(null,'',`?${p}`);
+};
+onViewChange(updateAddress);
+eraSelect.addEventListener('change',updateAddress);
+wholeStory.addEventListener('click',updateAddress);
+const initialAddress=new URLSearchParams(location.search);
+const initialView=initialAddress.get('view');
+if(initialView==='narrative'||initialView==='lineage') setView(initialView);
+const initialEra=initialAddress.get('era');
+if(initialEra !== null && /^\d$/.test(initialEra) && ERA_BANDS[Number(initialEra)]) {
+  eraSelect.value=initialEra;eraSelect.dispatchEvent(new Event('change'));
+}
 
 // ─── Scroll Sync ─────────────────────────────────────────────────
 

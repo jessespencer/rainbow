@@ -40,8 +40,9 @@ export function zoomTo(
   animated = true,
 ) {
   const sel = select(canvas);
+  sel.interrupt();
   const transform = zoomIdentity.translate(tx, ty).scale(k);
-  if (animated) {
+  if (animated && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     sel.transition().duration(750).call(zoomState.behavior.transform, transform);
   } else {
     sel.call(zoomState.behavior.transform, transform);

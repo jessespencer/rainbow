@@ -62,7 +62,7 @@ export function renderArcs(
     const midX = (sx1 + sx2) / 2;
     const radius = Math.abs(sx2 - sx1) / 2;
 
-    let alpha = binAlpha(bin.count);
+    let alpha = binAlpha(bin.count) * (selectedBin || hoveredBin ? 0.12 : 1);
     let width = binWidth(bin.count);
 
     // Dim or hide non-matching arcs when a book is highlighted or selected
@@ -120,6 +120,7 @@ export function renderBookLabels(
   transform: ScreenTransform,
   highlightBook: number | null,
   selectedBook: number | null,
+  pair: [number, number] | null = null,
 ) {
   const { k, tx, ty } = transform;
   const labelY = layout.baselineY * k + ty + 8;
@@ -148,39 +149,33 @@ export function renderBookLabels(
   ctx.stroke();
   ctx.setLineDash([]);
 
-  // Book labels
   const bookW = layout.bookWidth * k;
-  const fontSize = Math.min(11, Math.max(6, bookW * 0.4));
-
+  const groups = [[0,4,'Law'],[5,16,'History'],[17,21,'Poetry'],[22,38,'Prophets'],[39,42,'Gospels'],[43,43,'Acts'],[44,64,'Letters'],[65,65,'Revelation']] as const;
+  ctx.font = '12px "DM Mono", monospace';
+  ctx.fillStyle = '#A0AEC0';
+  if (bookW < 30) {
+    let right = -Infinity;
+    for (const [first,last,label] of groups) {
+      const x = (layout.books[first].centerX + layout.books[last].centerX) / 2 * k + tx;
+      const w = ctx.measureText(label).width;
+      if (x-w/2 < right+8) continue;
+      ctx.fillText(label, x, labelY); right = x+w/2;
+    }
+  }
   for (const book of layout.books) {
     const cx = book.centerX * k + tx;
-    const isSelected = book.index === selectedBook;
-    const isHighlighted = book.index === highlightBook;
-    const isActive = isSelected || isHighlighted;
-
-    ctx.font = `${isActive ? 'bold ' : ''}${fontSize}px "Fraunces", Georgia, serif`;
-    ctx.fillStyle = isSelected ? '#FFFFFF' : isHighlighted ? '#EDF2F8' : '#A0AEC0';
-
-    // Book tick mark
-    ctx.strokeStyle = isActive ? '#EDF2F8' : 'rgba(255,255,255,0.22)';
-    ctx.lineWidth = isActive ? 2 : 1;
-    ctx.beginPath();
-    ctx.moveTo(cx, sy);
-    ctx.lineTo(cx, sy + 4);
-    ctx.stroke();
-
-    const label = bookW > 60 ? BOOKS[book.index].name : BOOKS[book.index].abbr;
-    ctx.fillText(label, cx, labelY, bookW - 2);
-
-    // Underline selected book
-    if (isSelected) {
-      const textWidth = Math.min(ctx.measureText(label).width, bookW - 2);
-      ctx.strokeStyle = '#FFFFFF';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(cx - textWidth / 2, labelY + fontSize + 2);
-      ctx.lineTo(cx + textWidth / 2, labelY + fontSize + 2);
-      ctx.stroke();
+    const active = book.index === selectedBook || book.index === highlightBook || !!pair?.includes(book.index);
+    ctx.strokeStyle = active ? '#EDF2F8' : '#ffffff38';
+    ctx.beginPath(); ctx.moveTo(cx,sy); ctx.lineTo(cx,sy+4); ctx.stroke();
+    if (bookW >= 30) {
+      ctx.fillStyle = active ? '#fff' : '#A0AEC0';
+      ctx.fillText(bookW > 100 ? BOOKS[book.index].name : BOOKS[book.index].abbr, cx, labelY);
+    }
+    if (active) {
+      const label = BOOKS[book.index].name;
+      const w = ctx.measureText(label).width+16;
+      ctx.fillStyle = '#1A1D27'; ctx.fillRect(cx-w/2,sy-29,w,24);
+      ctx.fillStyle = '#EDF2F8'; ctx.fillText(label,cx,sy-24);
     }
   }
 }

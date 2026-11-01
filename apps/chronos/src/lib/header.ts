@@ -23,6 +23,7 @@ export const initHeader = (controlsSlot: HTMLElement): void => {
     btn.className = "view-toggle__btn";
     btn.textContent = label;
     btn.dataset.view = mode;
+    btn.setAttribute("aria-pressed", String(mode === getView()));
 
     if (mode === getView()) {
       btn.classList.add("view-toggle__btn--active");
@@ -37,6 +38,7 @@ export const initHeader = (controlsSlot: HTMLElement): void => {
 
   onViewChange((view) => {
     for (const btn of buttons) {
+      btn.setAttribute("aria-pressed", String(btn.dataset.view === view));
       btn.classList.toggle(
         "view-toggle__btn--active",
         btn.dataset.view === view,

@@ -10,13 +10,14 @@ export interface HeatmapData {
   dominantCat: Int8Array;
 }
 
-export function buildHeatmapData(bins: Bin[]): HeatmapData {
+export function buildHeatmapData(bins: Bin[], categoryVisible?: boolean[]): HeatmapData {
   const N = 66;
   const matrix = new Float32Array(N * N);
   // Track per-category counts for each cell to find dominant
   const catCounts = new Array(N * N).fill(null).map(() => new Float32Array(8));
 
   for (const bin of bins) {
+    if (categoryVisible && !categoryVisible[bin.category]) continue;
     const key = bin.sourceBook * N + bin.targetBook;
     matrix[key] += bin.count;
     catCounts[key][bin.category] += bin.count;
@@ -47,11 +48,11 @@ export function renderHeatmap(
   heatmap: HeatmapData,
   canvasWidth: number,
   canvasHeight: number,
-  categoryVisible: boolean[],
+  active: { row: number; col: number } | null = null,
 ) {
   const N = 66;
   const padding = 60;
-  const size = Math.min(canvasWidth, canvasHeight) - padding * 2;
+  const size = Math.max(66, Math.min(canvasWidth, canvasHeight) - padding * 2);
   const cellSize = size / N;
   const offsetX = (canvasWidth - size) / 2;
   const offsetY = (canvasHeight - size) / 2;
@@ -68,7 +69,6 @@ export function renderHeatmap(
       if (count === 0) continue;
 
       const cat = heatmap.dominantCat[key];
-      if (!categoryVisible[cat]) continue;
 
       const intensity = Math.log(count + 1) / Math.log(heatmap.maxCount + 1);
       const color = CATEGORY_COLORS[cat];
@@ -85,35 +85,32 @@ export function renderHeatmap(
   }
   ctx.globalAlpha = 1;
 
-  // Row/column labels
-  ctx.font = `${Math.min(9, Math.max(5, cellSize * 0.7))}px sans-serif`;
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle = 'rgba(180,180,190,0.6)';
-
-  // Left labels (rows)
-  ctx.textAlign = 'right';
-  for (let i = 0; i < N; i++) {
-    ctx.fillText(
-      BOOKS[i].abbr,
-      offsetX - 4,
-      offsetY + i * cellSize + cellSize / 2,
-    );
+  if (active) {
+    ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.07;
+    ctx.fillRect(offsetX, offsetY + active.row*cellSize, size, cellSize);
+    ctx.fillRect(offsetX + active.col*cellSize, offsetY, cellSize, size);
+    ctx.globalAlpha = 1; ctx.strokeStyle = '#EDF2F8'; ctx.lineWidth = 2;
+    ctx.strokeRect(offsetX + active.col*cellSize, offsetY+active.row*cellSize,cellSize,cellSize);
+    ctx.fillStyle = '#D8E4F0'; ctx.font = '13px "DM Mono", monospace'; ctx.textAlign = 'center';
+    ctx.fillText(`${BOOKS[active.row].name} ↔ ${BOOKS[active.col].name}`, canvasWidth/2, offsetY+size+28);
   }
-
-  // Top labels (columns)
-  ctx.textAlign = 'left';
-  ctx.save();
-  for (let i = 0; i < N; i++) {
+  // Use readable overview labels when individual book labels would collide.
+  ctx.font = '12px "DM Mono", monospace';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#A0AEC0';
+  const labels = cellSize >= 12
+    ? BOOKS.map((book, index) => ({ label: book.abbr, center: index + 0.5 }))
+    : [{ label: 'OT', center: 19.5 }, { label: 'NT', center: 52.5 }];
+  for (const { label, center } of labels) {
+    ctx.textAlign = 'right';
+    ctx.fillText(label, offsetX - 8, offsetY + center * cellSize);
     ctx.save();
-    ctx.translate(
-      offsetX + i * cellSize + cellSize / 2,
-      offsetY - 4,
-    );
-    ctx.rotate(-Math.PI / 2);
-    ctx.fillText(BOOKS[i].abbr, 0, 0);
+    ctx.translate(offsetX + center * cellSize, offsetY - 8);
+    if (cellSize >= 12) { ctx.rotate(-Math.PI / 2); ctx.textAlign = 'left'; }
+    else ctx.textAlign = 'center';
+    ctx.fillText(label, 0, 0);
     ctx.restore();
   }
-  ctx.restore();
 
   // OT/NT divider lines
   const otEnd = 39;
@@ -138,7 +135,7 @@ export function heatmapHitTest(
 ): { row: number; col: number } | null {
   const N = 66;
   const padding = 60;
-  const size = Math.min(canvasWidth, canvasHeight) - padding * 2;
+  const size = Math.max(66, Math.min(canvasWidth, canvasHeight) - padding * 2);
   const cellSize = size / N;
   const offsetX = (canvasWidth - size) / 2;
   const offsetY = (canvasHeight - size) / 2;

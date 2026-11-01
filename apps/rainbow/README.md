@@ -2,23 +2,25 @@
 
 > *63,000 threads woven through 66 books. Every arc a conversation across millennia.*
 
-Rainbow Reference is an interactive visualization of the Bible's internal cross-reference network — the hidden web of allusions, callbacks, prophecies, and echoes that bind scripture together. Inspired by [Chris Harrison's](https://www.chrisharrison.net/index.php/visualizations/BibleViz) landmark arc diagram, this app brings that structure to life as an explorable, filterable, living diagram.
+Rainbow Reference is an interactive exploration of connections across the Bible, inspired by [Chris Harrison's](https://www.chrisharrison.net/index.php/visualizations/BibleViz) arc diagram.
 
-Each arc represents a documented cross-reference. Each color a theological thread. Together, they reveal something remarkable: the Bible is not a collection of independent texts, but a single document in deep conversation with itself across thousands of years of authorship.
+**The current visualization uses 63,779 synthetic demo pairs generated with a seeded algorithm. These are not documented scriptural cross-references.** Each rendered arc aggregates demo pairs by book pair and theme. The separately curated **Creation & light** journey contains verified passage text and editorial explanations; it does not alter the graph counts.
 
 ---
 
 ## ✨ Features
 
-### Two Ways to See the Whole
+### Three Ways to Explore
 
-**Arc View** renders the canonical Bible as a single horizontal axis — Genesis at the left, Revelation at the right — with semi-circular arcs leaping between connected verses. The density of arcs over Isaiah, Psalms, and the Gospels is immediately visible. So is the relative silence of certain books. The diagram doesn't editorialize; it simply shows what's there.
+**Arc View** groups demo connections by book pair and theme, with group labels at overview scale and book names as space permits.
 
-**Heatmap View** collapses that same data into a 66×66 matrix, where each cell's intensity reflects the volume of cross-references between two books. It's the difference between watching individual conversations and seeing a social graph: different information, equally revealing.
+**Heatmap View** shows counts between books in a 66×66 matrix. Filters recalculate counts, dominant themes, and logarithmic brightness. Selecting a cell opens its reference list.
+
+**Galaxy View** places verses in a 3D network. Select a verse to isolate its neighborhood, or use **Explore references** for a readable alternative. Galaxy loads on demand and pauses while hidden.
 
 ### 8 Theological Categories
 
-Every cross-reference is classified into one of eight categories, each with its own color in the spectrum:
+The synthetic generator assigns each demo pair to one of eight thematic categories. These assignments are illustrative, not verified interpretation:
 
 | Color | Category | What it tracks |
 |-------|----------|----------------|
@@ -36,8 +38,11 @@ Every cross-reference is classified into one of eight categories, each with its 
 - **Book Search** — type any book name or common abbreviation to instantly highlight and filter to its connections
 - **Click-to-Filter** — click any book label to isolate just its arcs; click again to release
 - **Hover Tooltips** — pause over any arc for verse references and category details
-- **Side Panel** — click an arc to open a full detail view: curated sample references, connection counts, and the theological thread it belongs to
-- **Shuffle Mode** — randomly surface a cross-reference pair, ideal for discovery and devotional use
+- **Side Panel** — click an arc to open a full detail view: demo reference pairs and connection counts
+- **Shuffle Mode** — randomly surface a synthetic demo pair
+- **Discover a connection** — three sourced readings with passage text, explanations, highlighted endpoints, and links to Chronos
+- **Explore references** — searchable, keyboard-accessible books, pairs, and verses
+- **Share and retrace** — URLs restore view and selection; Back retraces exploration
 - **Preset Views** — jump instantly to Fit All, Old Testament only, or New Testament only
 
 ### Performance Architecture
@@ -56,7 +61,7 @@ With over 63,000 reference pairs, naive DOM rendering isn't an option. Rainbow R
 ```
 rainbow-reference/
 ├── public/
-│   └── references.json          # Pre-built cross-reference dataset (63,000+ pairs)
+│   └── references.json          # Synthetic demo dataset (63,779 pairs)
 ├── src/
 │   ├── main.ts                  # App state, event wiring, animation loop
 │   ├── style.css                # Dark theme, CSS design tokens
@@ -74,7 +79,7 @@ rainbow-reference/
 ├── scripts/
 │   ├── download-data.ts         # Download raw cross-reference data from openbible.info
 │   ├── parse-crossrefs.ts       # Parse TSV into JSON with theme classification
-│   └── generateReferences.ts    # Categorize and emit references.json
+│   └── generateReferences.ts    # Generate seeded synthetic references.json
 ├── index.html
 ├── vite.config.ts
 └── tsconfig.json
@@ -113,14 +118,14 @@ npm run build
 
 ### Data Pipeline
 
-The cross-reference dataset is pre-built and committed to `public/references.json`. If you want to regenerate it from source:
+The app loads `public/references.json`. Its contents match the output of `scripts/generateReferences.ts` byte for byte (verified October 16, 2026). That script generates synthetic pairs with seed 42; it does not import OpenBible data.
 
 ```bash
-npm run build:data   # Fetch raw data from openbible.info
-npm run generate     # Parse, classify, and write references.json
+pnpm --filter rainbow generate    # Regenerate the synthetic demo dataset
+pnpm --filter rainbow build:data  # Separate OpenBible download/parse pipeline
 ```
 
-The raw data comes from the [OpenBible.info cross-reference dataset](https://www.openbible.info/labs/cross-references/), which aggregates references from multiple scholarly sources. The classification step assigns each pair to one of the eight theological categories based on keyword analysis and book-level heuristics.
+The OpenBible pipeline writes `public/data/cross-references.json` in a different format. The current app does not load that file. Switching to sourced graph data requires an explicit adapter and provenance review; running `build:data` does not replace the active graph.
 
 ---
 
@@ -144,7 +149,11 @@ Rainbow Reference is part of a Bible visualization ecosystem alongside [Chronos]
 
 ## 📚 Data Source & Attribution
 
-Cross-reference data: [OpenBible.info](https://www.openbible.info/labs/cross-references/) — compiled by Chris Kimball from *Treasury of Scripture Knowledge*, *The New Treasury of Scripture Knowledge*, and other scholarly sources. Used under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+Active graph: synthetic demo data from this repository's seeded generator. Do not cite its pairs or counts as evidence of actual textual relationships.
+
+Curated reading text: World English Bible Classic, public domain, from [Genesis 1](https://ebible.org/eng-web/GEN01.htm), [John 1](https://ebible.org/eng-web/JHN01.htm), and [2 Corinthians 4](https://ebible.org/eng-web/2CO04.htm). Emphasis and explanations are editorial.
+
+A separate, currently unused importer targets [OpenBible.info](https://www.openbible.info/labs/cross-references/). Verify its dataset and attribution before integrating it into the active graph.
 
 Arc diagram concept originally visualized by [Chris Harrison](https://www.chrisharrison.net/index.php/visualizations/BibleViz) at Carnegie Mellon University.
 

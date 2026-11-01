@@ -8,7 +8,9 @@
     "download": "tsx scripts/download-data.ts",
     "parse": "tsx scripts/parse-crossrefs.ts",
     "build:data": "npm run download && npm run parse",
-    "generate": "tsx scripts/generateReferences.ts"
+    "generate": "tsx scripts/generateReferences.ts",
+    "typecheck": "tsc -p tsconfig.app.json",
+    "test:experience": "node --require tsx/cjs scripts/test-experience.cjs"
   },
   "keywords": [],
   "author": "",

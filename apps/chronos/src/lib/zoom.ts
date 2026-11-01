@@ -9,9 +9,10 @@ import {
   getDefaultPPY,
   yearToX,
   xToYear,
+  MIN_YEAR,
+  MAX_YEAR,
 } from "./scale.ts";
 
-const MIN_PPY = 1;
 const MAX_PPY = 16;
 const STEP_FACTOR = Math.pow(2, 1 / 4); // ~1.19x per tick
 
@@ -20,6 +21,8 @@ const clamp = (v: number, lo: number, hi: number) =>
 
 export interface ZoomHandle {
   getZoomPercent: () => number;
+  fitRange: (start: number, end: number) => void;
+  restore: (ppy: number, left: number) => void;
 }
 
 export const initZoom = (
@@ -34,7 +37,7 @@ export const initZoom = (
     anchorYear: number,
     anchorViewportX: number,
   ) => {
-    const clamped = clamp(newPpy, MIN_PPY, MAX_PPY);
+    const clamped = clamp(newPpy, Math.max(0.001, scrollContainer.clientWidth / (MAX_YEAR - MIN_YEAR)), MAX_PPY);
     if (clamped === getPixelsPerYear()) return;
 
     setPixelsPerYear(clamped);
@@ -127,6 +130,20 @@ export const initZoom = (
   });
 
   return {
+    fitRange: (start, end) => {
+      const lo = Math.max(MIN_YEAR, Math.min(start, end));
+      const hi = Math.min(MAX_YEAR, Math.max(start, end));
+      if (hi <= lo) return;
+      const whole = lo === MIN_YEAR && hi === MAX_YEAR;
+      const padding = whole ? 0 : 32;
+      applyZoom((scrollContainer.clientWidth - padding * 2) / (hi - lo), lo, padding);
+      // Navigation must also work when the requested scale is unchanged.
+      scrollContainer.scrollLeft = Math.max(0, yearToX(lo) - padding);
+    },
+    restore: (ppy, left) => {
+      applyZoom(ppy, MIN_YEAR, 0);
+      scrollContainer.scrollLeft = left;
+    },
     getZoomPercent: () =>
       Math.round((getPixelsPerYear() / getDefaultPPY()) * 100),
   };

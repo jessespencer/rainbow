@@ -77,10 +77,15 @@ const buildPanel = () => {
   closeBtn.textContent = "×";
   closeBtn.addEventListener("click", () => {
     panel.classList.add("panel--hidden");
+    panel.inert = true;
   });
   topRow.appendChild(closeBtn);
 
   panel.appendChild(topRow);
+  const provenance = document.createElement('p');
+  provenance.className = 'reader-note'; provenance.style.padding='0 16px 12px';
+  provenance.textContent='Project chronology, including estimated lifespans and reign boundaries. See About the chronology for sources and assumptions.';
+  panel.appendChild(provenance);
 
   const list = document.createElement("div");
   list.className = "panel__list";
@@ -189,6 +194,7 @@ const highlightBars = (container: HTMLElement, aliveIds: Set<string>) => {
 // ─── Main init ───────────────────────────────────────────────────
 
 export interface ScrubberHandle {
+  hidePanel: () => void;
   setYear: (year: number) => void;
   getCurrentYear: () => number;
   /** Reposition the scrubber line without recomputing the panel (for zoom). */
@@ -231,6 +237,7 @@ export const initScrubber = (
     currentYear = clamp(Math.round(year), MIN_YEAR, MAX_YEAR);
     positionScrubber(currentYear);
     panel.classList.remove("panel--hidden");
+    panel.inert = false;
 
     const alive = aliveAt(figures, currentYear);
     const aliveIds = new Set(alive.map((f) => f.id));
@@ -285,6 +292,10 @@ export const initScrubber = (
   scrollContainer.addEventListener("pointercancel", stopDrag);
 
   return {
+    hidePanel: () => {
+      panel.classList.add("panel--hidden");
+      panel.inert = true;
+    },
     setYear: update,
     getCurrentYear: () => currentYear,
     reposition: () => positionScrubber(currentYear),

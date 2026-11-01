@@ -67,6 +67,7 @@ export const initTooltip = (
     html += `<span class="tooltip__ref">${f.scriptureRef}</span>`;
     html += `<p class="tooltip__blurb">${f.blurb}</p>`;
 
+    html += '<p class="tooltip__blurb">Project chronology; some dates are estimated. Reign boundaries may stand in for unknown lifespans. See About the chronology.</p>';
     showTooltip(html, x, y);
   };
 

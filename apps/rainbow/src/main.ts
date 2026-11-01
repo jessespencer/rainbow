@@ -9,6 +9,9 @@ import { buildHeatmapData, renderHeatmap, heatmapHitTest, type HeatmapData } fro
 import { showBinTooltip, showHeatmapTooltip, hideTooltip, showSidePanel, hideSidePanel } from './lib/tooltip';
 import { setupZoom, zoomTo, type ZoomState } from './lib/zoom';
 import type { Bin, Reference, WorkerResult } from './lib/dataWorker';
+import { setupDiscovery } from './lib/discovery';
+import { setupExplorer } from './lib/explorer';
+import { readContext, contextSearch, type ExploreContext } from './lib/context';
 import type { GalaxyHandle, ColorMode } from './lib/galaxy';
 
 // State
@@ -29,6 +32,14 @@ let selectedBin: Bin | null = null;
 let viewMode: 'arcs' | 'heatmap' | 'galaxy' = 'arcs';
 let galaxy: GalaxyHandle | null = null;
 let galaxyLoading = false;
+let galaxyPromise: Promise<void> | null = null;
+let activePair: [number, number] | null = null;
+let activeVerse: [number, number, number] | null = null;
+let heatHover: { row: number; col: number } | null = null;
+let restoring = false;
+let contextReady = false;
+let contextDepth = Number.isInteger(history.state?.explorationDepth) ? history.state.explorationDepth : 0;
+let restorationVersion = 0;
 let shuffleActive = false;
 let shuffleRef: Reference | null = null;
 let animFrame: number | null = null;
@@ -71,7 +82,7 @@ function render() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   if (viewMode === 'heatmap') {
-    renderHeatmap(ctx, heatmapData, width, height, categoryVisible);
+    renderHeatmap(ctx, heatmapData, width, height, heatHover ?? (activePair ? {row:activePair[0],col:activePair[1]} : null));
   } else {
     const transform: ScreenTransform = { k: zoomState.k, tx: zoomState.tx, ty: zoomState.ty };
 
@@ -93,7 +104,7 @@ function render() {
       }, transform);
     }
 
-    renderBookLabels(ctx, layout, transform, highlightBook, selectedBook);
+    renderBookLabels(ctx, layout, transform, highlightBook, selectedBook, activePair ?? (hoveredBin ? [hoveredBin.sourceBook, hoveredBin.targetBook] : null));
   }
 
   ctx.restore();
@@ -240,6 +251,131 @@ function debouncedRender() {
   filterDebounce = setTimeout(() => { scheduleRender(); }, 150);
 }
 
+function currentContext(): ExploreContext {
+  return { view: viewMode, book: selectedBook, pair: activePair, verse: activeVerse, category: focusedCategory };
+}
+function recordContext() {
+  if (!contextReady) return;
+  const context = currentContext();
+  const search = contextSearch(context);
+  if (!restoring && search !== location.search) {
+    contextDepth++;
+    history.pushState({ explorationDepth: contextDepth }, '', search);
+  }
+  const labels = [viewMode === 'arcs' ? 'Arcs' : viewMode === 'heatmap' ? 'Heatmap' : 'Galaxy'];
+  if (selectedBook !== null) labels.push(BOOKS[selectedBook].name);
+  if (activePair) labels.push(`${BOOKS[activePair[0]].name} ↔ ${BOOKS[activePair[1]].name}`);
+  if (activeVerse) labels.push(`${BOOKS[activeVerse[0]].name} ${activeVerse[1]}:${activeVerse[2]}`);
+  if (focusedCategory !== null && viewMode !== 'galaxy') labels.push(CATEGORIES[focusedCategory].label);
+  document.getElementById('exploration-location')!.textContent = labels.join(' › ');
+  (document.getElementById('exploration-back') as HTMLButtonElement).disabled = contextDepth <= 0;
+}
+function selectBook(book: number) {
+  selectedBook = book; activePair = null; activeVerse = null; selectedBin = null;
+  highlightBook = null;
+  hideSidePanel();
+  if (viewMode === 'galaxy') galaxy?.focusBook(book);
+  updateClearButton(); scheduleRender(); recordContext();
+}
+function selectPair(a: number, b: number) {
+  activePair = [a,b]; activeVerse = null;
+  const matching = bins.filter(bin => categoryVisible[bin.category] &&
+    ((bin.sourceBook === a && bin.targetBook === b) || (bin.sourceBook === b && bin.targetBook === a)));
+  selectedBin = matching.slice().sort((x,y)=>y.count-x.count)[0] ?? null;
+  const panel = document.getElementById('side-panel')!;
+  const content = document.getElementById('side-panel-content')!;
+  content.replaceChildren();
+  const heading = document.createElement('h3'); heading.className = 'sp-title';
+  heading.textContent = `${BOOKS[a].name} ↔ ${BOOKS[b].name}`;
+  const count = matching.reduce((n,bin)=>n+bin.count,0);
+  const meta = document.createElement('p'); meta.className = 'sp-meta';
+  meta.textContent = `${count.toLocaleString()} connections in the selected themes. Choose a verse to explore its neighborhood in Galaxy.`;
+  content.append(heading,meta);
+  const indices = matching.flatMap(bin=>bin.refIndices);
+  let shown = 0;
+  const more = document.createElement('button'); more.className = 'sp-show-more'; more.textContent = 'Show more references';
+  const append = () => {
+    const keepFocus = document.activeElement === more;
+    const priorCount = content.querySelectorAll('.sp-link').length;
+    more.remove();
+    indices.slice(shown,shown+30).forEach(index=>{
+      const ref = references[index];
+      const row = document.createElement('div'); row.className = 'reference-pair';
+      for (const verse of [ref.s,ref.t]) {
+        const button = document.createElement('button'); button.className = 'sp-link';
+        button.textContent = `${BOOKS[verse[0]].name} ${verse[1]}:${verse[2]}`;
+        button.addEventListener('click',()=>openVerse(verse)); row.append(button);
+      }
+      content.append(row);
+    });
+    shown += 30;
+    if(shown<indices.length) content.append(more);
+    if (keepFocus) content.querySelectorAll<HTMLButtonElement>('.sp-link')[priorCount]?.focus();
+  };
+  more.addEventListener('click',append); append();
+  const source = document.createElement('p'); source.className = 'sp-hint';
+  source.textContent = 'Synthetic demo connections generated for visual exploration. These pairs and theme assignments are not verified scriptural cross-references. Discover a connection contains separately sourced readings.';
+  content.prepend(source);
+  panel.classList.remove('hidden');
+  updateClearButton(); scheduleRender(); recordContext();
+}
+async function openVerse(verse: [number,number,number]) {
+  activeVerse = verse; selectedBook = verse[0]; activePair = null;
+  document.getElementById('view-galaxy')!.click();
+  await ensureGalaxy();
+  const found = viewMode !== 'galaxy' || !galaxy || galaxy.focusVerse(verse);
+  recordContext();
+  if (!found) document.getElementById('exploration-location')!.textContent = 'This verse is not in the demo graph. Choose another verse from Explore references.';
+}
+async function restoreContext() {
+  const version = ++restorationVersion;
+  restoring = true;
+  const c = readContext(location.search);
+  focusedCategory = c.category;
+  categoryVisible = CATEGORIES.map((_,i)=>c.category === null || c.category === i);
+  document.querySelectorAll<HTMLButtonElement>('.cat-pill').forEach((b,i)=>{
+    b.classList.toggle('focused',i === c.category);
+    b.classList.toggle('inactive',c.category !== null && i !== c.category);
+    b.setAttribute('aria-pressed',String(i === c.category));
+  });
+  selectedBook = c.book; activePair = c.pair; activeVerse = c.verse; selectedBin = null;
+  refreshHeatmap();
+  document.getElementById(`view-${c.view}`)!.click();
+  if (c.view === 'galaxy') {
+    await ensureGalaxy();
+    if (version !== restorationVersion) return;
+    if (c.verse) galaxy?.focusVerse(c.verse);
+    else if (c.pair && galaxy) { galaxy.focusPair(...c.pair); selectPair(...c.pair); syncFocusedLayers(); }
+    else if (c.book !== null) galaxy?.focusBook(c.book);
+    else galaxy?.clearSelection();
+  } else if (c.pair) selectPair(...c.pair);
+  updateClearButton(); scheduleRender(); recordContext(); restoring = false;
+}
+
+function refreshHeatmap() {
+  heatmapData = buildHeatmapData(bins, categoryVisible);
+  hideTooltip();
+  const legend = document.getElementById('heatmap-scale')!;
+  legend.textContent = heatmapData.maxCount > 0
+    ? `Fewer connections → ${heatmapData.maxCount.toLocaleString()} (brightest)`
+    : 'No connections in this selection';
+}
+
+function updateViewContext() {
+  document.getElementById("app")!.classList.toggle("heatmap-mode", viewMode === "heatmap");
+  hideTooltip();
+  hideSidePanel();
+  const descriptions = {
+    arcs: 'Each arc groups synthetic demo connections between two books within a theme. Select a book or arc to explore.',
+    heatmap: 'Each cell counts connections between two books. Color shows the leading theme; brightness shows the count on a logarithmic scale. Filters recalculate counts and brightness. OT/NT group the books when space is tight; use Explore references for precise selection.',
+    galaxy: 'Each star is a verse in the demo graph. Select a star to explore; drag to orbit and pinch or scroll to zoom.',
+  };
+  document.getElementById('view-description')!.textContent = descriptions[viewMode];
+  document.getElementById('heatmap-legend')!.hidden = viewMode !== 'heatmap';
+  galaxy?.setActive(viewMode === 'galaxy');
+  recordContext();
+}
+
 // UI Setup
 function setupFilters() {
   const container = document.getElementById('category-filters')!;
@@ -248,6 +384,8 @@ function setupFilters() {
   CATEGORIES.forEach((cat, i) => {
     const btn = document.createElement('button');
     btn.className = 'cat-pill';
+    btn.setAttribute('aria-pressed', 'false');
+    btn.title = `Show only ${cat.label}; select again to show all themes`;
     btn.innerHTML = `<span class="cat-dot" style="background:${cat.color}"></span>${cat.label}`;
     btn.addEventListener('click', () => {
       if (focusedCategory === i) {
@@ -261,9 +399,13 @@ function setupFilters() {
       }
       // Update button styles
       buttons.forEach((b, j) => {
+        b.setAttribute('aria-pressed', String(focusedCategory === j));
         b.classList.toggle('focused', focusedCategory === j);
         b.classList.toggle('inactive', focusedCategory !== null && focusedCategory !== j);
       });
+      refreshHeatmap();
+      if (activePair) selectPair(...activePair);
+      recordContext();
       updateClearButton();
       scheduleRender();
     });
@@ -277,18 +419,23 @@ function setupFilters() {
     focusedCategory = null;
     categoryVisible = CATEGORIES.map(() => true);
     selectedBook = null;
+    galaxy?.clearSelection();
+    activePair = null; activeVerse = null;
     selectedBin = null;
     highlightBook = null;
     hideSidePanel();
     buttons.forEach(b => {
       b.classList.remove('focused', 'inactive');
+      b.setAttribute('aria-pressed', 'false');
     });
+    refreshHeatmap();
+    recordContext();
     updateClearButton();
     scheduleRender();
   });
 
   updateClearButton = () => {
-    const hasFilter = focusedCategory !== null || selectedBook !== null || selectedBin !== null;
+    const hasFilter = focusedCategory !== null || selectedBook !== null || selectedBin !== null || activePair !== null || activeVerse !== null;
     clearBtn.classList.toggle('visible', hasFilter);
   };
 }
@@ -358,39 +505,59 @@ function setupViewToggle() {
   const container = document.getElementById('app')!;
 
   const setActive = (active: HTMLElement) => {
-    [arcBtn, heatBtn, uniBtn].forEach((b) => b.classList.toggle('active', b === active));
+    [arcBtn, heatBtn, uniBtn].forEach((b) => {
+      b.classList.toggle('active', b === active);
+      b.setAttribute('aria-pressed', String(b === active));
+    });
   };
+
+  setActive(arcBtn);
 
   arcBtn.addEventListener('click', () => {
     viewMode = 'arcs';
+    updateViewContext();
     setActive(arcBtn);
     container.classList.remove('galaxy-mode');
+    if (activePair) selectPair(...activePair);
     scheduleRender();
   });
 
   heatBtn.addEventListener('click', () => {
     viewMode = 'heatmap';
+    updateViewContext();
     setActive(heatBtn);
     container.classList.remove('galaxy-mode');
+    if (activePair) selectPair(...activePair);
     scheduleRender();
   });
 
   uniBtn.addEventListener('click', async () => {
     viewMode = 'galaxy';
+    updateViewContext();
     setActive(uniBtn);
     container.classList.add('galaxy-mode');
-    const firstOpen = !galaxy;
     await ensureGalaxy();
+    galaxy?.setActive(viewMode === 'galaxy');
+    if (viewMode !== 'galaxy') return;
     galaxy?.resize();
     // first open plays the built-in fly-in intro; only re-frame on return
-    if (!firstOpen) galaxy?.fit();
+    if (activeVerse) galaxy?.focusVerse(activeVerse);
+    else if (activePair && galaxy) { galaxy.focusPair(...activePair); selectPair(...activePair); syncFocusedLayers(); }
+    else if (selectedBook !== null) galaxy?.focusBook(selectedBook);
   });
 }
 
 async function ensureGalaxy() {
-  if (galaxy || galaxyLoading || references.length === 0) return;
+  if (galaxy || references.length === 0) return;
+  if (galaxyPromise) return galaxyPromise;
+  galaxyPromise = loadGalaxy().finally(() => { galaxyPromise = null; });
+  return galaxyPromise;
+}
+async function loadGalaxy() {
   galaxyLoading = true;
   const host = document.getElementById('galaxy-container')!;
+  try {
+  host.replaceChildren();
   const { createGalaxy } = await import('./lib/galaxy');
   galaxy = createGalaxy(host, references, {
     onHover: (info, screen) => {
@@ -405,15 +572,19 @@ async function ensureGalaxy() {
     onSelect: (info, neighbours) => {
       const panel = document.getElementById('side-panel')!;
       const content = document.getElementById('side-panel-content')!;
-      if (!info) { panel.classList.add('hidden'); return; }
+      if (!info) { activeVerse = null; panel.classList.add('hidden'); recordContext(); return; }
+      activeVerse = [info.book,info.chapter,info.verse];
+      selectedBook = info.book; activePair = null;
+      syncFocusedLayers();
+      recordContext();
       const shown = neighbours.slice(0, 80);
       const items = shown.map((nb) =>
         `<button class="sp-link" data-id="${nb.id}">` +
         `<span class="sp-link-ref">${nb.label}</span>` +
         `<span class="sp-link-deg">${nb.degree}</span></button>`).join('');
       content.innerHTML =
-        `<h3 class="sp-title">${info.label}</h3>` +
-        `<p class="sp-meta">${info.degree} cross-reference${info.degree === 1 ? '' : 's'} — ` +
+        `<h3 class="sp-title">${info.label}</h3><p class="sp-hint">Synthetic demo connections · not verified cross-references.</p>` +
+        `<p class="sp-meta">${info.degree} demo connection${info.degree === 1 ? '' : 's'} — ` +
         `lit in white. Click any verse below to fly to it.</p>` +
         `<div class="sp-neighbours">${items}</div>` +
         (neighbours.length > shown.length
@@ -425,7 +596,32 @@ async function ensureGalaxy() {
     },
   });
   galaxyLoading = false;
+  document.getElementById('app')!.classList.remove('galaxy-unavailable');
   setupGalaxyPanel();
+  galaxy.setActive(viewMode === 'galaxy');
+  } catch {
+    document.getElementById('app')!.classList.add('galaxy-unavailable');
+    host.replaceChildren();
+    const message = document.createElement('p'); message.className = 'view-error';
+    message.textContent = 'The 3D view could not start on this device. Explore references offers the same data as a readable list, or return to Arcs.';
+    const retry = document.createElement('button'); retry.className = 'canvas-btn'; retry.textContent = 'Retry 3D';
+    retry.addEventListener('click', async () => {
+      await ensureGalaxy();
+      if (viewMode !== 'galaxy' || !galaxy) return;
+      if (activeVerse) galaxy.focusVerse(activeVerse);
+      else if (activePair) { galaxy.focusPair(...activePair); selectPair(...activePair); syncFocusedLayers(); }
+      else if (selectedBook !== null) galaxy.focusBook(selectedBook);
+      document.getElementById('view-galaxy')!.focus();
+    });
+    host.append(message,retry);
+  } finally { galaxyLoading = false; }
+}
+
+function syncFocusedLayers() {
+  document.querySelectorAll('[data-layer="edges"], [data-layer="bridges"]').forEach(row => {
+    row.classList.remove('active'); row.setAttribute('aria-checked','false');
+    row.querySelector('.u-switch')?.classList.remove('on');
+  });
 }
 
 function setupGalaxyPanel() {
@@ -462,12 +658,16 @@ function setupGalaxyPanel() {
     setRow(labelsRow, on);
     galaxy!.setShowLabels(on);
   });
-  fitBtn.addEventListener('click', () => galaxy!.fit());
+  fitBtn.addEventListener('click', () => { galaxy!.fit(); activeVerse = null; activePair = null; selectedBook = null; hideSidePanel(); recordContext(); });
 
   const wireSeg = (seg: HTMLElement, apply: (mode: string) => void) => {
     seg.querySelectorAll('button').forEach((btn) => {
+      btn.setAttribute('aria-pressed', String(btn.classList.contains('on')));
       btn.addEventListener('click', () => {
-        seg.querySelectorAll('button').forEach((b) => b.classList.remove('on'));
+        seg.querySelectorAll('button').forEach((b) => {
+          b.classList.remove('on');
+          b.setAttribute('aria-pressed', String(b === btn));
+        });
         btn.classList.add('on');
         apply(btn.dataset.mode!);
       });
@@ -479,37 +679,32 @@ function setupGalaxyPanel() {
 
 function setupSearch() {
   const input = document.getElementById('book-search') as HTMLInputElement;
-  input.addEventListener('input', () => {
-    const query = input.value.trim().toLowerCase();
-    if (!query) {
-      highlightBook = null;
-      scheduleRender();
-      return;
-    }
-    const idx = BOOKS.findIndex(b =>
-      b.name.toLowerCase().startsWith(query) ||
-      b.abbr.toLowerCase().startsWith(query)
-    );
-    highlightBook = idx >= 0 ? idx : null;
-    scheduleRender();
+  const results = document.createElement('div'); results.id = 'book-results'; results.hidden = true;
+  results.setAttribute('role','group'); results.setAttribute('aria-label','Matching books');
+  input.after(results);
+  input.addEventListener('input',()=>{
+    results.replaceChildren();
+    const query = input.value.trim().toLowerCase(); results.hidden = !query;
+    if(!query) return;
+    const matches = BOOKS.map((book,index)=>({...book,index})).filter(book=>book.name.toLowerCase().includes(query)||book.abbr.toLowerCase().startsWith(query));
+    if(!matches.length) { results.textContent = 'No books found. Try Genesis or John.'; return; }
+    matches.forEach(book=>{
+      const b = document.createElement('button'); b.textContent = book.name;
+      b.addEventListener('click',()=>{ selectBook(book.index); input.value = book.name; results.hidden = true; input.focus(); });
+      results.append(b);
+    });
   });
-
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && highlightBook !== null) {
-      selectedBook = highlightBook;
-      highlightBook = null;
-      selectedBin = null;
-      hideSidePanel();
-      input.value = '';
-      input.blur();
-      updateClearButton();
-      scheduleRender();
-    }
+  input.addEventListener('keydown',e=>{
+    if(e.key === 'ArrowDown') { e.preventDefault(); results.querySelector('button')?.focus(); }
+    if(e.key === 'Enter') { e.preventDefault(); results.querySelector('button')?.click(); }
+    if(e.key === 'Escape') { e.stopPropagation(); results.hidden = true; }
   });
+  results.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();results.hidden=true;input.focus();}});
+  document.addEventListener('click',e=>{ if(e.target!==input && !results.contains(e.target as Node)) results.hidden=true; });
 }
 
 function setupShuffle() {
-  const overlay = document.getElementById('shuffle-overlay')!;
+  const overlay = document.getElementById('shuffle-overlay') as HTMLDialogElement;
   const verse1 = document.getElementById('shuffle-verse-1')!;
   const verse2 = document.getElementById('shuffle-verse-2')!;
   const btn = document.getElementById('btn-shuffle')!;
@@ -530,6 +725,8 @@ function setupShuffle() {
     verse2.textContent = tgtName;
 
     overlay.classList.remove('hidden');
+    if (!overlay.open) overlay.showModal();
+    btnAgain.focus();
     scheduleRender();
   }
 
@@ -540,9 +737,12 @@ function setupShuffle() {
     shuffleActive = false;
     shuffleRef = null;
     overlay.classList.add('hidden');
+    overlay.close(); btn.focus();
     scheduleRender();
   }
 
+  overlay.addEventListener('cancel', e => { e.preventDefault(); dismissShuffle(); });
+  overlay.addEventListener('keydown', e => { if(e.key === 'Escape') e.stopPropagation(); });
   btn.addEventListener('click', doShuffle);
   btnAgain.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -565,13 +765,15 @@ function setupShuffle() {
 function setupKeyboard() {
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
+    hideTooltip();
+    if (shuffleActive) { document.getElementById('btn-shuffle-exit')!.click(); return; }
     // Don't intercept Escape when typing in an input
     if (document.activeElement instanceof HTMLInputElement) {
       (document.activeElement as HTMLInputElement).blur();
       return;
     }
 
-    const hasFilter = focusedCategory !== null || selectedBook !== null || selectedBin !== null;
+    const hasFilter = focusedCategory !== null || selectedBook !== null || selectedBin !== null || activePair !== null || activeVerse !== null;
     if (!hasFilter) return;
 
     // Clear all filters (same as clear button)
@@ -588,6 +790,7 @@ function setupInteraction() {
 
     if (viewMode === 'heatmap') {
       const hit = heatmapHitTest(screenX, screenY, width, height);
+      heatHover = hit; scheduleRender();
       if (hit) {
         const key = hit.row * 66 + hit.col;
         const count = heatmapData.matrix[key];
@@ -650,6 +853,7 @@ function setupInteraction() {
   });
 
   canvas.addEventListener('mouseleave', () => {
+    heatHover = null;
     hoveredBin = null;
     highlightBook = null;
     hideTooltip();
@@ -659,7 +863,12 @@ function setupInteraction() {
 
   // Click
   canvas.addEventListener('click', (e) => {
-    if (viewMode === 'heatmap') return;
+    if (viewMode === 'heatmap') {
+      const rect = canvas.getBoundingClientRect();
+      const hit = heatmapHitTest(e.clientX-rect.left,e.clientY-rect.top,width,height);
+      if(hit) selectPair(hit.row,hit.col);
+      return;
+    }
 
     const rect = canvas.getBoundingClientRect();
     const screenX = e.clientX - rect.left;
@@ -680,6 +889,8 @@ function setupInteraction() {
       if (hitBook !== null) {
         // Toggle: click same book to deselect, different book to switch
         selectedBook = selectedBook === hitBook ? null : hitBook;
+        activePair = null; activeVerse = null;
+        recordContext();
         selectedBin = null;
         hideSidePanel();
         updateClearButton();
@@ -693,16 +904,24 @@ function setupInteraction() {
 
     if (hit) {
       selectedBin = hit;
-      showSidePanel(hit, references);
+      selectPair(hit.sourceBook,hit.targetBook);
       updateClearButton();
       scheduleRender();
     } else {
       selectedBin = null;
-      selectedBook = null;
+      selectedBook = null; activePair = null; activeVerse = null;
+      recordContext();
       hideSidePanel();
       updateClearButton();
       scheduleRender();
     }
+  });
+
+  const expandReading = document.getElementById('side-panel-expand')!;
+  expandReading.addEventListener('click', () => {
+    const expanded = document.getElementById('side-panel')!.classList.toggle('reading-expanded');
+    expandReading.setAttribute('aria-expanded', String(expanded));
+    expandReading.textContent = expanded ? 'Show more of the map' : 'Expand reading';
   });
 
   // Side panel close
@@ -710,6 +929,8 @@ function setupInteraction() {
     selectedBin = null;
     hideSidePanel();
     galaxy?.clearSelection();
+    activePair = null; activeVerse = null; recordContext();
+    document.getElementById('btn-explore')!.focus({preventScroll:true});
     updateClearButton();
     scheduleRender();
   });
@@ -749,6 +970,13 @@ async function main() {
 
   controls.append(fitBtn, otBtn, ntBtn);
   app.prepend(header);
+  const toolbar = document.createElement('div');
+  toolbar.id = 'exploration-toolbar';
+  toolbar.append(
+    document.getElementById('canvas-controls-left')!,
+    document.getElementById('canvas-controls-right')!,
+  );
+  header.after(toolbar);
 
   canvas = document.getElementById('main-canvas') as HTMLCanvasElement;
   ctx = canvas.getContext('2d')!;
@@ -772,21 +1000,47 @@ async function main() {
       bins = e.data.bins!;
       references = e.data.references!;
       totalCount = e.data.totalCount!;
-      heatmapData = buildHeatmapData(bins);
+      refreshHeatmap();
 
+      (document.getElementById('loading') as HTMLDialogElement).close();
       document.getElementById('loading')!.classList.add('hidden');
       document.getElementById('footer-stats')!.textContent =
-        `${totalCount.toLocaleString()} connections across 66 books, ~1,500 years, ~40 authors, 1 awesome God`;
+        `${totalCount.toLocaleString()} demo connections across 66 books`;
 
       // Fit the full rainbow in the viewport
       fitRainbowToView(false);
 
       // Start entrance animation
-      animation = createAnimation();
+      animation = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? null : createAnimation();
+      contextReady = true;
+      restoreContext();
       scheduleRender();
     }
   };
 
+  const failed = () => {
+    const loading = document.getElementById('loading') as HTMLDialogElement;
+    loading.replaceChildren();
+    const message = document.createElement('p'); message.textContent = 'References could not load. Check your connection and retry.';
+    const retry = document.createElement('button'); retry.className = 'canvas-btn'; retry.textContent = 'Retry loading';
+    retry.addEventListener('click',()=>location.reload());
+    const read = document.createElement('button'); read.className = 'canvas-btn'; read.textContent = 'Read curated connections';
+    read.addEventListener('click', () => {
+      loading.close(); loading.classList.add('hidden');
+      if (!document.getElementById('reference-error')) {
+        const notice = document.createElement('div'); notice.id = 'reference-error'; notice.setAttribute('role', 'status');
+        notice.textContent = 'The map data is unavailable. Sourced readings are still available. ';
+        const retryMap = document.createElement('button'); retryMap.className = 'canvas-btn'; retryMap.textContent = 'Retry map';
+        retryMap.addEventListener('click', () => location.reload()); notice.append(retryMap);
+        document.getElementById('exploration-toolbar')!.after(notice);
+      }
+      document.getElementById('btn-discover')!.click();
+    });
+    loading.append(message,retry,read);
+    retry.focus();
+  };
+  worker.onerror = failed;
+  worker.addEventListener('message', e=>{if(e.data.type === 'error') failed();});
   worker.postMessage({ type: 'load', url: `${import.meta.env.BASE_URL}references.json` });
 
   // Inject Lucide icons (prepend before text)
@@ -797,24 +1051,63 @@ async function main() {
   setupFilters();
   setupZoomPresets();
   setupViewToggle();
+  updateViewContext();
   setupSearch();
+  setupExplorer({
+    trigger: document.getElementById('btn-explore') as HTMLButtonElement,
+    bins: ()=>bins.filter(b=>categoryVisible[b.category]),
+    references: ()=>references.filter(r=>categoryVisible[r.cat]),
+    onBook: selectBook, onPair: selectPair, onVerse: openVerse,
+  });
+  document.getElementById('exploration-back')!.addEventListener('click',()=>history.back());
+  window.addEventListener('popstate',()=>{contextDepth=history.state?.explorationDepth ?? 0;restoreContext();});
+  document.getElementById('exploration-share')!.addEventListener('click', async()=>{
+    const url = new URL(contextSearch(currentContext()),location.href).href;
+    const status = document.getElementById('exploration-location')!;
+    try { await navigator.clipboard.writeText(url); status.textContent = 'Link copied — opens this selection.'; }
+    catch { window.prompt('Copy this link',url); }
+  });
+  const welcome = document.getElementById('welcome')!;
+  try { welcome.hidden = localStorage.getItem('rainbow-welcomed') === 'yes'; } catch {}
+  document.getElementById('dismiss-welcome')!.addEventListener('click',()=>{
+    welcome.hidden = true; try {localStorage.setItem('rainbow-welcomed','yes');}catch{}
+  });
+  document.getElementById('start-story')!.addEventListener('click',()=>document.getElementById('btn-discover')!.click());
+  for(const id of ['start-book','start-pair']) document.getElementById(id)!.addEventListener('click',()=>document.getElementById('btn-explore')!.click());
   setupInteraction();
   setupShuffle();
+  setupDiscovery(document.getElementById("btn-discover") as HTMLButtonElement, (map, item) => {
+    const w = map.clientWidth, h = map.clientHeight, ratio = window.devicePixelRatio || 1;
+    if (!w || !h) return;
+    map.width = w*ratio; map.height = h*ratio;
+    const c = map.getContext('2d')!; c.scale(ratio,ratio);
+    const l = computeLayout(w,h); const scale = Math.min(1,(h-36)/(w/2));
+    const t = {k:scale,tx:(w-w*scale)/2,ty:h-30-l.baselineY*scale};
+    renderArcs(c,bins,l,{categoryVisible:CATEGORIES.map(()=>true),highlightBook:null,selectedBook:null,hoveredBin:null,selectedBin:null},t);
+    c.fillStyle = '#11151ee6'; c.fillRect(0,0,w,h);
+    const names = item.passages.map(p=>p.reference.replace(/ \d+:\d+$/, ''));
+    const ids = names.map(name=>BOOKS.findIndex(b=>b.name===name));
+    if(ids.some(id=>id<0)) return;
+    const xs = ids.map(id=>l.books[id].centerX*t.k+t.tx);
+    const y=h-30;
+    c.strokeStyle='#c4e9b1'; c.lineWidth=2; c.beginPath(); c.arc((xs[0]+xs[1])/2,y,Math.abs(xs[1]-xs[0])/2,Math.PI,0); c.stroke();
+    c.font='12px "DM Mono", monospace'; c.textAlign='center'; c.fillStyle='#e0f2d4';
+    xs.forEach((x,i)=>{c.beginPath();c.arc(x,y,4,0,Math.PI*2);c.fill();c.fillText(names[i],Math.max(48,Math.min(w-70,x)),y+22);});
+  });
   setupKeyboard();
 
-  // Prevent browser zoom (ctrl+wheel / pinch) outside the canvas
-  // d3-zoom already handles wheel events on the canvas itself
-  document.getElementById('app')!.addEventListener('wheel', (e) => {
-    if (e.ctrlKey) e.preventDefault();
-  }, { passive: false });
-
-  window.addEventListener('resize', () => {
+  const resizeView = () => {
     resizeCanvas();
     layout = computeLayout(width, height);
-    if (bins.length > 0) fitRainbowToView(false);
+    if (bins.length > 0 && !contextReady) fitRainbowToView(false);
     galaxy?.resize();
     scheduleRender();
-  });
+  };
+  window.addEventListener('resize', resizeView);
+  new ResizeObserver(resizeView).observe(canvas.parentElement!);
+  const loadingDialog = document.getElementById('loading') as HTMLDialogElement;
+  loadingDialog.addEventListener('cancel', e => e.preventDefault());
+  loadingDialog.showModal();
 }
 
 main().catch(err => {

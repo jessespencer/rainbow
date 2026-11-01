@@ -9,34 +9,41 @@
 <body>
   <div id="app">
     <!-- header injected by bible-ui createHeader() -->
+    <nav id="exploration-trail" aria-label="Exploration history">
+      <button class="canvas-btn" id="exploration-back" disabled>← Back</button>
+      <span id="exploration-location" role="status">Arcs</span>
+      <button class="canvas-btn" id="btn-explore">Explore references</button>
+      <button class="canvas-btn" id="exploration-share">Copy link</button>
+    </nav>
     <div id="canvas-container">
-      <canvas id="main-canvas"></canvas>
+      <canvas id="main-canvas" aria-label="Interactive cross-reference visualization. Use Explore references for a keyboard-accessible list."></canvas>
       <div id="galaxy-container" class="hidden"></div>
-      <div id="galaxy-panel" class="hidden">
+      <details id="galaxy-panel" class="hidden">
+        <summary>View options</summary>
         <div class="u-head">Layers</div>
 
-        <div class="u-row" data-layer="edges" role="switch" aria-checked="false">
+        <button type="button" class="u-row" data-layer="edges" role="switch" aria-checked="false">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M6 18m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M18 6m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M7.5 16.5l9 -9"/>
           </svg>
           <span class="u-label">Edges</span><span class="u-switch"></span>
-        </div>
-        <div class="u-row" data-layer="bridges" role="switch" aria-checked="false">
+        </button>
+        <button type="button" class="u-row" data-layer="bridges" role="switch" aria-checked="false">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M6 19m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M18 5m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M6 16v-6a3 3 0 0 1 3 -3h6"/>
           </svg>
           <span class="u-label">Bridges <em>OT↔NT</em></span><span class="u-switch"></span>
-        </div>
-        <div class="u-row active" data-layer="labels" role="switch" aria-checked="true">
+        </button>
+        <button type="button" class="u-row active" data-layer="labels" role="switch" aria-checked="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M7.5 7.5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M3 6v5.172a2 2 0 0 0 .586 1.414l7.71 7.71a2.41 2.41 0 0 0 3.408 0l5.592 -5.592a2.41 2.41 0 0 0 0 -3.408l-7.71 -7.71a2 2 0 0 0 -1.414 -.586h-5.172a3 3 0 0 0 -3 3z"/>
           </svg>
           <span class="u-label">Labels</span><span class="u-switch on"></span>
-        </div>
+        </button>
 
         <div class="u-divider"></div>
         <div class="u-sub">Color</div>
-        <div class="u-seg" id="up-color">
+        <div class="u-seg" id="up-color" role="group" aria-label="Star color">
           <button data-mode="category" class="on">Theme</button>
           <button data-mode="testament">OT/NT</button>
           <button data-mode="heat">Heat</button>
@@ -44,11 +51,11 @@
         </div>
 
         <div class="u-sub" style="margin-top:14px">Node size</div>
-        <div class="u-seg" id="up-size">
+        <div class="u-seg" id="up-size" role="group" aria-label="Star size">
           <button data-mode="uniform" class="on">Uniform</button>
           <button data-mode="connections">Connections</button>
         </div>
-      </div>
+      </details>
       <button id="up-fit" class="hidden u-fit-btn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M4 8v-2a2 2 0 0 1 2 -2h2"/><path d="M4 16v2a2 2 0 0 0 2 2h2"/><path d="M16 4h2a2 2 0 0 1 2 2v2"/><path d="M16 20h2a2 2 0 0 0 2 -2v-2"/>
@@ -56,44 +63,60 @@
         Fit
       </button>
       <div id="canvas-controls-left">
+        <button id="btn-discover" class="canvas-btn">Discover a connection</button>
         <button id="btn-shuffle" class="canvas-btn">Shuffle</button>
       </div>
       <div id="side-panel" class="hidden">
-        <button id="side-panel-close">&times;</button>
+        <div class="side-panel-actions">
+        <button id="side-panel-close" aria-label="Close connection details">&times;</button>
+        <button id="side-panel-expand" class="canvas-btn" aria-expanded="false" aria-controls="side-panel-content">Expand reading</button>
+        </div>
         <div id="side-panel-content"></div>
       </div>
       <div id="canvas-controls-right">
         <button id="clear-filters" class="canvas-btn">✕ Clear</button>
-        <input type="text" id="book-search" placeholder="Search book..." />
-        <div id="view-toggle">
+        <input type="text" id="book-search" aria-label="Search books" placeholder="Search book..." />
+        <div id="view-toggle" role="group" aria-label="Visualization">
           <button id="view-arcs" class="active">Arcs</button>
           <button id="view-heatmap">Heatmap</button>
           <button id="view-galaxy">Galaxy</button>
         </div>
       </div>
     </div>
+    <div id="view-context" aria-live="polite">
+      <p id="view-description"></p>
+      <div id="heatmap-legend" hidden><span class="intensity-ramp" aria-hidden="true"></span><span id="heatmap-scale"></span></div>
+    </div>
+    <section id="welcome" aria-label="Start exploring">
+      <p>A whole library in conversation. Start with a story, a book, or a pair.</p>
+      <button class="canvas-btn" id="start-story">Creation & light</button>
+      <button class="canvas-btn" id="start-book">Explore a book</button>
+      <button class="canvas-btn" id="start-pair">Compare two books</button>
+      <button class="canvas-btn" id="dismiss-welcome" aria-label="Dismiss introduction">×</button>
+    </section>
     <div id="category-filters"></div>
     <div id="footer">
       <div id="footer-text">
         <span>Inspired by <a href="https://www.chrisharrison.net/index.php/visualizations/BibleViz" target="_blank">Chris Harrison</a>. Made by <a href="https://www.jessedestroys.com" target="_blank">jessedestroys.com</a> · v1.0.0</span>
-        <span id="footer-stats"></span>
+        <span id="footer-stats"></span><span class="data-provenance">Synthetic demo data · curated readings sourced separately</span>
       </div>
     </div>
     <div id="tooltip" class="hidden"></div>
-    <div id="shuffle-overlay" class="hidden">
+    <dialog id="shuffle-overlay" class="hidden" aria-label="Shuffle demo connections">
       <canvas id="shuffle-canvas"></canvas>
       <div id="shuffle-content">
+        <p class="sp-hint">Synthetic demo pair · not a verified cross-reference</p>
         <p id="shuffle-verse-1" class="shuffle-ref"></p>
         <div id="shuffle-arrow">↔</div>
         <p id="shuffle-verse-2" class="shuffle-ref"></p>
         <button id="btn-shuffle-again" class="canvas-btn">Shuffle again</button>
         <button id="btn-shuffle-exit" class="canvas-btn">Exit</button>
       </div>
-    </div>
-    <div id="loading">
+    </dialog>
+    <dialog id="loading" aria-label="Reference data loading" aria-live="polite">
       <div id="loading-text">Loading cross-references...</div>
       <div id="loading-bar"><div id="loading-progress"></div></div>
-    </div>
+    </dialog>
   </div>
   <script type="module" src="/src/main.ts"></script>
 </body>

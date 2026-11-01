@@ -8,7 +8,7 @@ Monorepo for Bible visualization tools sharing a common design system.
 
 | Path | Package | Description |
 |---|---|---|
-| `apps/rainbow` | `rainbow` | Rainbow Reference — interactive arc visualization of 63k+ Bible cross-references. |
+| `apps/rainbow` | `rainbow` | Rainbow Reference — interactive visualization of 63k+ synthetic demo connections, with separately sourced curated readings. |
 | `apps/chronos` | `chronos` | Chronos — horizontal-scrolling Bible timeline (Adam → resurrection). |
 | `packages/bible-ui` | `@jessespencer/bible-ui` | Shared header, fonts, and design tokens. |
 
@@ -23,10 +23,14 @@ pnpm install
 pnpm dev:rainbow      # http://localhost:5173/rainbow/
 pnpm dev:chronos      # http://localhost:5174/rainbow/timeline/
 pnpm build            # builds both apps
+pnpm --filter rainbow typecheck
+pnpm --filter rainbow test:experience
 ```
 
 Dev ports are pinned (`strictPort`) so the header's app switcher can link
 across the two dev servers. Run both to move between apps locally.
+
+Experience work is tracked in [IMPROVEMENT-ROADMAP.md](IMPROVEMENT-ROADMAP.md), with checks and remaining validation in [EXPERIENCE-VALIDATION.md](EXPERIENCE-VALIDATION.md).
 
 ## Deployment
 

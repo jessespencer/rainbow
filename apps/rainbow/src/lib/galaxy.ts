@@ -25,10 +25,14 @@ export interface GalaxyHandle {
   setShowEdges(on: boolean): void;
   setBridgesOnly(on: boolean): void;
   setShowLabels(on: boolean): void;
+  focusBook(book: number): void;
+  focusPair(a: number, b: number): void;
+  focusVerse(verse: [number,number,number]): boolean;
   focusNode(id: number): void; // fly to + select a verse by node id
   clearSelection(): void;
   fit(): void;
   resize(): void;
+  setActive(active: boolean): void;
   dispose(): void;
 }
 
@@ -57,9 +61,9 @@ const BASE3D = 2.7; // smaller than Constellation's 3.4 — with ~18x the nodes,
                     // dots (same glow shader) give each star room instead of bleeding together
 const HIT_PAD = 8;
 const EDGE_OPACITY = 0.035; // the full 63k-edge hairball is intentionally a faint mist
-const BRIDGE_OPACITY = 0.22;
+const BRIDGE_OPACITY = 0.025;
 const REST_ALPHA = 0.85; // a star's normal opacity (matches Constellation)
-const DIM_ALPHA = 0.2; // a star dimmed because another verse is in focus — kept as a soft backdrop, not blacked out
+const DIM_ALPHA = 0.045; // a star dimmed because another verse is in focus — kept as a soft backdrop, not blacked out
 const FOCUS_MS = 850; // camera fly-to duration when a verse is selected
 const FIT_MS = 900; // camera re-frame duration for the Fit button
 
@@ -364,11 +368,14 @@ export function createGalaxy(
   labelRenderer.domElement.style.pointerEvents = 'none';
   container.appendChild(labelRenderer.domElement);
 
+  const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let reducedMotion = motionPreference.matches;
+  let userInteracted = false;
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.target.copy(cen);
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
-  controls.autoRotate = true;
+  controls.autoRotate = !reducedMotion;
   controls.autoRotateSpeed = -0.4; // spin so the spiral arms trail (the natural galaxy direction)
   controls.minDistance = 20;
   controls.maxDistance = 2200;
@@ -447,6 +454,9 @@ export function createGalaxy(
     toPos: THREE.Vector3; toTarget: THREE.Vector3;
   } | null = null;
   function startCamTween(toTarget: THREE.Vector3, toPos: THREE.Vector3, dur: number, resumeAuto: boolean) {
+    if (reducedMotion) {
+      camAnim = null; controls.target.copy(toTarget); camera.position.copy(toPos); controls.autoRotate = false; return;
+    }
     camAnim = {
       t0: performance.now(), dur, resumeAuto,
       fromPos: camera.position.clone(),
@@ -459,6 +469,8 @@ export function createGalaxy(
   // ---- selection: highlight a verse's links, dim the rest, fly to it ---- //
   let hiliteObj: THREE.LineSegments | null = null;
   let selected = -1;
+  let bookFocus: number | null = null;
+  let bookPair: [number, number] | null = null;
   function clearHilite() {
     if (hiliteObj) {
       scene.remove(hiliteObj);
@@ -481,6 +493,9 @@ export function createGalaxy(
   }
   function applySelect(node: number, fly: boolean): VerseInfo[] {
     selected = node;
+    bookPair = null;
+    bookFocus = g.book[node];
+    edgesObj.visible = false; bridgesObj.visible = false;
     const neigh = neighbourIds(node);
     const inFocus = new Set(neigh);
     inFocus.add(node);
@@ -522,10 +537,43 @@ export function createGalaxy(
   }
   function clearSelection() {
     selected = -1;
+    bookFocus = null; bookPair = null;
     clearHilite();
     for (let i = 0; i < n; i++) alphaAttr.setX(i, REST_ALPHA);
     alphaAttr.needsUpdate = true;
-    controls.autoRotate = true;
+    controls.autoRotate = !reducedMotion;
+  }
+
+  function focusBooks(books: number[]) {
+      clearSelection(); bookFocus = books[0];
+      bookPair = books.length === 2 ? [books[0], books[1]] : null;
+      const center = new THREE.Vector3(); let count = 0;
+      for(let i=0;i<n;i++) {
+        const match = books.includes(g.book[i]);
+        alphaAttr.setX(i,match ? REST_ALPHA : DIM_ALPHA);
+        if(match) {center.add(new THREE.Vector3(pos[i*3],pos[i*3+1],pos[i*3+2]));count++;}
+      }
+      alphaAttr.needsUpdate = true;
+      if(count) {
+        center.divideScalar(count);
+        const dir = camera.position.clone().sub(controls.target).normalize();
+        startCamTween(center,center.clone().addScaledVector(dir,radius * (books.length === 2 ? 1.2 : .7)),FOCUS_MS,false);
+      }
+
+    if (bookPair) {
+      edgesObj.visible = false; bridgesObj.visible = false;
+      const segments: number[] = [];
+      for (let e = 0; e < g.edgeSi.length; e++) {
+        const a = g.edgeSi[e], b = g.edgeTi[e];
+        if ((g.book[a] === books[0] && g.book[b] === books[1]) || (g.book[a] === books[1] && g.book[b] === books[0])) {
+          segments.push(pos[a*3],pos[a*3+1],pos[a*3+2],pos[b*3],pos[b*3+1],pos[b*3+2]);
+        }
+      }
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(segments, 3));
+      hiliteObj = new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({color:HILITE,transparent:true,opacity:Math.min(.09, 6 / Math.max(1, segments.length / 6)),depthWrite:false}));
+      scene.add(hiliteObj);
+    }
   }
 
   // floating book labels at each galaxy's tip
@@ -540,7 +588,33 @@ export function createGalaxy(
     const obj = new CSS2DObject(el);
     obj.position.set(anchor[0], anchor[1], anchor[2]);
     scene.add(obj);
+    obj.userData.book = b;
     labelObjs.push(obj);
+  }
+
+  let showLabels = true;
+  const labelProjection = new THREE.Vector3();
+  function positionLabels() {
+    const width = container.clientWidth, height = container.clientHeight;
+    const occupied: {x:number;y:number;w:number}[] = [];
+    const ordered = [...labelObjs].sort((a,b)=>Number(b.userData.book === bookFocus || bookPair?.includes(b.userData.book))-Number(a.userData.book === bookFocus || bookPair?.includes(a.userData.book)));
+    const maxLabels = Math.min(30, Math.max(5, Math.round(10 * fitDist / camera.position.distanceTo(controls.target))));
+    for (const label of ordered) {
+      label.visible = false;
+      label.element.style.marginTop = '0px';
+      if (!showLabels || occupied.length >= maxLabels) continue;
+      labelProjection.copy(label.position).project(camera);
+      if (Math.abs(labelProjection.x)>0.95 || Math.abs(labelProjection.y)>0.9 || Math.abs(labelProjection.z)>1) continue;
+      const x=(labelProjection.x+1)*width/2, y=(1-labelProjection.y)*height/2;
+      const w=label.element.textContent!.length*7+16;
+      const selected = label.userData.book === bookFocus || bookPair?.includes(label.userData.book);
+      const offsets = selected ? [0, -28, 28, -56, 56] : [0];
+      const offset = offsets.find(dy => y + dy > 14 && y + dy < height - 14 &&
+        !occupied.some(other => Math.abs(x-other.x)<(w+other.w)/2 && Math.abs(y+dy-other.y)<26));
+      if (offset === undefined) continue;
+      label.element.style.marginTop = `${offset}px`;
+      label.visible=true; occupied.push({x,y:y+offset,w});
+    }
   }
 
   // ---- color application ---- //
@@ -614,14 +688,14 @@ export function createGalaxy(
     if (idx !== hovered) {
       hovered = idx;
       // pause the ambient spin while pointing at a star (unless a verse is pinned)
-      if (selected < 0) controls.autoRotate = idx < 0;
+      if (selected < 0) controls.autoRotate = idx < 0 && !reducedMotion;
       renderer.domElement.style.cursor = idx >= 0 ? 'pointer' : 'grab';
     }
     const rect = container.getBoundingClientRect();
-    cb.onHover?.(idx >= 0 ? infoFor(idx) : null, [ev.clientX - rect.left, ev.clientY - rect.top]);
+    cb.onHover?.(idx >= 0 ? infoFor(idx) : null, [ev.clientX, ev.clientY]);
   }
   let downPos: [number, number] = [0, 0];
-  function onDown(ev: PointerEvent) { downPos = [ev.clientX, ev.clientY]; }
+  function onDown(ev: PointerEvent) { downPos = [ev.clientX, ev.clientY]; userInteracted = true; camAnim = null; controls.autoRotate = false; }
   function onClick(ev: PointerEvent) {
     if (Math.hypot(ev.clientX - downPos[0], ev.clientY - downPos[1]) > 5) return; // a drag
     const idx = pick(ev);
@@ -667,7 +741,11 @@ export function createGalaxy(
   }
 
   let raf = 0;
+  let active = true;
+  let disposed = false;
   const loop = () => {
+    raf = 0;
+    if (!active || disposed || document.hidden) return;
     raf = requestAnimationFrame(loop);
     const ca = camAnim;
     const ck = ca ? easeInOutCubic(Math.min(1, (performance.now() - ca.t0) / ca.dur)) : 0;
@@ -675,11 +753,11 @@ export function createGalaxy(
     controls.update();
     if (ca) {
       camera.position.lerpVectors(ca.fromPos, ca.toPos, ck);
-      if (ck >= 1) { controls.autoRotate = ca.resumeAuto; camAnim = null; }
+      if (ck >= 1) { controls.autoRotate = ca.resumeAuto && !reducedMotion; camAnim = null; }
     }
     // intro dolly-in: recompute distance each frame so the auto-rotate spin is
     // preserved while the camera eases from introStartDist down to restDist
-    if (playIntro && !camAnim) {
+    if (playIntro && !reducedMotion && !userInteracted && !camAnim) {
       const e = (performance.now() - introT0) / INTRO_MS;
       if (e < 1) {
         const k = 1 - Math.pow(1 - e, 3); // easeOutCubic
@@ -689,9 +767,21 @@ export function createGalaxy(
       }
     }
     renderer.render(scene, camera);
+    positionLabels();
     labelRenderer.render(scene, camera);
   };
-  loop();
+  const syncRendering = () => {
+    if (!active || disposed || document.hidden) {
+      cancelAnimationFrame(raf);
+      raf = 0;
+    } else if (!raf) {
+      loop();
+    }
+  };
+  const updateMotion = () => { reducedMotion = motionPreference.matches; controls.autoRotate = !reducedMotion && selected < 0; if(reducedMotion) camAnim=null; };
+  motionPreference.addEventListener('change',updateMotion);
+  document.addEventListener('visibilitychange', syncRendering);
+  syncRendering();
 
   const sizeAttr = geom.getAttribute('size') as THREE.BufferAttribute;
   return {
@@ -707,7 +797,15 @@ export function createGalaxy(
       bridgesObj.visible = on;
       edgesObj.visible = !on;
     },
-    setShowLabels(on) { labelObjs.forEach((o) => (o.visible = on)); },
+    setShowLabels(on) { showLabels = on; },
+    focusVerse(verse) {
+      for(let i=0;i<n;i++) if(g.book[i]===verse[0] && g.chapter[i]===verse[1] && g.verse[i]===verse[2]) {
+        cb.onSelect?.(infoFor(i),applySelect(i,true)); return true;
+      }
+      return false;
+    },
+    focusBook(book) { focusBooks([book]); },
+    focusPair(a,b) { focusBooks([a,b]); },
     focusNode(id) {
       if (id < 0 || id >= n) return;
       const neigh = applySelect(id, true);
@@ -716,7 +814,14 @@ export function createGalaxy(
     clearSelection,
     fit,
     resize,
+    setActive(value) {
+      active = value;
+      syncRendering();
+    },
     dispose() {
+      disposed = true;
+      motionPreference.removeEventListener('change',updateMotion);
+      document.removeEventListener('visibilitychange', syncRendering);
       cancelAnimationFrame(raf);
       renderer.domElement.removeEventListener('pointermove', onMove);
       renderer.domElement.removeEventListener('pointerdown', onDown);

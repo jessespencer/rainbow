@@ -20,8 +20,8 @@ export function showBinTooltip(bin: Bin, x: number, y: number) {
     <div class="tt-count">${bin.count} connection${bin.count !== 1 ? 's' : ''}</div>
   `;
   el.classList.remove('hidden');
-  el.style.left = `${x + 14}px`;
-  el.style.top = `${y - 10}px`;
+  el.style.left = `${Math.max(12, Math.min(x + 14, innerWidth - el.offsetWidth - 12))}px`;
+  el.style.top = `${Math.max(12, Math.min(y - 10, innerHeight - el.offsetHeight - 12))}px`;
 }
 
 export function showHeatmapTooltip(
@@ -41,8 +41,8 @@ export function showHeatmapTooltip(
     <div class="tt-cat" style="color:${color}">Primary: ${label}</div>
   `;
   el.classList.remove('hidden');
-  el.style.left = `${x + 14}px`;
-  el.style.top = `${y - 10}px`;
+  el.style.left = `${Math.max(12, Math.min(x + 14, innerWidth - el.offsetWidth - 12))}px`;
+  el.style.top = `${Math.max(12, Math.min(y - 10, innerHeight - el.offsetHeight - 12))}px`;
 }
 
 export function hideTooltip() {
