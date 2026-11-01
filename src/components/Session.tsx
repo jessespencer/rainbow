@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
-import { fetchChapter, refLabel, type Book, type Verse } from '../lib/bible'
+import { fetchChapter, getTranslation, refLabel, type Book, type Verse } from '../lib/bible'
 import {
   LADDER,
   STAGE_HINTS,
@@ -13,6 +13,7 @@ import {
 } from '../lib/memory'
 import { pickBlanks, senseLines, tokenize } from '../lib/text'
 import { Back } from './Back'
+import { Footnotes } from './Footnotes'
 import { PassageText, type Reveal } from './PassageText'
 import { OrderStage, ReciteStage, TypedStage, VanishStage, canSpeak } from './stages'
 
@@ -63,7 +64,7 @@ export const Session = ({ items, book, translation, progress, onRecord, onExit, 
     let current = true
     fetchChapter(translation, book, item.chapter)
       .then((verses) => current && setChapterText({ chapter: item.chapter, verses }))
-      .catch((e: Error) => current && setLoadError(e.message || 'The ESV needs a key. Add yours on the page.'))
+      .catch((e: Error) => current && setLoadError(e.message || 'This translation needs a key. Add yours on the page.'))
     return () => {
       current = false
     }
@@ -271,6 +272,7 @@ export const Session = ({ items, book, translation, progress, onRecord, onExit, 
 
   const reference = refLabel(book, verses.length ? verses : [{ chapter: item.chapter, verse: item.from, text: '' }])
   const ladder = LADDER.filter((s) => s !== 'thread' || previousVerse)
+  const credited = getTranslation(translation)
 
   return (
     <main className={`session session-${stage}`}>
@@ -307,14 +309,16 @@ export const Session = ({ items, book, translation, progress, onRecord, onExit, 
       <section className="stage">{renderStage()}</section>
       <footer className="session-hint">
         {item.kind === 'run' ? 'First letter of every word. Two misses and the word is given to you.' : STAGE_HINTS[stage]}
-        {translation === 'ESV' && (
-          <>
+        {credited.links?.map((link) => (
+          <span key={link.url}>
             {' '}
-            <a href="https://www.esv.org" target="_blank" rel="noreferrer">
-              ESV.org
+            <a href={link.url} target="_blank" rel="noreferrer">
+              {link.label}
             </a>
-          </>
-        )}
+          </span>
+        ))}
+        {credited.creditOnRecitals && <p className="session-credit">{credited.credit}</p>}
+        <Footnotes verses={verses} />
       </footer>
     </main>
   )

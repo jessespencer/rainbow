@@ -1,7 +1,8 @@
 import { useEffect, useState, type CSSProperties } from 'react'
-import { BOOKS, ESV_NOTICE, MissingKeyError, TRANSLATIONS, fetchChapter, getEsvKey, setEsvKey, type Book, type Verse } from '../lib/bible'
+import { BOOKS, MissingKeyError, TRANSLATIONS, fetchChapter, getKey, getTranslation, setKey, type Book, type Translation, type Verse } from '../lib/bible'
 import { inkLevel, isDue, verseKey, type Progress } from '../lib/memory'
 import { prefersStillness } from '../lib/motion'
+import { Footnotes } from './Footnotes'
 import type { SessionItem } from './Session'
 
 interface PageViewProps {
@@ -90,6 +91,7 @@ export const PageView = (props: PageViewProps) => {
 
   const chapterCount = (n: number) => kept.filter(([key]) => parseKey(key).chapter === n).length
   const lastVerse = verses[verses.length - 1]?.verse ?? 1
+  const credited = getTranslation(translation)
   const titleStyle = { '--letters': Math.max(book.name.length, 8) } as CSSProperties
 
   return (
@@ -190,7 +192,7 @@ export const PageView = (props: PageViewProps) => {
       </nav>
 
       {problem?.needsKey ? (
-        <EsvKeyForm message={problem.message} onSaved={() => setKeyAttempt(keyAttempt + 1)} />
+        <KeyForm translation={credited} message={problem.message} onSaved={() => setKeyAttempt(keyAttempt + 1)} />
       ) : problem ? (
         <p className="session-message">{problem.message}</p>
       ) : (
@@ -220,17 +222,23 @@ export const PageView = (props: PageViewProps) => {
               </span>
             )
           })}
+          <Footnotes verses={verses} />
         </article>
       )}
 
       <footer className="colophon">
         <p>Unlearned verses are printed in grey. They darken as you learn them.</p>
-        {translation === 'ESV' ? (
+        {credited.credit ? (
           <p>
-            {ESV_NOTICE}{' '}
-            <a href="https://www.esv.org" target="_blank" rel="noreferrer">
-              ESV.org
-            </a>
+            {credited.credit}
+            {credited.links?.map((link) => (
+              <span key={link.url}>
+                {' '}
+                <a href={link.url} target="_blank" rel="noreferrer">
+                  {link.label}
+                </a>
+              </span>
+            ))}
           </p>
         ) : (
           <p>
@@ -297,40 +305,42 @@ const VerseSlip = ({ book, chapter, selection, onLearn, onRecite }: VerseSlipPro
   )
 }
 
-interface EsvKeyFormProps {
+interface KeyFormProps {
+  translation: Translation
   message: string
   onSaved: () => void
 }
 
-const EsvKeyForm = ({ message, onSaved }: EsvKeyFormProps) => {
-  const [value, setValue] = useState(getEsvKey())
+const KeyForm = ({ translation, message, onSaved }: KeyFormProps) => {
+  const [value, setValue] = useState(getKey(translation))
+  const source = translation.keySource!
   return (
     <form
       className="key-form"
       onSubmit={(e) => {
         e.preventDefault()
-        setEsvKey(value)
+        setKey(translation, value)
         onSaved()
       }}
     >
-      <h2>The ESV needs a key</h2>
+      <h2>The {translation.id} needs a key</h2>
       <p>
-        {message || 'Crossway lends its text out one key at a time.'} Create a free one at{' '}
-        <a href="https://api.esv.org/account/create-application/" target="_blank" rel="noreferrer">
-          api.esv.org
+        {message || `${source.lender} lends this text out one key at a time.`} Create a free one at{' '}
+        <a href={source.url} target="_blank" rel="noreferrer">
+          {source.site}
         </a>{' '}
-        and paste it here. It stays in this browser, which then talks to Crossway directly.
+        and paste it here. It stays in this browser, which then talks to {source.lender} directly.
       </p>
       <input
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="Your API key"
-        aria-label="ESV API key"
+        aria-label={`${translation.id} API key`}
         autoComplete="off"
         spellCheck={false}
       />
       <button type="submit" className="primary" disabled={!value.trim()}>
-        Open the ESV
+        Open the {translation.id}
       </button>
     </form>
   )

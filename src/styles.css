@@ -348,6 +348,33 @@ kbd {
   background: color-mix(in srgb, var(--rubric) 16%, transparent);
 }
 
+.footnotes {
+  clear: both;
+  margin-top: 1.5rem;
+  font-size: 0.95rem;
+  font-style: normal;
+  line-height: 1.45;
+  text-align: left;
+  hyphens: manual;
+  color: var(--soft);
+}
+
+.footnotes summary {
+  cursor: pointer;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+}
+
+.footnotes ol {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+}
+
+.footnotes li + li {
+  margin-top: 0.3rem;
+}
+
 .colophon {
   margin-top: 3rem;
   padding-top: 1rem;
@@ -487,6 +514,104 @@ kbd {
   font-size: 1.2rem;
 }
 
+/* The welcome */
+
+.welcome {
+  min-height: 100dvh;
+  width: min(100%, 34rem);
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  animation: arrive 0.6s var(--ease-out) backwards;
+}
+
+.welcome .wordmark {
+  margin: 0 0 1.5rem;
+}
+
+.welcome h1 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(2.8rem, 11vw, 4.4rem);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+}
+
+.welcome form {
+  margin-top: 1.75rem;
+}
+
+.welcome-choice {
+  position: relative;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.welcome-choice span {
+  font-style: italic;
+  color: var(--soft);
+}
+
+.welcome-choice::after {
+  content: '';
+  position: absolute;
+  right: 0.3rem;
+  bottom: 1.05rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border: solid var(--rubric);
+  border-width: 0 1px 1px 0;
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+.welcome-choice select {
+  appearance: none;
+  display: block;
+  width: 100%;
+  padding: 0.1rem 1.5rem 0.25rem 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--hair);
+  border-radius: 0;
+  font-family: var(--display);
+  font-size: 1.75rem;
+  line-height: 1.25;
+  color: var(--rubric);
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.welcome-choice option {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.welcome-key {
+  margin-bottom: 1rem;
+  font-style: italic;
+  color: var(--soft);
+}
+
+.welcome .primary {
+  margin-top: 0.4rem;
+}
+
+.welcome-notes {
+  list-style: none;
+  margin: 2rem 0 0;
+  padding: 0.9rem 0 0;
+  border-top: 1px solid var(--hair);
+  font-size: 0.92rem;
+  color: var(--soft);
+}
+
+.welcome-notes li + li {
+  margin-top: 0.2rem;
+}
+
 /* The session */
 
 .session {
@@ -597,6 +722,16 @@ kbd {
   font-style: italic;
   color: var(--soft);
   padding-bottom: 1.1rem;
+}
+
+.session-credit {
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+}
+
+.session-hint .footnotes {
+  margin-top: 0.5rem;
+  text-align: center;
 }
 
 .session-message {

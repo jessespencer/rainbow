@@ -3,6 +3,7 @@ import { PageView } from './components/PageView'
 import { Session, type SessionItem } from './components/Session'
 import { StructureMap } from './components/StructureMap'
 import { StructureQuiz } from './components/StructureQuiz'
+import { Welcome } from './components/Welcome'
 import { getBook } from './lib/bible'
 import { revealFrom, withTransition } from './lib/motion'
 import { emptyRecord, loadProgress, saveProgress, writeStore, type Progress, type VerseRecord } from './lib/memory'
@@ -37,6 +38,7 @@ const initialTheme = (): Theme => {
 
 export const App = () => {
   const [place, setPlace] = useState(loadPlace)
+  const [welcoming, setWelcoming] = useState(() => !localStorage.getItem(placeStore))
   const [progress, setProgress] = useState<Progress>(loadProgress)
   const [session, setSession] = useState<SessionItem[]>()
   const [theme, setTheme] = useState<Theme>(initialTheme)
@@ -53,7 +55,10 @@ export const App = () => {
     writeStore('byheart.theme', theme)
   }, [theme])
 
-  useEffect(() => writeStore(placeStore, JSON.stringify(place)), [place])
+  // Nothing is saved until the welcome is answered, so it returns if left unfinished.
+  useEffect(() => {
+    if (!welcoming) writeStore(placeStore, JSON.stringify(place))
+  }, [place, welcoming])
   useEffect(() => saveProgress(progress), [progress])
   useEffect(() => saveStructureRecall(recall), [recall])
 
@@ -89,6 +94,21 @@ export const App = () => {
       setSection(chosen)
       setSession(sectionSpans(outline!, chosen).map((span) => ({ kind: 'run', ...span })))
     })
+  }
+
+  if (welcoming) {
+    return (
+      <Welcome
+        book={place.book}
+        translation={place.translation}
+        onBegin={(chosenBook, translation) =>
+          withTransition('screen', () => {
+            setPlace({ ...place, book: chosenBook, translation })
+            setWelcoming(false)
+          })
+        }
+      />
+    )
   }
 
   if (session) {

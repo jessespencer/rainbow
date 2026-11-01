@@ -2,6 +2,7 @@ export interface Verse {
   chapter: number
   verse: number
   text: string
+  notes?: string[]
 }
 
 export interface Book {
@@ -14,12 +15,82 @@ export interface Translation {
   id: string
   name: string
   apiId?: string
+  apiBibleId?: string
+  keySource?: { lender: string; site: string; url: string }
+  // Some publishers want the full notice beside the text on every screen, not just the page.
+  creditOnRecitals?: boolean
+  // What the rights holder asks to be shown with the text. Public domain needs neither.
+  credit?: string
+  links?: { label: string; url: string }[]
 }
 
+const API_BIBLE = { lender: 'API.Bible', site: 'api.bible', url: 'https://api.bible/sign-up' }
+
 export const TRANSLATIONS: Translation[] = [
-  { id: 'ESV', name: 'English Standard Version' },
+  {
+    id: 'ESV',
+    name: 'English Standard Version',
+    keySource: { lender: 'Crossway', site: 'api.esv.org', url: 'https://api.esv.org/account/create-application/' },
+    credit:
+      'Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.',
+    links: [{ label: 'ESV.org', url: 'https://www.esv.org' }],
+  },
+  {
+    id: 'NIV',
+    name: 'New International Version',
+    apiBibleId: '78a9f6124f344018-01',
+    keySource: API_BIBLE,
+    credit:
+      'The Holy Bible, New International Version® NIV® Copyright © 1973, 1978, 1984, 2011 by Biblica, Inc.® Used by Permission of Biblica, Inc.® All rights reserved worldwide.',
+    creditOnRecitals: true,
+    links: [
+      { label: 'Biblica', url: 'https://www.biblica.com' },
+      { label: 'API.Bible', url: 'https://api.bible' },
+    ],
+  },
+  {
+    id: 'NKJV',
+    name: 'New King James Version',
+    apiBibleId: '63097d2a0a2f7db3-01',
+    keySource: API_BIBLE,
+    credit: 'New King James Version®, Copyright © 1982, Thomas Nelson. All rights reserved.',
+    links: [
+      { label: 'NKJV', url: 'https://www.harpercollins.com' },
+      { label: 'API.Bible', url: 'https://api.bible' },
+    ],
+  },
+  {
+    id: 'NLT',
+    name: 'New Living Translation',
+    apiBibleId: 'd6e14a625393b4da-01',
+    keySource: API_BIBLE,
+    credit:
+      'Holy Bible, New Living Translation, copyright © 1996, 2004, 2015 by Tyndale House Foundation. All rights reserved. Used by permission of Tyndale House Publishers, Carol Stream, Illinois 60188. All rights reserved.',
+    links: [
+      { label: 'NLT', url: 'https://www.tyndale.com' },
+      { label: 'API.Bible', url: 'https://api.bible' },
+    ],
+  },
   { id: 'BSB', name: 'Berean Standard Bible', apiId: 'BSB' },
   { id: 'WEB', name: 'World English Bible', apiId: 'ENGWEBP' },
+  {
+    id: 'NET',
+    name: 'NET Bible',
+    apiId: 'eng_net',
+    credit: 'Scripture quotations are from the NET Bible® copyright ©1996, 2019 by Biblical Studies Press, L.L.C. All rights reserved.',
+    links: [{ label: 'NET', url: 'https://netbible.org' }],
+  },
+  {
+    id: 'LEB',
+    name: 'Lexham English Bible',
+    apiId: 'eng_leb',
+    credit:
+      'Scripture quotations marked (LEB) are from the Lexham English Bible. Copyright 2012 Logos Bible Software. Lexham is a registered trademark of Logos Bible Software.',
+    links: [
+      { label: 'LEB', url: 'http://www.lexhamenglishbible.com' },
+      { label: 'Logos Bible Software', url: 'http://www.logos.com' },
+    ],
+  },
   { id: 'KJV', name: 'King James Version', apiId: 'eng_kjv' },
   { id: 'ASV', name: 'American Standard Version', apiId: 'eng_asv' },
   { id: 'GNV', name: 'Geneva Bible, 1599', apiId: 'eng_gnv' },
@@ -33,22 +104,79 @@ export const BOOKS: Book[] = bookTable.split('|').map((row) => {
   return { code, name: name.replace(/_/g, ' '), chapters: Number(chapters) }
 })
 
+export const getTranslation = (id: string) =>
+  TRANSLATIONS.find((t) => t.id === id) ?? TRANSLATIONS.find((t) => t.id === 'BSB')!
+
 export const getBook = (code: string) => BOOKS.find((b) => b.code === code) ?? BOOKS[48]
 
 export class MissingKeyError extends Error {}
 
-const esvKeyStore = 'byheart.esvKey'
+const keyStore = (t: Translation) => (t.apiBibleId ? 'byheart.apiBibleKey' : 'byheart.esvKey')
 
-export const getEsvKey = () => localStorage.getItem(esvKeyStore) ?? ''
-export const setEsvKey = (key: string) => localStorage.setItem(esvKeyStore, key.trim())
+// A key in .env.local saves pasting it on each dev port. These only exist in development,
+// so a production build can never carry a key to anyone else.
+const envKey = (t: Translation) => {
+  if (!import.meta.env.DEV) return ''
+  return (t.apiBibleId ? import.meta.env.VITE_API_BIBLE_KEY : import.meta.env.VITE_ESV_KEY) ?? ''
+}
 
-// Crossway caps local storage at half a book, so ESV text stays in memory and only
-// the two most recent chapters are kept. Everything else here is public domain.
-const esvChapters = new Map<string, Verse[]>()
+export const getKey = (t: Translation) => localStorage.getItem(keyStore(t)) || envKey(t)
+export const setKey = (t: Translation, key: string) => localStorage.setItem(keyStore(t), key.trim())
 
-const rememberEsv = (key: string, verses: Verse[]) => {
-  esvChapters.set(key, verses)
-  if (esvChapters.size > 2) esvChapters.delete(esvChapters.keys().next().value!)
+// Licensed text stays in memory, never on disk, and only the two most recent chapters
+// are kept. Crossway caps storage at half a book, and API.Bible and Biblica set their own
+// limits, so every licensed translation shares this one small shelf.
+const heldChapters = new Map<string, { verses: Verse[]; fumsToken?: string }>()
+
+const hold = (key: string, verses: Verse[], fumsToken?: string) => {
+  heldChapters.set(key, { verses, fumsToken })
+  if (heldChapters.size > 2) heldChapters.delete(heldChapters.keys().next().value!)
+}
+
+interface ApiNode {
+  name?: string
+  text?: string
+  attrs?: { number?: string }
+  items?: ApiNode[]
+}
+
+const plainText = (node: ApiNode): string => node.text ?? (node.items ?? []).map(plainText).join('')
+
+// A verse can run across paragraphs, so text gathers under the most recent verse marker
+// until the next one. Footnotes are set aside rather than left in the words to memorize.
+export const parseApiBible = (content: ApiNode[], chapter: number): Verse[] => {
+  const verses: Verse[] = []
+  const visit = (node: ApiNode) => {
+    const current = verses[verses.length - 1]
+    if (node.name === 'verse') {
+      verses.push({ chapter, verse: parseInt(node.attrs!.number!), text: '', notes: [] })
+    } else if (node.name === 'note') {
+      current?.notes!.push(plainText(node).trim())
+    } else if (node.text !== undefined) {
+      if (current) current.text += node.text
+    } else {
+      if (node.name === 'para' && current) current.text += ' '
+      node.items?.forEach(visit)
+    }
+  }
+  content.forEach(visit)
+  return verses.map((v) => ({ ...v, text: v.text.replace(/\s+/g, ' ').replace(/ ([,.;:!?])/g, '$1').trim() }))
+}
+
+type FumsWindow = Window & { fums?: (...args: unknown[]) => void; fumsData?: unknown[] }
+
+// API.Bible requires each view of its text to be reported. The tracker loads only when
+// one of its translations is on screen.
+const reportView = (fumsToken: string) => {
+  const w = window as FumsWindow
+  if (!w.fums) {
+    w.fumsData = []
+    w.fums = (...args) => w.fumsData!.push(args)
+    const script = document.createElement('script')
+    script.src = 'https://pkg.api.bible/fumsV3.min.js'
+    document.body.append(script)
+  }
+  w.fums('trackView', fumsToken)
 }
 
 interface ContentPart {
@@ -78,7 +206,10 @@ const fetchPublicDomain = async (t: Translation, book: Book, chapter: number): P
       text: (c.content ?? [])
         .map((part) => (typeof part === 'string' ? part : (part.text ?? '')))
         .join(' ')
+        // The LEB's half brackets mark idioms. On a page to memorize they are only noise.
+        .replace(/[⸤⸥]/g, '')
         .replace(/\s+/g, ' ')
+        .replace(/ ([,.;:!?])/g, '$1')
         .trim(),
     }))
   try {
@@ -89,7 +220,7 @@ const fetchPublicDomain = async (t: Translation, book: Book, chapter: number): P
   return verses
 }
 
-export const parseEsv = (passage: string, chapter: number): Verse[] => {
+export const parseVerses = (passage: string, chapter: number): Verse[] => {
   const parts = passage.split(/\[(?:\d+:)?(\d+)\]/)
   const verses: Verse[] = []
   if (parts[0].trim()) verses.push({ chapter, verse: 1, text: parts[0] })
@@ -101,12 +232,45 @@ export const parseEsv = (passage: string, chapter: number): Verse[] => {
     .filter((v) => v.text)
 }
 
-const fetchEsv = async (book: Book, chapter: number): Promise<Verse[]> => {
-  const cacheKey = `${book.code}.${chapter}`
-  const cached = esvChapters.get(cacheKey)
-  if (cached) return cached
+const fetchApiBible = async (t: Translation, book: Book, chapter: number): Promise<Verse[]> => {
+  const heldKey = `${t.id}.${book.code}.${chapter}`
+  const held = heldChapters.get(heldKey)
+  if (held) {
+    reportView(held.fumsToken!)
+    return held.verses
+  }
 
-  const key = getEsvKey()
+  const key = getKey(t)
+  if (!key) throw new MissingKeyError()
+  const params = new URLSearchParams({
+    'content-type': 'json',
+    'include-notes': 'true',
+    'include-titles': 'false',
+    'include-chapter-numbers': 'false',
+    'include-verse-numbers': 'true',
+    'include-verse-spans': 'false',
+    'fums-version': '3',
+  })
+  const res = await fetch(`https://rest.api.bible/v1/bibles/${t.apiBibleId}/chapters/${book.code}.${chapter}?${params}`, {
+    headers: { 'api-key': key },
+  }).catch(() => {
+    throw unreachable(book, chapter)
+  })
+  if (res.status === 401 || res.status === 403) throw new MissingKeyError('That key was not accepted for this translation.')
+  if (!res.ok) throw new Error(`Could not load ${book.name} ${chapter}`)
+  const data = (await res.json()) as { data: { content: ApiNode[] }; meta: { fumsToken: string } }
+  const verses = parseApiBible(data.data.content, chapter)
+  hold(heldKey, verses, data.meta.fumsToken)
+  reportView(data.meta.fumsToken)
+  return verses
+}
+
+const fetchEsv = async (t: Translation, book: Book, chapter: number): Promise<Verse[]> => {
+  const heldKey = `${t.id}.${book.code}.${chapter}`
+  const held = heldChapters.get(heldKey)
+  if (held) return held.verses
+
+  const key = getKey(t)
   if (!key) throw new MissingKeyError()
   const params = new URLSearchParams({
     // A chapter number on a one-chapter book would read as a verse.
@@ -134,14 +298,15 @@ const fetchEsv = async (book: Book, chapter: number): Promise<Verse[]> => {
   if (res.status === 401 || res.status === 403) throw new MissingKeyError('That ESV key was not accepted.')
   if (!res.ok) throw new Error(`Could not load ${book.name} ${chapter}`)
   const data = (await res.json()) as { passages: string[] }
-  const verses = parseEsv(data.passages.join(' '), chapter)
-  rememberEsv(cacheKey, verses)
+  const verses = parseVerses(data.passages.join(' '), chapter)
+  hold(heldKey, verses)
   return verses
 }
 
 export const fetchChapter = (translationId: string, book: Book, chapter: number): Promise<Verse[]> => {
-  const t = TRANSLATIONS.find((x) => x.id === translationId) ?? TRANSLATIONS[1]
-  return t.apiId ? fetchPublicDomain(t, book, chapter) : fetchEsv(book, chapter)
+  const t = getTranslation(translationId)
+  if (t.apiBibleId) return fetchApiBible(t, book, chapter)
+  return t.apiId ? fetchPublicDomain(t, book, chapter) : fetchEsv(t, book, chapter)
 }
 
 export const refLabel = (book: Book, verses: Verse[]) => {
@@ -151,6 +316,3 @@ export const refLabel = (book: Book, verses: Verse[]) => {
   if (first.verse === last.verse) return `${book.name} ${first.chapter}:${first.verse}`
   return `${book.name} ${first.chapter}:${first.verse}–${last.verse}`
 }
-
-export const ESV_NOTICE =
-  'Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.'
