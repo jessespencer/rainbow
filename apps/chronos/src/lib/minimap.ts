@@ -74,18 +74,19 @@ export const initMinimap = (
 
   let isDragging = false;
 
-  const scrollToFraction = (clientX: number) => {
+  const scrollToFraction = (clientX: number, behavior: ScrollBehavior = "auto") => {
     const rect = track.getBoundingClientRect();
     const frac = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     const targetScroll = frac * scrollContainer.scrollWidth - scrollContainer.clientWidth / 2;
-    scrollContainer.scrollLeft = Math.max(0, targetScroll);
+    scrollContainer.scrollTo({ left: Math.max(0, targetScroll), behavior });
   };
 
   minimap.addEventListener("pointerdown", (e) => {
     if (e.button !== 0) return;
     isDragging = true;
     minimap.setPointerCapture(e.pointerId);
-    scrollToFraction(e.clientX);
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    scrollToFraction(e.clientX, reduced ? "auto" : "smooth");
     e.preventDefault();
   });
 

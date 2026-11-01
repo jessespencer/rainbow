@@ -6,8 +6,10 @@
  * using a greedy first-fit algorithm (sorted by birth year).
  */
 
-import { getPixelsPerYear, yearToX } from "./scale.ts";
+import { formatYear, getPixelsPerYear, yearToX } from "./scale.ts";
 import type { TimelineFigure, Category } from "../data/timeline.ts";
+
+export const CHRIST_ID = "jesus";
 
 const FULL_ROW_H = 24;
 const MIN_ROW_H = 3;
@@ -22,31 +24,29 @@ const MIN_NAMED_BAR_W = 36;
 const MIN_NAMED_ROW_H = 16;
 const MIN_BAR_W = 4;
 const BAR_GAP_X = 1;
+/** Rows are assigned at the narrowest zoom any screen reaches, so no bar changes row while zooming. */
+const LAYOUT_PPY = 0.09;
 
 interface Placement {
   figure: TimelineFigure;
   row: number;
-  left: number;
-  width: number;
 }
 
 /** Greedy first-fit sub-row assignment for one category's figures. */
 const computePlacements = (figures: TimelineFigure[]): Placement[] => {
   const sorted = [...figures].sort((a, b) => a.birth - b.birth);
   const rowEnds: number[] = [];
+  const minYears = MIN_BAR_W / LAYOUT_PPY;
+  const gapYears = BAR_GAP_X / LAYOUT_PPY;
 
   return sorted.map((figure) => {
-    const left = yearToX(figure.birth);
-    const width = Math.max(yearToX(figure.death) - left, MIN_BAR_W);
-    const right = left + width;
-
     let row = 0;
-    while (row < rowEnds.length && (rowEnds[row] ?? 0) + BAR_GAP_X > left) {
+    while (row < rowEnds.length && (rowEnds[row] ?? -Infinity) + gapYears > figure.birth) {
       row++;
     }
 
-    rowEnds[row] = right;
-    return { figure, row, left, width };
+    rowEnds[row] = figure.birth + Math.max(figure.death - figure.birth, minYears);
+    return { figure, row };
   });
 };
 
@@ -82,9 +82,11 @@ const FULL_DENSITY: Density = { rowH: FULL_ROW_H, gap: FULL_GAP, pad: FULL_LANE_
 /** Apply position + reign to a bar element. */
 const applyBarPosition = (
   bar: HTMLElement,
-  { figure, row, left, width }: Placement,
+  { figure, row }: Placement,
   { rowH, gap, pad }: Density,
 ) => {
+  const left = yearToX(figure.birth);
+  const width = Math.max(yearToX(figure.death) - left, MIN_BAR_W);
   bar.style.left = `${left}px`;
   bar.style.width = `${width}px`;
   bar.style.top = `${pad + row * (rowH + gap)}px`;
@@ -118,6 +120,22 @@ const createBar = (placement: Placement): HTMLDivElement => {
   bar.dataset.category = figure.category;
   bar.dataset.id = figure.id;
   bar.style.setProperty("--bar-color", `var(--cat-${figure.category})`);
+  bar.classList.toggle("figure-bar--open-end", figure.deathUnknown === true);
+
+  // His bar is too short to name at most zooms, so his label rides beside it.
+  if (figure.id === CHRIST_ID) {
+    bar.classList.add("figure-bar--christ");
+    const label = document.createElement("span");
+    label.className = "christ-label";
+    const nameEl = document.createElement("span");
+    nameEl.className = "christ-label__name";
+    nameEl.textContent = figure.name;
+    const dates = document.createElement("span");
+    dates.className = "christ-label__dates";
+    dates.textContent = `${formatYear(figure.birth)} – ${formatYear(figure.death)}`;
+    label.append(nameEl, dates);
+    bar.appendChild(label);
+  }
 
   const name = document.createElement("span");
   name.className = "figure-bar__name";
@@ -139,14 +157,21 @@ const createBar = (placement: Placement): HTMLDivElement => {
   return bar;
 };
 
+interface Lane {
+  element: HTMLElement;
+  placements: Placement[];
+  rows: number;
+}
+
 export interface RenderResult {
+  lanes: Lane[];
   laneHeights: Map<Category, number>;
   barMap: Map<string, HTMLElement>;
 }
 
 /**
  * Render all figures as positioned bars within their category lanes.
- * Returns lane heights and a map of bar elements for repositioning.
+ * Returns the lanes and a map of bar elements for repositioning.
  */
 export const renderBars = (
   container: HTMLElement,
@@ -162,70 +187,51 @@ export const renderBars = (
     }
   }
 
+  const lanes: Lane[] = [];
   const laneHeights = new Map<Category, number>();
   const barMap = new Map<string, HTMLElement>();
-  const lanes = container.querySelectorAll<HTMLElement>(".lane[data-category]");
 
-  for (const lane of lanes) {
-    const cat = lane.dataset.category as Category;
+  for (const element of container.querySelectorAll<HTMLElement>(".lane[data-category]")) {
+    const cat = element.dataset.category as Category;
     const catFigures = byCategory.get(cat);
     if (!catFigures) continue;
 
     const placements = computePlacements(catFigures);
-    const maxRow = placements.reduce((m, p) => Math.max(m, p.row), 0);
-    const h = laneHeightForRows(maxRow + 1, FULL_DENSITY);
-    lane.style.height = `${h}px`;
+    const rows = placements.reduce((m, p) => Math.max(m, p.row), 0) + 1;
+    lanes.push({ element, placements, rows });
+
+    const h = laneHeightForRows(rows, FULL_DENSITY);
+    element.style.height = `${h}px`;
     laneHeights.set(cat, h);
 
     for (const placement of placements) {
       const bar = createBar(placement);
-      lane.appendChild(bar);
+      element.appendChild(bar);
       barMap.set(placement.figure.id, bar);
     }
   }
 
-  return { laneHeights, barMap };
+  return { lanes, laneHeights, barMap };
 };
 
 /**
- * Reposition existing bars in-place after a zoom change.
- * Recomputes placements (sub-rows may shift) and updates
- * inline styles. Returns updated lane heights.
+ * Reposition existing bars in place after a zoom change.
+ * Returns updated lane heights.
  */
 export const repositionBars = (
-  container: HTMLElement,
-  figures: TimelineFigure[],
+  lanes: Lane[],
   barMap: Map<string, HTMLElement>,
   fitHeight: number,
   fitPpy: number,
 ): Map<Category, number> => {
-  const byCategory = new Map<Category, TimelineFigure[]>();
-  for (const f of figures) {
-    const list = byCategory.get(f.category);
-    if (list) {
-      list.push(f);
-    } else {
-      byCategory.set(f.category, [f]);
-    }
-  }
-
-  const lanes = [...container.querySelectorAll<HTMLElement>(".lane[data-category]")]
-    .flatMap((lane) => {
-      const catFigures = byCategory.get(lane.dataset.category as Category);
-      if (!catFigures) return [];
-      const placements = computePlacements(catFigures);
-      const rows = placements.reduce((m, p) => Math.max(m, p.row), 0) + 1;
-      return [{ lane, placements, rows }];
-    });
-
   const totalRows = lanes.reduce((sum, { rows }) => sum + rows, 0);
   const density = densityFor(totalRows, lanes.length, fitHeight, fitPpy);
   const laneHeights = new Map<Category, number>();
 
-  for (const { lane, placements, rows } of lanes) {
+  for (const { element, placements, rows } of lanes) {
     const h = laneHeightForRows(rows, density);
-    lane.style.height = `${h}px`;
-    laneHeights.set(lane.dataset.category as Category, h);
+    element.style.height = `${h}px`;
+    laneHeights.set(element.dataset.category as Category, h);
 
     for (const placement of placements) {
       const bar = barMap.get(placement.figure.id);

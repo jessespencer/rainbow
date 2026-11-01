@@ -26,6 +26,7 @@ export const CATEGORY_NAMES: Record<Category, string> = {
   prophet: "Prophet",
   "exile-return": "Exile & Return",
   messiah: "Messiah",
+  priest: "Priest",
 };
 
 export const CATEGORY_DESCRIPTIONS: Record<Category, string> = {
@@ -40,4 +41,5 @@ export const CATEGORY_DESCRIPTIONS: Record<Category, string> = {
   prophet: "God's messengers during the monarchy and exile",
   "exile-return": "The Babylonian exile and the return to rebuild Jerusalem",
   messiah: "Jesus Christ — his birth, ministry, and resurrection",
+  priest: "The priestly line from Levi and Aaron",
 };

@@ -18,6 +18,7 @@
   --cat-prophet:       #5a9cf5;
   --cat-exile-return:  #4aad6e;
   --cat-messiah:       #e8e0d0;
+  --cat-priest:        #9cc4f0;
 
   /* Lineage palette */
   --lineage-messianic:   #e8c06a;
@@ -27,15 +28,8 @@
   --lineage-edomite:     #a06040;
   --lineage-tribes:      #7090b0;
   --lineage-israel-king: #40b8a0;
-
-  /* Narrative thread palette */
-  --thread-covenant:       #D4A84B;
-  --thread-kingdom-united: #6E4BA8;
-  --thread-kingdom-north:  #A85050;
-  --thread-kingdom-south:  #3B7A7A;
-  --thread-prophecy:       #9E8BC4;
-  --thread-exile:          #3A4452;
-  --thread-messianic:      #F4E8C8;
+  --lineage-christ:      #ffe9a8;
+  --lineage-priestly:    #9cc4f0;
 
   /* Layout */
   --axis-h:    72px;
@@ -250,6 +244,12 @@ body {
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-x pan-y;
+  /* The minimap is the scrollbar here. */
+  scrollbar-width: none;
+}
+
+.main-viewport::-webkit-scrollbar {
+  display: none;
 }
 
 .main-inner {
@@ -292,8 +292,64 @@ body {
 }
 
 .figure-bar--dimmed {
-  opacity: 0.18;
-  filter: saturate(0.25) brightness(0.8);
+  opacity: 0.14;
+}
+
+/* Keeps every frame of a zoom cheap: no fades or glows to repaint on 157 moving bars. */
+.zooming .figure-bar:not(.figure-bar--christ) {
+  box-shadow: none;
+  transition: none;
+}
+
+.figure-bar.figure-bar--christ {
+  overflow: visible;
+  border: 1px solid #fff;
+  border-radius: 3px;
+  background: var(--lineage-christ);
+  box-shadow: 0 0 10px 2px rgba(255, 220, 140, 0.65), 0 0 28px 8px rgba(255, 220, 140, 0.28);
+  animation: christ-bar-glow 3.6s ease-in-out infinite;
+  z-index: 12;
+}
+
+@keyframes christ-bar-glow {
+  0%, 100% { box-shadow: 0 0 10px 2px rgba(255, 220, 140, 0.55), 0 0 26px 7px rgba(255, 220, 140, 0.22); }
+  50%      { box-shadow: 0 0 14px 3px rgba(255, 220, 140, 0.75), 0 0 34px 10px rgba(255, 220, 140, 0.34); }
+}
+
+.figure-bar--christ .figure-bar__name {
+  display: none;
+}
+
+.christ-label {
+  position: absolute;
+  right: calc(100% + 12px);
+  bottom: -3px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.christ-label__name {
+  color: var(--lineage-christ);
+  font-family: var(--font-ui);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 26px;
+  text-shadow: 0 0 12px rgba(255, 220, 140, 0.55), 0 0 4px var(--bg-base), 0 0 8px var(--bg-base);
+}
+
+.christ-label__dates {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 14px;
+  text-shadow: 0 0 4px var(--bg-base), 0 0 8px var(--bg-base);
+}
+
+.zooming .scrubber {
+  box-shadow: none;
 }
 
 .figure-bar__name {
@@ -323,6 +379,11 @@ body {
   display: none;
 }
 
+.era-label--end {
+  transform: translateX(-100%) rotate(-18deg);
+  transform-origin: bottom right;
+}
+
 .era-label[hidden],
 .tick__label[hidden] {
   display: none;
@@ -332,6 +393,12 @@ body {
 .scrubber__label[hidden],
 .minimap__scrubber[hidden] {
   display: none;
+}
+
+/* No recorded death: the bar trails off instead of claiming an end date. */
+.figure-bar--open-end {
+  border-right: none;
+  mask-image: linear-gradient(to right, #000 78%, transparent);
 }
 
 .figure-bar--selected {
@@ -521,212 +588,302 @@ body {
   box-shadow: 0 0 4px 1px var(--accent-glow);
 }
 
-/* ─── Scrollbar Styling ───────────────────────────────────────── */
-
-.main-viewport::-webkit-scrollbar {
-  height: 6px;
-  width: 4px;
-}
-
-.main-viewport::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.main-viewport::-webkit-scrollbar-thumb {
-  background: var(--border-default);
-  border-radius: 2px;
-}
-
-.main-viewport::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
-}
-
 /* ─── View Containers ─────────────────────────────────────────── */
 
 .timeline-view,
-.lineage-view,
-.narrative-view {
+.lineage-view {
   position: relative;
   width: 100%;
 }
 
-/* ─── Lineage SVG ─────────────────────────────────────────────── */
+/* ─── Lineage ─────────────────────────────────────────────────── */
+
+.lineage-view {
+  overflow: visible;
+}
 
 .lineage-svg {
   display: block;
+  /* The end padding is outside the drawing, and Jesus's glow reaches into it. */
+  overflow: visible;
 }
 
-.lineage-svg text {
-  pointer-events: none;
-  user-select: none;
+.lineage-svg path,
+.lineage-svg line {
+  transition: opacity 0.2s;
 }
 
-.lineage-svg circle {
+.lineage-svg--focused path:not(.lineage-line--lit, .lineage-route),
+.lineage-svg--focused line:not(.lineage-line--lit) {
+  opacity: 0.25;
+}
+
+.lineage-station {
   cursor: pointer;
-  transition: r 0.15s, filter 0.15s;
 }
 
-.lineage-svg circle:hover {
-  filter: brightness(1.3);
+/* King and Priest: glowing routes that draw themselves toward Jesus. */
+.lineage-route {
+  fill: none;
+  stroke-linecap: round;
+  stroke-width: 9;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
 }
 
-.lineage--dimmed {
-  opacity: 0.15;
-  transition: opacity 0.2s;
+.lineage-route--royal {
+  stroke: var(--lineage-messianic);
 }
 
-.lineage--highlighted {
-  opacity: 1;
-  transition: opacity 0.2s;
+.lineage-route--priestly {
+  stroke: var(--lineage-priestly);
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   Narrative Stream Graph
-   ═══════════════════════════════════════════════════════════════════ */
-
-.narrative-view {
-  min-height: 500px;
+.lineage-svg--royal .lineage-route--royal,
+.lineage-svg--priestly .lineage-route--priestly,
+.lineage-svg--both .lineage-route {
+  opacity: 0.32;
 }
 
-.narrative-svg {
+.lineage-route--drawing {
+  stroke-dasharray: 1;
+  animation: lineage-draw 1.5s cubic-bezier(0.45, 0, 0.2, 1) both;
+}
+
+@keyframes lineage-draw {
+  from { stroke-dashoffset: 1; }
+  to   { stroke-dashoffset: 0; }
+}
+
+.lineage-svg path.lineage-gap,
+.lineage-svg path.lineage-link {
+  fill: none;
+  stroke: var(--lineage-priestly);
+  stroke-linecap: round;
+}
+
+.lineage-svg path.lineage-gap,
+.lineage-svg path.lineage-link {
+  stroke-width: 2.5;
+  stroke-dasharray: 2 7;
+}
+
+.lineage-svg circle.lineage-station {
+  transition: opacity 0.15s;
+}
+
+.lineage--dimmed,
+.lineage-station--dimmed {
+  opacity: 0.18;
+}
+
+.lineage-station--selected {
+  stroke: #fff;
+  stroke-width: 2.5;
+}
+
+.lineage-labels {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.lineage-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  text-align: left;
+  text-shadow: 0 0 4px var(--bg-base), 0 0 8px var(--bg-base), 0 0 2px var(--bg-base);
+  white-space: nowrap;
+  pointer-events: auto;
+  transition: opacity 0.15s;
+}
+
+.lineage-label:hover .lineage-label__name,
+.lineage-label--selected .lineage-label__name {
+  color: var(--text-bright);
+}
+
+.lineage-label--dimmed {
+  opacity: 0.22;
+}
+
+.lineage-label--hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.lineage-label--selected {
+  z-index: 2;
+}
+
+.lineage-halo {
+  pointer-events: none;
+  animation: christ-glow 3.6s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes christ-glow {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50%      { opacity: 1; transform: scale(1.12); }
+}
+
+.lineage-label--christ {
+  z-index: 3;
+}
+
+.lineage-label--flipped {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.lineage-label--christ .lineage-label__name {
+  color: var(--lineage-christ);
+  font-family: var(--font-ui);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 28px;
+  text-shadow: 0 0 12px rgba(255, 220, 140, 0.55), 0 0 4px var(--bg-base);
+}
+
+.lineage-label__title {
+  display: none;
+  color: var(--lineage-christ);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-style: italic;
+  line-height: 16px;
+}
+
+.lineage-label--titled .lineage-label__title {
   display: block;
 }
 
-.narrative-svg path {
-  opacity: 0.85;
-  transition: opacity 0.15s ease;
-}
-
-.narrative--dimmed {
-  opacity: 0.15 !important;
-  transition: opacity 0.15s ease !important;
-}
-
-.narrative--highlighted {
-  opacity: 1 !important;
-  filter: brightness(1.1);
-  transition: opacity 0.15s ease !important;
-}
-
-/* ─── Entrance animation ─────────────────────────────────────────── */
-
-@keyframes narrative-fade-in {
-  from { opacity: 0; transform: scaleY(0.3); }
-  to   { opacity: 0.85; transform: scaleY(1); }
-}
-
-.narrative-path--animate {
-  animation: narrative-fade-in 600ms ease-out both;
-}
-
-/* ─── Era annotations ────────────────────────────────────────────── */
-
-.narrative-era-line {
-  stroke: var(--text-dim, #888);
-  stroke-width: 0.5;
-  opacity: 0.3;
-}
-
-.narrative-era-label {
-  font-family: var(--font-mono, "DM Mono", monospace);
-  font-size: 9px;
-  fill: var(--text-dim, #888);
-  opacity: 0.6;
-}
-
-/* ─── Legend ──────────────────────────────────────────────────────── */
-
-.narrative-legend {
-  position: fixed;
-  bottom: 76px;
-  left: 20px;
-  background: rgba(20, 22, 28, 0.88);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--border-faint, rgba(255, 255, 255, 0.08));
-  border-radius: 8px;
-  padding: 10px 14px;
-  z-index: 40;
-  pointer-events: auto;
-}
-
-.narrative-legend__row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 2px 0;
-}
-
-.narrative-legend__swatch {
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-  flex-shrink: 0;
-}
-
-.narrative-legend__name {
-  font-family: var(--font-mono, "DM Mono", monospace);
+.lineage-label--christ .lineage-label__dates {
+  color: var(--text-secondary);
   font-size: 11px;
-  color: var(--text-dim, #888);
 }
 
-/* ─── Hover tooltip ──────────────────────────────────────────────── */
+.lineage-label__name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 15px;
+}
 
-.narrative-tooltip {
+.lineage-label--trunk:not(.lineage-label--christ) .lineage-label__name {
+  color: var(--text-bright);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.lineage-label--tribe .lineage-label__name {
+  font-size: 11px;
+  line-height: 13px;
+}
+
+.lineage-label--tribe {
+  flex-direction: row;
+  gap: 8px;
+}
+
+.lineage-label__dates,
+.lineage-label__blurb {
+  display: none;
+}
+
+.lineage-label__dates {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 13px;
+}
+
+.lineage-label__blurb {
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: normal;
+}
+
+.lineage-label--trunk .lineage-label__blurb {
+  -webkit-line-clamp: 3;
+}
+
+.lineage-label--dated .lineage-label__dates {
+  display: block;
+}
+
+.lineage-label--described .lineage-label__blurb {
+  display: -webkit-box;
+}
+
+.lineage-ending {
   position: absolute;
-  pointer-events: none;
-  background: rgba(20, 22, 28, 0.92);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--border-faint, rgba(255, 255, 255, 0.08));
-  border-radius: 6px;
-  padding: 8px 12px;
-  font-family: var(--font-mono, "DM Mono", monospace);
-  font-size: 11px;
-  color: var(--text-primary, #ccc);
-  line-height: 1.5;
+  top: 0;
+  left: 0;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 14px;
+  text-shadow: 0 0 4px var(--bg-base), 0 0 8px var(--bg-base);
   white-space: nowrap;
-  z-index: 50;
-  opacity: 0;
-  transition: opacity 0.1s ease;
+  transition: opacity 0.15s;
 }
 
-.narrative-tooltip--visible {
-  opacity: 1;
+.lineage-ending--final {
+  color: var(--text-secondary);
 }
 
-.narrative-tooltip__desc {
-  color: var(--text-dim, #888);
-  font-style: italic;
+.lineage-ending--dimmed {
+  opacity: 0.22;
 }
 
-.narrative-tooltip__year {
-  color: var(--text-bright, #eee);
+.lineage-gutter {
+  position: relative;
+  width: var(--label-w);
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-subtle);
+  background: var(--bg-base);
+  z-index: 10;
 }
 
-.narrative-tooltip__word {
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.lineage-gutter__name {
+  position: absolute;
+  left: 14px;
+  right: 8px;
+  transform: translateY(-50%);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
 }
 
-/* ─── Story-at-this-moment (year panel section) ──────────────────── */
-
-.narrative-story__entry {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 2px 20px;
-}
-
-.narrative-story__swatch {
+.lineage-gutter__name::before {
+  content: "";
+  display: inline-block;
   width: 6px;
   height: 6px;
+  margin-right: 8px;
   border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.narrative-story__label {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-primary);
+  background: var(--dot-color);
+  vertical-align: 1px;
 }
 
 /* ─── Search ──────────────────────────────────────────────────── */
@@ -873,65 +1030,235 @@ body {
 }
 
 /* ─── Canvas Overlays ─────────────────────────────────────────── */
-/* Overlay blocks let the timeline take input; only their controls catch the pointer. */
+/* Match Rainbow's. Overlay blocks let the timeline take input; only their controls catch the pointer. */
 
-/* The story runs top left to bottom right, which leaves this corner empty. */
 .canvas-status {
   position: absolute;
-  left: calc(var(--label-w) + 12px);
-  bottom: calc(var(--minimap-h) + 12px);
   z-index: 35;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
   pointer-events: none;
 }
 
-.canvas-status > * {
+.canvas-status button,
+.canvas-status select {
   pointer-events: auto;
 }
 
+.canvas-status {
+  top: calc(var(--axis-h) + 14px);
+  left: calc(var(--label-w) + 12px);
+  right: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.status-row,
 .zoom-controls {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.canvas-btn,
-.zoom-btn,
+.status-row {
+  gap: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-shadow: 0 0 4px var(--bg-base), 0 0 8px var(--bg-base);
+}
+
 .era-select {
+  width: 76px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-pill);
+  background: var(--fill-subtle);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  backdrop-filter: blur(8px);
+}
+
+.canvas-btn,
+.preset-btn {
+  display: inline-flex;
+  align-items: center;
   height: 28px;
   border: 1px solid var(--border-faint);
   border-radius: var(--radius-pill);
-  background: var(--bg-elevated);
+  background: var(--fill-subtle);
   color: var(--text-dim);
   font-family: var(--font-mono);
   font-size: 11px;
+  white-space: nowrap;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.canvas-btn {
+  gap: 5px;
+  padding: 0 12px;
+}
+
+.canvas-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2;
+}
+
+.preset-btn {
+  padding: 0 14px;
+}
+
+.canvas-btn:hover,
+.preset-btn:hover {
+  background: var(--fill-hover);
+  color: var(--text-secondary);
+}
+
+/* A real row, not an overlay, so it sits at the very bottom like Rainbow's. */
+.canvas-credits {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 12px;
+  padding: 6px 24px calc(6px + env(safe-area-inset-bottom));
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.canvas-credits a {
+  pointer-events: auto;
+}
+
+.canvas-credits {
+  left: calc(var(--label-w) + 12px);
+  bottom: calc(var(--minimap-h) + 8px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-shadow: 0 0 4px var(--bg-base), 0 0 8px var(--bg-base);
+}
+
+.canvas-credits a {
+  color: inherit;
+}
+
+.canvas-credits a:hover,
+.about-button:hover {
+  color: var(--text-secondary);
+}
+
+.about-button {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ─── King and Priest ────────────────────────────────────────── */
+
+.line-toggle {
+  display: inline-flex;
+  order: -1;
+  align-items: center;
+  gap: 2px;
+  margin-right: auto;
+  padding: 2px;
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-pill);
+  background: var(--fill-subtle);
+  backdrop-filter: blur(8px);
+}
+
+.line-toggle[hidden] {
+  display: none;
+}
+
+.line-toggle__btn {
+  height: 22px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  white-space: nowrap;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
 
-.canvas-btn {
-  padding: 0 12px;
-  white-space: nowrap;
-}
-
-.zoom-btn {
-  width: 28px;
-  font-size: 14px;
-}
-
-.era-select {
-  width: 116px;
-  padding: 0 8px;
-}
-
-.canvas-btn:hover,
-.zoom-btn:hover,
-.era-select:hover {
-  background: var(--fill-hover);
+.line-toggle__btn:hover:not(.line-toggle__btn--active) {
   color: var(--text-secondary);
+}
+
+.line-toggle__btn--active {
+  background: var(--fill-selected);
+  color: var(--text-bright);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.line-card {
+  position: absolute;
+  left: calc(var(--label-w) + 12px);
+  bottom: calc(var(--minimap-h) + 12px);
+  z-index: 35;
+  width: min(340px, calc(100% - var(--label-w) - 24px));
+  padding: 12px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--bg-elevated) 88%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.line-card[hidden] {
+  display: none;
+}
+
+.line-card__title {
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.line-card__text {
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.line-card__refs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 8px;
+}
+
+.line-card__refs a {
+  color: var(--accent-text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-decoration: none;
+}
+
+.line-card__refs a:hover {
+  text-decoration: underline;
 }
 
 /* ─── Companion ───────────────────────────────────────────────── */
@@ -1275,7 +1602,8 @@ a:focus-visible {
 
 @media (max-width: 760px) {
   .label-gutter,
-  .lane-labels {
+  .lane-labels,
+  .lineage-gutter {
     display: none !important;
   }
 
@@ -1290,14 +1618,40 @@ a:focus-visible {
   }
 
   .view-toggle__btn {
-    height: 26px;
     padding: 0 8px;
-    font-size: 10px;
   }
 
   .canvas-status {
-    left: 10px;
-    right: 10px;
+    top: calc(var(--axis-h) + 10px);
+    left: 16px;
+    right: 16px;
+  }
+
+  .status-row > span:first-child {
+    display: none;
+  }
+
+  .line-toggle {
+    order: 1;
+    flex: 1 1 100%;
+    margin-right: 0;
+  }
+
+  .line-toggle__btn {
+    flex: 1;
+    height: 28px;
+    padding: 0 8px;
+  }
+
+  .line-card {
+    left: 12px;
+    right: 12px;
+    width: auto;
+  }
+
+  .canvas-credits {
+    padding-left: 16px;
+    font-size: 10px;
   }
 
   .companion__head {

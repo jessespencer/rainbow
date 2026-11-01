@@ -43,6 +43,8 @@
  * ═══════════════════════════════════════════════════════════════════
  *
  * - Enoch: "death" year is his translation (taken by God), not death.
+ * - Cain's line: Genesis gives no death dates. These bars stop at the
+ *   Flood and are marked `deathUnknown`, which fades their ends.
  * - Abraham: born when Terah was 130 (not 70); Ussher's reasoning
  *   from Acts 7:4 and Gen 12:4.
  * - Pekah (Israel): Thiele dates his reign 752–732 BC. The first
@@ -100,7 +102,8 @@ export type Category =
   | "judah-king"
   | "prophet"
   | "exile-return"
-  | "messiah";
+  | "messiah"
+  | "priest";
 
 export type Lineage =
   | "messianic"
@@ -109,13 +112,18 @@ export type Lineage =
   | "ishmaelite"
   | "edomite"
   | "tribes"
-  | "israel-king";
+  | "israel-king"
+  | "priestly";
 
 export interface TimelineFigure {
   id: string;
   name: string;
   birth: number;
   death: number;
+  /** Scripture gives no death date, so `death` is only where the bar stops. */
+  deathUnknown?: boolean;
+  /** Dates are spaced by generation, not recorded. */
+  estimated?: boolean;
   reignStart?: number;
   reignEnd?: number;
   category: Category;
@@ -254,6 +262,7 @@ export const figures: TimelineFigure[] = [
     name: "Cain",
     birth: -3874,
     death: -2348,
+    deathUnknown: true,
     category: "antediluvian",
     scriptureRef: "Gen 4:1–24",
     blurb:
@@ -278,6 +287,7 @@ export const figures: TimelineFigure[] = [
     name: "Enoch (of Cain)",
     birth: -3800,
     death: -2348,
+    deathUnknown: true,
     category: "antediluvian",
     scriptureRef: "Gen 4:17",
     blurb:
@@ -290,6 +300,7 @@ export const figures: TimelineFigure[] = [
     name: "Irad",
     birth: -3730,
     death: -2348,
+    deathUnknown: true,
     category: "antediluvian",
     scriptureRef: "Gen 4:18",
     blurb: "Son of Enoch of Cain; third generation of the Cainite line.",
@@ -301,6 +312,7 @@ export const figures: TimelineFigure[] = [
     name: "Mehujael",
     birth: -3660,
     death: -2348,
+    deathUnknown: true,
     category: "antediluvian",
     scriptureRef: "Gen 4:18",
     blurb: "Son of Irad; fourth generation of the Cainite line.",
@@ -312,6 +324,7 @@ export const figures: TimelineFigure[] = [
     name: "Methushael",
     birth: -3590,
     death: -2348,
+    deathUnknown: true,
     category: "antediluvian",
     scriptureRef: "Gen 4:18",
     blurb: "Son of Mehujael; fifth generation of the Cainite line.",
@@ -323,6 +336,7 @@ export const figures: TimelineFigure[] = [
     name: "Lamech (of Cain)",
     birth: -3520,
     death: -2348,
+    deathUnknown: true,
     category: "antediluvian",
     scriptureRef: "Gen 4:18–24",
     blurb:
@@ -335,6 +349,7 @@ export const figures: TimelineFigure[] = [
     name: "Tubal-Cain",
     birth: -3450,
     death: -2348,
+    deathUnknown: true,
     category: "antediluvian",
     scriptureRef: "Gen 4:22",
     blurb: "Son of Lamech of Cain; forger of all instruments of bronze and iron.",
@@ -663,7 +678,7 @@ export const figures: TimelineFigure[] = [
     blurb:
       "Third son of Jacob; ancestor of the priestly tribe that served at the tabernacle and temple.",
     parent: "jacob",
-    lineage: "tribes",
+    lineage: "priestly",
   },
   {
     id: "dan",
@@ -946,6 +961,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "Exod 4–Num 20",
     blurb:
       "Brother of Moses; first high priest of Israel, died on Mount Hor at age 123.",
+    parent: "amram",
+    lineage: "priestly",
   },
   {
     id: "moses",
@@ -2037,6 +2054,8 @@ export const figures: TimelineFigure[] = [
     scriptureRef: "Luke 1; Matt 3; 14:1–12",
     blurb:
       "Forerunner of the Messiah; baptized Jesus in the Jordan and was beheaded by Herod Antipas.",
+    parent: "zechariah-priest",
+    lineage: "priestly",
   },
   {
     id: "jesus",

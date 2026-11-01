@@ -6,12 +6,13 @@
 import { APPS, appHref } from "@jessespencer/bible-ui";
 import { setupSheet } from "@jessespencer/bible-ui/sheet";
 import { formatYear } from "./scale.ts";
-import { formatLifespan, formatReign } from "./tooltip.ts";
+import { describeLife, formatDates, formatReign } from "./tooltip.ts";
 import { el } from "./dom.ts";
 import { CATEGORY_NAMES, CATEGORY_ORDER } from "./categories.ts";
 import { loadBible, locate, parseScripture } from "./scripture.ts";
 import type { Passage } from "./scripture.ts";
 import { ERA_BANDS } from "./eras.ts";
+import { allFigures, childrenOf } from "./renderLineage.ts";
 import type { Category, TimelineFigure } from "../data/timeline.ts";
 
 const PREVIEW_VERSES = 6;
@@ -26,8 +27,6 @@ interface CompanionEvents {
   onFigure: (id: string) => void;
   onStep: (step: -1 | 1) => void;
   onClose: () => void;
-  /** Adds view-specific sections to the top of the year view. */
-  renderYearExtra: (body: HTMLElement, year: number) => void;
 }
 
 const eraAt = (year: number): string =>
@@ -57,14 +56,14 @@ const figureRow = (parent: HTMLElement, figure: TimelineFigure, onFigure: (id: s
   const row = el("button", "cp-row", parent);
   row.style.setProperty("--dot-color", `var(--cat-${figure.category})`);
   el("span", "cp-row__name", row).textContent = figure.name;
-  el("span", "cp-row__dates", row).textContent = `${formatYear(figure.birth)} – ${formatYear(figure.death)}`;
+  el("span", "cp-row__dates", row).textContent = formatDates(figure);
   el("span", "cp-row__blurb", row).textContent = figure.blurb;
   row.addEventListener("click", () => onFigure(figure.id));
 };
 
 export const initCompanion = (
   stage: HTMLElement,
-  { onFigure, onStep, onClose, renderYearExtra }: CompanionEvents,
+  { onFigure, onStep, onClose }: CompanionEvents,
 ): CompanionHandle => {
   const panel = el("aside", "bui-sheet companion hidden", stage);
   panel.setAttribute("aria-label", "Details");
@@ -144,12 +143,18 @@ export const initCompanion = (
         headingEl,
         CATEGORY_NAMES[figure.category],
         figure.name,
-        `${formatLifespan(figure.birth, figure.death)}${reign}`,
+        `${describeLife(figure)}${reign}`,
         `var(--cat-${figure.category})`,
       );
       body.replaceChildren();
       el("p", "cp-text cp-lead", el("div", "cp-quote", body)).textContent = figure.blurb;
       renderScripture(figure);
+      const parent = allFigures.find((f) => f.id === figure.parent);
+      const family = [...(parent ? [parent] : []), ...childrenOf(figure)];
+      if (family.length > 0) {
+        const root = section(body, "Family line", family.length);
+        for (const relative of family) figureRow(root, relative, onFigure);
+      }
       if (alongside.length > 0) {
         const root = section(body, "Alive alongside", alongside.length);
         for (const other of alongside) figureRow(root, other, onFigure);
@@ -162,7 +167,6 @@ export const initCompanion = (
       const count = alive.length === 1 ? "1 person" : `${alive.length} people`;
       heading(headingEl, eraAt(year), `Alive in ${formatYear(year)}`, count);
       body.replaceChildren();
-      renderYearExtra(body, year);
 
       if (alive.length === 0) {
         el("p", "cp-empty", body).textContent = "No one on the timeline at this date.";

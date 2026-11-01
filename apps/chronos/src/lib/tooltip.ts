@@ -41,6 +41,18 @@ export const formatLifespan = (birth: number, death: number): string => {
   return `${from} – ${to} (${span} yrs)`;
 };
 
+/** Birth to death for the panel and tooltip, with an unknown death said plainly. */
+export const describeLife = (figure: TimelineFigure): string => {
+  const estimate = figure.estimated ? "About " : "";
+  if (figure.deathUnknown) return `${estimate}${formatYear(figure.birth)} – death not recorded`;
+  if (figure.estimated) return `About ${formatYear(figure.birth)} – ${formatYear(figure.death)}, estimated`;
+  return formatLifespan(figure.birth, figure.death);
+};
+
+/** The short form, for lists and labels. */
+export const formatDates = (figure: TimelineFigure): string =>
+  `${figure.estimated ? "c. " : ""}${formatYear(figure.birth)} – ${figure.deathUnknown ? "unknown" : formatYear(figure.death)}`;
+
 export const formatReign = (start: number, end: number): string =>
   `Reigned ${formatYear(start)} – ${formatYear(end)}`;
 
@@ -60,7 +72,7 @@ export const initTooltip = (
     if (!f) return;
 
     let html = `<strong class="tooltip__name">${f.name}</strong>`;
-    html += `<span class="tooltip__life">${formatLifespan(f.birth, f.death)}</span>`;
+    html += `<span class="tooltip__life">${describeLife(f)}</span>`;
     if (f.reignStart != null && f.reignEnd != null) {
       html += `<span class="tooltip__reign">${formatReign(f.reignStart, f.reignEnd)}</span>`;
     }
