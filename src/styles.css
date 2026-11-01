@@ -8,6 +8,7 @@
   --ghost: 0.4;
   --book: 'EB Garamond Variable', 'EB Garamond', Garamond, Georgia, serif;
   --display: 'IM Fell Great Primer', 'EB Garamond Variable', Georgia, serif;
+  --greek: 'EB Garamond Variable', 'EB Garamond', Georgia, serif;
   color-scheme: light;
 }
 
@@ -253,6 +254,7 @@ kbd {
   text-align: justify;
   hyphens: auto;
   hanging-punctuation: first last;
+  position: relative;
 }
 
 .drop {
@@ -372,6 +374,154 @@ kbd {
   padding: 0.4rem 0;
   margin-bottom: 1rem;
   font-size: 1.2rem;
+}
+
+/* The Greek behind the page */
+
+.greek-switch {
+  font-size: 1rem;
+  font-style: italic;
+  line-height: 1.3;
+  text-align: right;
+  hyphens: manual;
+  color: var(--soft);
+  margin: -1.5rem 0 1rem;
+}
+
+.greek-switch button {
+  font-style: normal;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+  padding: 0.3rem 0.1rem;
+}
+
+.greek-switch .on {
+  color: var(--rubric);
+  text-decoration-color: currentColor;
+}
+
+.leaf-greek .verse {
+  cursor: default;
+}
+
+.g {
+  cursor: pointer;
+  text-decoration: underline dotted 1px color-mix(in srgb, var(--rubric) 70%, transparent);
+  text-underline-offset: 0.2em;
+  border-radius: 2px;
+  transition: color 0.15s ease;
+}
+
+.g:hover,
+.g.on {
+  color: var(--rubric);
+}
+
+.g.on {
+  text-decoration-style: solid;
+}
+
+.found {
+  animation: found 2.4s ease-out;
+}
+
+.note {
+  position: fixed;
+  z-index: 6;
+  inset: auto 0 0;
+  max-height: 58dvh;
+  overflow-y: auto;
+  padding: 0.55rem max(1rem, calc((100vw - 42rem) / 2)) max(1rem, env(safe-area-inset-bottom));
+  background: var(--paper);
+  border-top: 1px solid var(--ink);
+  font-size: 1.02rem;
+  line-height: 1.34;
+  text-align: left;
+  hyphens: manual;
+  animation: note-rise 0.2s ease-out;
+}
+
+.note-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+  color: var(--rubric);
+}
+
+.note-head .close {
+  font-size: 1.5rem;
+  padding: 0 0.2em;
+}
+
+.note-entry + .note-entry {
+  margin-top: 0.7rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--hair);
+}
+
+.note-greek {
+  font-family: var(--greek);
+  font-size: 1.8rem;
+  line-height: 1.15;
+  font-feature-settings: 'kern', 'liga';
+}
+
+.note-translit {
+  font-style: italic;
+  color: var(--soft);
+}
+
+.note-gloss {
+  margin-top: 0.3rem;
+}
+
+.note-gloss em {
+  font-style: italic;
+}
+
+.greek {
+  font-family: var(--greek);
+  font-feature-settings: 'kern', 'liga';
+}
+
+.note-small {
+  margin-top: 0.3rem;
+  font-size: 0.92em;
+  color: var(--soft);
+}
+
+.note-places .link {
+  padding: 0.1em 0.05em;
+  text-underline-offset: 0.16em;
+  text-decoration-thickness: 1px;
+}
+
+.page:has(.note) {
+  padding-bottom: 62dvh;
+}
+
+@media (min-width: 80rem) {
+  .note {
+    position: absolute;
+    inset: var(--note-top) auto auto calc(100% + 2.25rem);
+    width: 15.5rem;
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+    background: none;
+    border: 0;
+    animation-name: note-fade;
+  }
+
+  .note-head {
+    margin-bottom: 0.1rem;
+  }
+
+  .page:has(.note) {
+    padding-bottom: 9rem;
+  }
 }
 
 /* The session */
@@ -703,6 +853,26 @@ kbd {
   font-size: 0.62em;
   padding-top: 0.42em;
   color: var(--rubric);
+}
+
+@keyframes found {
+  from {
+    opacity: 1;
+    background: color-mix(in srgb, var(--rubric) 22%, transparent);
+  }
+}
+
+@keyframes note-rise {
+  from {
+    transform: translateY(0.75rem);
+    opacity: 0;
+  }
+}
+
+@keyframes note-fade {
+  from {
+    opacity: 0;
+  }
 }
 
 @keyframes blot {

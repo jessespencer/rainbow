@@ -1,6 +1,8 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { BOOKS, ESV_NOTICE, MissingKeyError, TRANSLATIONS, fetchChapter, getEsvKey, setEsvKey, type Book, type Verse } from '../lib/bible'
+import { hasGreek, loadGreek, splitVerse, type GreekData, type GreekTag } from '../lib/greek'
 import { inkLevel, isDue, verseKey, type Progress } from '../lib/memory'
+import { GreekNote } from './GreekNote'
 import type { SessionItem } from './Session'
 
 interface PageViewProps {
@@ -30,9 +32,15 @@ export const PageView = (props: PageViewProps) => {
   const [failure, setFailure] = useState<{ id: string; message: string; needsKey: boolean }>()
   const [selection, setSelection] = useState<[number, number]>()
   const [keyAttempt, setKeyAttempt] = useState(0)
+  const [greekOn, setGreekOn] = useState(false)
+  const [greek, setGreek] = useState<GreekData>()
+  const [opened, setOpened] = useState<{ id: string; tag: GreekTag; ref: string; anchor: HTMLElement }>()
+  const [found, setFound] = useState<{ chapter: number; verse: number }>()
   const pageId = `${translation}:${book.code}:${chapter}:${keyAttempt}`
   const verses = loaded?.id === pageId ? loaded.verses : []
   const problem = failure?.id === pageId ? failure : undefined
+  const greekReady = hasGreek(translation, book.code) && greekOn ? greek : undefined
+  const note = greekReady && opened?.id === pageId ? opened : undefined
 
   useEffect(() => {
     let current = true
@@ -49,6 +57,22 @@ export const PageView = (props: PageViewProps) => {
       current = false
     }
   }, [translation, book, chapter, pageId])
+
+  useEffect(() => {
+    if (greekOn && !greek) loadGreek().then(setGreek)
+  }, [greekOn, greek])
+
+  useEffect(() => {
+    if (found?.chapter !== chapter || !loaded || loaded.id !== pageId) return
+    document.getElementById(`verse-${found.verse}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }, [found, chapter, loaded, pageId])
+
+  useEffect(() => {
+    if (!note) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpened(undefined)
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [note])
 
   const prefix = `${translation}:${book.code}:`
   const bookRecords = Object.entries(progress).filter(([key]) => key.startsWith(prefix))
@@ -78,6 +102,31 @@ export const PageView = (props: PageViewProps) => {
       Array.from({ length: to - from + 1 }, (_, i) => ({ kind: 'learn' as const, chapter, from: from + i, to: from + i })),
     )
   }
+
+  const toggleGreek = () => {
+    setGreekOn(!greekOn)
+    setSelection(undefined)
+    setOpened(undefined)
+    setFound(undefined)
+  }
+
+  const openWord = (tag: GreekTag, verse: number, anchor: HTMLElement) => {
+    const same = note?.tag === tag
+    setOpened(same ? undefined : { id: pageId, tag, ref: `${chapter}:${verse}`, anchor })
+  }
+
+  const goToVerse = (ref: string) => {
+    const [target, verse] = ref.split(':').map(Number)
+    setOpened(undefined)
+    setFound({ chapter: target, verse })
+    if (target !== chapter) props.onChapter(target)
+  }
+
+  const greekPieces = (v: Verse) => {
+    const tagged = greekReady?.verses[`${chapter}:${v.verse}`]
+    return tagged && splitVerse(v.text, tagged)
+  }
+  const untagged = greekReady ? verses.filter((v) => !greekPieces(v)).length : 0
 
   const chapterCount = (n: number) => kept.filter(([key]) => parseKey(key).chapter === n).length
   const lastVerse = verses[verses.length - 1]?.verse ?? 1
@@ -174,19 +223,48 @@ export const PageView = (props: PageViewProps) => {
       ) : problem ? (
         <p className="session-message">{problem.message}</p>
       ) : (
-        <article className="leaf">
+        <article className={`leaf ${greekReady ? 'leaf-greek' : ''}`}>
+          {hasGreek(translation, book.code) && verses.length > 0 && (
+            <p className="greek-switch">
+              <button type="button" className={`quiet ${greekOn ? 'on' : ''}`} aria-pressed={greekOn} onClick={toggleGreek}>
+                Greek
+              </button>
+              {greekReady && <span> Tap a dotted word to see the Greek behind it.</span>}
+            </p>
+          )}
           <span className="drop" aria-hidden="true">
             {chapterName(book, chapter)}
           </span>
           {verses.map((v) => {
             const record = recordOf(v.verse)
             const chosen = selection && v.verse >= selection[0] && v.verse <= selection[1]
+            const inkClasses = `verse ink-${inkLevel(record)} ${isDue(record) ? 'due' : ''}`
+            if (greekReady) {
+              const arrived = found?.chapter === chapter && found.verse === v.verse
+              return (
+                <span key={v.verse} id={`verse-${v.verse}`} className={`${inkClasses} ${arrived ? 'found' : ''}`}>
+                  {v.verse > 1 && <sup>{v.verse}</sup>}
+                  {(greekPieces(v) ?? [{ text: v.text }]).map((piece, i) =>
+                    piece.tag ? (
+                      <GreekWordSpan
+                        key={i}
+                        text={piece.text}
+                        open={note?.tag === piece.tag}
+                        onOpen={(anchor) => openWord(piece.tag!, v.verse, anchor)}
+                      />
+                    ) : (
+                      piece.text
+                    ),
+                  )}{' '}
+                </span>
+              )
+            }
             return (
               <span
                 key={v.verse}
                 role="button"
                 tabIndex={0}
-                className={`verse ink-${inkLevel(record)} ${isDue(record) ? 'due' : ''} ${chosen ? 'chosen' : ''}`}
+                className={`${inkClasses} ${chosen ? 'chosen' : ''}`}
                 onClick={() => select(v.verse)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
@@ -200,11 +278,45 @@ export const PageView = (props: PageViewProps) => {
               </span>
             )
           })}
+          {greekReady && note && (
+            <GreekNote
+              data={greekReady}
+              tag={note.tag}
+              reference={note.ref}
+              anchor={note.anchor}
+              onGo={goToVerse}
+              onClose={() => setOpened(undefined)}
+            />
+          )}
         </article>
       )}
 
       <footer className="colophon">
         <p>Unlearned verses are printed in grey. They darken as you learn them.</p>
+        {untagged > 0 && (
+          <p>
+            Greek is hidden for {untagged === 1 ? 'one verse' : `${untagged} verses`} here: the wording differs from the
+            edition the tags were made for.
+          </p>
+        )}
+        {hasGreek(translation, book.code) && (
+          <p>
+            Greek text, grammar and glosses from{' '}
+            <a href="https://www.STEPBible.org" target="_blank" rel="noreferrer">
+              STEP Bible
+            </a>{' '}
+            (TAGNT, TBESG, TEGMC; CC BY 4.0). ESV word tags by{' '}
+            <a href="https://www.TyndaleHouse.com" target="_blank" rel="noreferrer">
+              Tyndale House, Cambridge
+            </a>{' '}
+            and STEP Bible (
+            <a href="https://STEPBible.github.io/STEPBible-Data/" target="_blank" rel="noreferrer">
+              TTESV
+            </a>
+            ; CC BY-NC 4.0), corrected against the ESV and limited to words of meaning. The tags name a Greek word, not an
+            interpretation.
+          </p>
+        )}
         {translation === 'ESV' ? (
           <p>
             {ESV_NOTICE}{' '}
@@ -244,6 +356,30 @@ export const PageView = (props: PageViewProps) => {
     </div>
   )
 }
+
+interface GreekWordSpanProps {
+  text: string
+  open: boolean
+  onOpen: (anchor: HTMLElement) => void
+}
+
+const GreekWordSpan = ({ text, open, onOpen }: GreekWordSpanProps) => (
+  <span
+    role="button"
+    tabIndex={0}
+    aria-pressed={open}
+    className={`g ${open ? 'on' : ''}`}
+    onClick={(e) => onOpen(e.currentTarget)}
+    onKeyDown={(e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        onOpen(e.currentTarget)
+      }
+    }}
+  >
+    {text}
+  </span>
+)
 
 interface EsvKeyFormProps {
   message: string
