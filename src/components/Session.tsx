@@ -29,6 +29,7 @@ interface SessionProps {
   progress: Progress
   onRecord: (key: string, update: (record: VerseRecord) => VerseRecord) => void
   onExit: () => void
+  section?: { name: string; onNext?: () => void }
 }
 
 const REVEALS: Partial<Record<Stage, Reveal>> = {
@@ -42,7 +43,7 @@ const REVEALS: Partial<Record<Stage, Reveal>> = {
 const RUN_STAGE = 7
 const FLOURISH_MS = 1100
 
-export const Session = ({ items, book, translation, progress, onRecord, onExit }: SessionProps) => {
+export const Session = ({ items, book, translation, progress, onRecord, onExit, section }: SessionProps) => {
   const [index, setIndex] = useState(0)
   const [chapterText, setChapterText] = useState<{ chapter: number; verses: Verse[] }>()
   const [loadError, setLoadError] = useState('')
@@ -61,7 +62,7 @@ export const Session = ({ items, book, translation, progress, onRecord, onExit }
     let current = true
     fetchChapter(translation, book, item.chapter)
       .then((verses) => current && setChapterText({ chapter: item.chapter, verses }))
-      .catch((e: Error) => current && setLoadError(e.message))
+      .catch((e: Error) => current && setLoadError(e.message || 'The ESV needs a key. Add yours on the page.'))
     return () => {
       current = false
     }
@@ -175,12 +176,14 @@ export const Session = ({ items, book, translation, progress, onRecord, onExit }
     afterFlourish(nextItem)
   }
 
+  const backLabel = section ? 'Back to the map' : 'Back to the page'
+
   if (loadError) {
     return (
       <main className="session">
         <p className="session-message">{loadError}</p>
         <button type="button" className="quiet" onClick={onExit}>
-          Back to the page
+          {backLabel}
         </button>
       </main>
     )
@@ -195,8 +198,13 @@ export const Session = ({ items, book, translation, progress, onRecord, onExit }
           {tally.verses === 1 ? 'One verse' : `${tally.verses} verses`} kept
           {tally.stumbles > 0 && `, ${tally.stumbles} to come back to tomorrow`}.
         </p>
-        <button type="button" className="primary" onClick={onExit}>
-          Back to the page
+        {section?.onNext && (
+          <button type="button" className="primary" onClick={section.onNext}>
+            What comes next?
+          </button>
+        )}
+        <button type="button" className={section?.onNext ? 'quiet' : 'primary'} onClick={onExit}>
+          {backLabel}
         </button>
       </main>
     )
@@ -291,7 +299,7 @@ export const Session = ({ items, book, translation, progress, onRecord, onExit }
           ))}
         </nav>
       ) : (
-        <div className="ladder ladder-solo">{item.kind === 'run' ? 'recite' : stage === 'shapes' ? 'shapes' : 'review'}</div>
+        <div className="ladder ladder-solo">{item.kind === 'run' ? (section?.name ?? 'recite') : stage === 'shapes' ? 'shapes' : 'review'}</div>
       )}
       <section className="stage">{renderStage()}</section>
       <footer className="session-hint">

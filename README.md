@@ -7,6 +7,12 @@ npm install
 npm run dev
 ```
 
+## Structure map
+
+Books with an outline get a one-page map, reached from the main page. Each section shows its name, its verses and how well they are known. Tap one to recite it, even across a chapter break, and quiz yourself on what comes next and on where a passage belongs. Ephesians has an outline so far; add others in `src/lib/outline.ts`.
+
+Quiz recall is scheduled like verses but kept in its own store, apart from verse progress and shared across translations.
+
 ## Translations
 
 BSB, WEB, KJV, ASV and the Geneva Bible load from the free [Bible API](https://bible.helloao.org) and are cached in the browser.

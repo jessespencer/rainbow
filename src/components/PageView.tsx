@@ -14,6 +14,7 @@ interface PageViewProps {
   onTranslation: (id: string) => void
   onTheme: () => void
   onStart: (items: SessionItem[]) => void
+  onMap?: () => void
 }
 
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII']
@@ -151,6 +152,11 @@ export const PageView = (props: PageViewProps) => {
           >
             Recite all of {book.name}
           </button>
+          {props.onMap && (
+            <button type="button" className="quiet" onClick={props.onMap}>
+              The structure of {book.name}
+            </button>
+          )}
         </div>
       </section>
 

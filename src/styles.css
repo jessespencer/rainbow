@@ -283,6 +283,7 @@ kbd {
   outline-offset: 1px;
 }
 
+.ink-0 { opacity: var(--ghost); }
 .ink-1 { opacity: 0.46; }
 .ink-2 { opacity: 0.52; }
 .ink-3 { opacity: 0.58; }
@@ -705,6 +706,190 @@ kbd {
   color: var(--rubric);
 }
 
+/* The structure map */
+
+.map-hero {
+  padding: clamp(1.5rem, 5vw, 2.75rem) 0 1.25rem;
+}
+
+.map-kicker {
+  font-style: italic;
+  font-size: 1.2rem;
+  color: var(--soft);
+}
+
+.map-hero h1 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(3.6rem, 13vw, 5.75rem);
+  line-height: 0.95;
+  letter-spacing: -0.025em;
+  margin-left: -0.03em;
+}
+
+.map-hero .tally {
+  margin-top: 0.7rem;
+  font-size: 1.1rem;
+}
+
+.map-hero .hero-actions {
+  margin-top: 1rem;
+}
+
+.map-part {
+  margin-top: 1.1rem;
+}
+
+.map-part h2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 1rem;
+  font-weight: 400;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.1em;
+  color: var(--soft);
+  padding-bottom: 0.15rem;
+  border-bottom: 1px solid var(--ink);
+}
+
+.map-part h2 span {
+  font-family: var(--display);
+  font-variant-caps: normal;
+  letter-spacing: 0;
+}
+
+.map-part ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.map-row {
+  display: grid;
+  grid-template-columns: 1.7rem 9.4rem 1fr auto;
+  align-items: baseline;
+  width: 100%;
+  text-align: left;
+  padding: 0.3rem 0 0.32rem;
+  border-bottom: 1px solid var(--hair);
+}
+
+.map-number {
+  font-size: 0.9rem;
+  color: var(--soft);
+}
+
+.map-number.held {
+  color: var(--rubric);
+}
+
+.map-name {
+  font-family: var(--display);
+  font-size: 1.4rem;
+  line-height: 1.2;
+  transition: opacity 0.2s ease, color 0.15s ease;
+}
+
+@media (hover: hover) {
+  .map-row:hover .map-name {
+    opacity: 1;
+    color: var(--rubric);
+  }
+}
+
+.map-row:focus-visible .map-name {
+  opacity: 1;
+  color: var(--rubric);
+}
+
+.map-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+  align-self: center;
+  padding-right: 0.75rem;
+}
+
+.map-dots i {
+  width: 0.34rem;
+  height: 0.34rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.map-dots .ink-0 {
+  opacity: 0.2;
+}
+
+.map-dots .due {
+  background: var(--rubric);
+}
+
+.map-ref {
+  font-style: italic;
+  color: var(--soft);
+  white-space: nowrap;
+}
+
+.quiz {
+  width: min(100%, 27rem);
+  margin: 0 auto;
+  font-size: clamp(1.4rem, 3.3vw, 1.75rem);
+  line-height: 1.3;
+  text-align: center;
+}
+
+.quiz-lead {
+  font-style: italic;
+  font-size: 1.05rem;
+  color: var(--soft);
+}
+
+.quiz-prompt {
+  font-family: var(--display);
+  font-size: clamp(2.5rem, 8vw, 3.75rem);
+  line-height: 1.1;
+  margin: 0.1em 0 0.15em;
+}
+
+.quiz .order-pile {
+  font-family: var(--display);
+  text-align: left;
+}
+
+.quiz .order-pile button:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.quiz .order-pile .quiz-right {
+  color: var(--rubric);
+}
+
+.quiz .order-pile .quiz-miss {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.quiz .order-pile button.quiz-other {
+  opacity: 0.45;
+}
+
+.quiz .order-key {
+  flex: none;
+  width: 0.8em;
+}
+
+.quiz .primary {
+  font-size: 1rem;
+}
+
+.quiz .again-note {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
 @keyframes blot {
   from {
     opacity: 0.1;
@@ -758,6 +943,16 @@ kbd {
 
   .picker select {
     max-width: 5.6rem;
+  }
+
+  .map-row {
+    grid-template-columns: 1.5rem 1fr auto;
+    row-gap: 0.1rem;
+  }
+
+  .map-dots {
+    grid-area: 2 / 2 / auto / -1;
+    padding: 0 0 0.2rem;
   }
 
   .passage-short {

@@ -1,8 +1,19 @@
 import { useCallback, useEffect, useState } from 'react'
 import { PageView } from './components/PageView'
 import { Session, type SessionItem } from './components/Session'
+import { StructureMap } from './components/StructureMap'
+import { StructureQuiz } from './components/StructureQuiz'
 import { getBook } from './lib/bible'
 import { emptyRecord, loadProgress, saveProgress, type Progress, type VerseRecord } from './lib/memory'
+import {
+  gradeStructure,
+  loadStructureRecall,
+  outlineOf,
+  saveStructureRecall,
+  sectionAfter,
+  sectionSpans,
+  type Section,
+} from './lib/outline'
 
 type Theme = 'light' | 'dark'
 
@@ -28,7 +39,11 @@ export const App = () => {
   const [progress, setProgress] = useState<Progress>(loadProgress)
   const [session, setSession] = useState<SessionItem[]>()
   const [theme, setTheme] = useState<Theme>(initialTheme)
+  const [view, setView] = useState<'page' | 'map' | 'quiz'>('page')
+  const [section, setSection] = useState<Section>()
+  const [recall, setRecall] = useState<Progress>(loadStructureRecall)
   const book = getBook(place.book)
+  const outline = outlineOf(book.code)
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -37,14 +52,32 @@ export const App = () => {
 
   useEffect(() => localStorage.setItem(placeStore, JSON.stringify(place)), [place])
   useEffect(() => saveProgress(progress), [progress])
+  useEffect(() => saveStructureRecall(recall), [recall])
 
   const updateRecord = useCallback((key: string, update: (record: VerseRecord) => VerseRecord) => {
     setProgress((current) => ({ ...current, [key]: update(current[key] ?? emptyRecord()) }))
   }, [])
 
   const leaveSession = useCallback(() => setSession(undefined), [])
+  const leaveQuiz = useCallback(() => setView('map'), [])
+
+  const gradeQuestion = useCallback((key: string, clean: boolean) => {
+    setRecall((current) => ({ ...current, [key]: gradeStructure(current[key], clean) }))
+  }, [])
+
+  const reciteSection = (chosen: Section) => {
+    setSection(chosen)
+    setSession(sectionSpans(outline!, chosen).map((span) => ({ kind: 'run', ...span })))
+  }
 
   if (session) {
+    const sectionRun = view === 'map' && section && {
+      name: section.name,
+      onNext: sectionAfter(outline!, section) && (() => {
+        setSession(undefined)
+        setView('quiz')
+      }),
+    }
     return (
       <Session
         items={session}
@@ -53,6 +86,40 @@ export const App = () => {
         progress={progress}
         onRecord={updateRecord}
         onExit={leaveSession}
+        section={sectionRun || undefined}
+      />
+    )
+  }
+
+  if (view === 'quiz' && outline) {
+    return (
+      <StructureQuiz
+        book={book}
+        outline={outline}
+        recall={recall}
+        focus={section}
+        onGrade={gradeQuestion}
+        onExit={leaveQuiz}
+      />
+    )
+  }
+
+  if (view === 'map' && outline) {
+    return (
+      <StructureMap
+        book={book}
+        outline={outline}
+        translation={place.translation}
+        progress={progress}
+        recall={recall}
+        theme={theme}
+        onTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+        onBack={() => setView('page')}
+        onRecite={reciteSection}
+        onQuiz={() => {
+          setSection(undefined)
+          setView('quiz')
+        }}
       />
     )
   }
@@ -69,6 +136,7 @@ export const App = () => {
       onTranslation={(translation) => setPlace({ ...place, translation })}
       onTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')}
       onStart={setSession}
+      onMap={outline && (() => setView('map'))}
     />
   )
 }
