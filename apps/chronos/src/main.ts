@@ -13,10 +13,16 @@ import { initScrubber } from "./lib/scrubber.ts";
 import { initTooltip, showTooltip, hideTooltip } from "./lib/tooltip.ts";
 import { initMinimap } from "./lib/minimap.ts";
 import { initZoom } from "./lib/zoom.ts";
+import { initCompanion } from "./lib/companion.ts";
+import { initSearch } from "./lib/search.ts";
+import type { SearchResult } from "./lib/search.ts";
+import { el } from "./lib/dom.ts";
+import { CATEGORY_DESCRIPTIONS, CATEGORY_NAMES, CATEGORY_ORDER } from "./lib/categories.ts";
 import { ERA_BANDS } from "./lib/eras.ts";
 import { figures } from "./data/timeline.ts";
-import type { Category } from "./data/timeline.ts";
-import { onViewChange, getView } from "./lib/viewState.ts";
+import type { Category, TimelineFigure } from "./data/timeline.ts";
+import { onViewChange, getView, setView } from "./lib/viewState.ts";
+import type { ViewMode } from "./lib/viewState.ts";
 import { initHeader } from "./lib/header.ts";
 import { initLineageView } from "./lib/renderLineage.ts";
 import { initNarrativeView } from "./lib/renderNarrative.ts";
@@ -25,48 +31,11 @@ import { initNarrativeView } from "./lib/renderNarrative.ts";
 
 const TICK_INTERVAL = 100;
 const LABEL_INTERVAL = 500;
-
-const CATEGORY_ORDER: Category[] = [
-  "antediluvian",
-  "postdiluvian",
-  "patriarch",
-  "exodus",
-  "judge",
-  "united-king",
-  "israel-king",
-  "judah-king",
-  "prophet",
-  "exile-return",
-  "messiah",
-];
-
-const CATEGORY_NAMES: Record<Category, string> = {
-  antediluvian: "Antediluvian",
-  postdiluvian: "Postdiluvian",
-  patriarch: "Patriarch",
-  exodus: "Exodus",
-  judge: "Judge",
-  "united-king": "United Kingdom",
-  "israel-king": "Israel (North)",
-  "judah-king": "Judah (South)",
-  prophet: "Prophet",
-  "exile-return": "Exile & Return",
-  messiah: "Messiah",
-};
-
-const CATEGORY_DESCRIPTIONS: Record<Category, string> = {
-  antediluvian: "Before the Flood — Adam through the generation of Noah",
-  postdiluvian: "After the Flood — Noah's descendants through Terah",
-  patriarch: "The patriarchs of Israel — Abraham, Isaac, Jacob, and Joseph",
-  exodus: "The Exodus from Egypt — Moses and Aaron lead Israel out of slavery",
-  judge: "Tribal leaders who governed Israel before the monarchy",
-  "united-king": "Saul, David, and Solomon rule all twelve tribes",
-  "israel-king": "Kings of the Northern Kingdom after the split in 931 BC",
-  "judah-king": "Kings of the Southern Kingdom after the split in 931 BC",
-  prophet: "God's messengers during the monarchy and exile",
-  "exile-return": "The Babylonian exile and the return to rebuild Jerusalem",
-  messiah: "Jesus Christ — his birth, ministry, and resurrection",
-};
+const MIN_ERA_LABEL_GAP = 34;
+const MIN_TICK_LABEL_GAP = 60;
+const YEAR_STEP = 10;
+const MIN_FOCUS_YEARS = 60;
+const FOCUS_PADDING_RATIO = 0.15;
 
 interface EraMarker {
   year: number;
@@ -87,17 +56,6 @@ const ERA_MARKERS: EraMarker[] = [
 
 // ─── Helpers ─────────────────────────────────────────────────────
 
-const el = <K extends keyof HTMLElementTagNameMap>(
-  tag: K,
-  className?: string,
-  parent?: HTMLElement,
-): HTMLElementTagNameMap[K] => {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  if (parent) parent.appendChild(node);
-  return node;
-};
-
 const cssVar = (cat: Category): string =>
   `var(--cat-${cat})`;
 
@@ -109,24 +67,30 @@ const app = document.querySelector<HTMLDivElement>("#app")!;
 loadFonts();
 
 // -- Header (shared component) --
-const { element: headerEl, controls: headerControls } = createHeader({
+const { element: headerEl, controls: headerControls, center: headerCenter } = createHeader({
   title: "Chronos",
   subtitle: "A Visual History of the Bible",
+  appId: "chronos",
+  compact: true,
 });
 app.appendChild(headerEl);
 
 // -- Inject view toggle into header controls --
 initHeader(headerControls);
 
+// -- Stage: the timeline beside the companion --
+const stage = el("div", "stage", app);
+const canvasArea = el("div", "canvas-area", stage);
+
 // -- Axis row --
-const axisRow = el("div", "axis-row", app);
-el("div", "label-gutter", axisRow);
+const axisRow = el("div", "axis-row", canvasArea);
+const axisGutter = el("div", "label-gutter", axisRow);
 
 const axisViewport = el("div", "axis-viewport", axisRow);
 const axisInner = el("div", "axis-inner", axisViewport);
 
 // -- Content row --
-const contentRow = el("div", "content-row", app);
+const contentRow = el("div", "content-row", canvasArea);
 
 const laneLabels = el("div", "lane-labels", contentRow);
 const laneLabelsInner = el("div", undefined, laneLabels);
@@ -140,6 +104,21 @@ const lineageView = el("div", "lineage-view", mainInner);
 lineageView.style.display = "none";
 const narrativeView = el("div", "narrative-view", mainInner);
 narrativeView.style.display = "none";
+
+// -- Canvas overlays --
+const overlays = el("div", "canvas-status", canvasArea);
+const eraSelect = el("select", "era-select", overlays);
+eraSelect.setAttribute("aria-label", "Jump to an era");
+el("option", undefined, eraSelect).textContent = "Jump to era";
+eraSelect.options[0]!.value = "";
+ERA_BANDS.forEach((era, i) => {
+  const option = el("option", undefined, eraSelect);
+  option.value = String(i);
+  option.textContent = era.name;
+});
+const zoomControls = el("div", "zoom-controls", overlays);
+const aboutButton = el("button", "canvas-btn", overlays);
+aboutButton.textContent = "About";
 
 // ─── Set initial widths ──────────────────────────────────────────
 
@@ -203,8 +182,15 @@ for (let year = firstTick; year <= MAX_YEAR; year += TICK_INTERVAL) {
 }
 
 const positionTicks = () => {
+  let lastLabelX = -Infinity;
   for (const { element, year } of tickEls) {
-    element.style.left = `${yearToX(year)}px`;
+    const x = yearToX(year);
+    element.style.left = `${x}px`;
+    const label = element.firstElementChild as HTMLElement | null;
+    if (label) {
+      label.hidden = x - lastLabelX < MIN_TICK_LABEL_GAP;
+      if (!label.hidden) lastLabelX = x;
+    }
   }
 };
 
@@ -225,8 +211,12 @@ for (const era of ERA_MARKERS) {
 }
 
 const positionEraMarkers = () => {
+  let lastX = -Infinity;
   for (const { element, year } of eraLabelEls) {
-    element.style.left = `${yearToX(year) - 4}px`;
+    const x = yearToX(year);
+    element.style.left = `${x}px`;
+    element.hidden = x - lastX < MIN_ERA_LABEL_GAP;
+    if (!element.hidden) lastX = x;
   }
   for (const { element, year } of eraLineEls) {
     element.style.left = `${yearToX(year)}px`;
@@ -301,11 +291,14 @@ onViewChange((view) => {
   lineageView.style.display = view === "lineage" ? "" : "none";
   narrativeView.style.display = view === "narrative" ? "" : "none";
   laneLabels.style.display = view === "timeline" ? "" : "none";
+  axisGutter.style.display = view === "timeline" ? "" : "none";
+  hideTooltip();
+  syncAddress();
 });
 
 // ─── Minimap ─────────────────────────────────────────────────────
 
-const minimap = initMinimap(mainViewport);
+const minimap = initMinimap(mainViewport, canvasArea);
 
 // ─── Scrubber ────────────────────────────────────────────────────
 
@@ -319,7 +312,7 @@ const narrativeValueWord = (v: number): string => {
   return "faint";
 };
 
-const renderNarrativeExtra = (list: HTMLElement, year: number) => {
+const renderNarrativeExtra = (body: HTMLElement, year: number) => {
   if (getView() !== "narrative") return;
 
   const values = narrativeHandle.getThreadValuesAt(year)
@@ -330,16 +323,16 @@ const renderNarrativeExtra = (list: HTMLElement, year: number) => {
   if (values.length === 0) return;
 
   const section = document.createElement("div");
-  section.className = "panel__section narrative-story";
+  section.className = "cp-section narrative-story";
 
   const title = document.createElement("h3");
-  title.className = "panel__section-title narrative-story__title";
+  title.className = "cp-section-title";
   title.textContent = "Story at this moment";
   section.appendChild(title);
 
   for (const { id, name, value } of values) {
     const entry = document.createElement("div");
-    entry.className = "panel__entry narrative-story__entry";
+    entry.className = "narrative-story__entry";
 
     const swatch = document.createElement("span");
     swatch.className = "narrative-story__swatch";
@@ -354,12 +347,104 @@ const renderNarrativeExtra = (list: HTMLElement, year: number) => {
     section.appendChild(entry);
   }
 
-  list.insertBefore(section, list.firstChild);
+  body.appendChild(section);
 };
 
-const scrubber = initScrubber(mainViewport, figures, (year) => {
-  minimap.setScrubberYear(year);
-}, renderNarrativeExtra);
+// ─── Selection ───────────────────────────────────────────────────
+
+type Selection =
+  | { kind: "figure"; figure: TimelineFigure }
+  | { kind: "year"; year: number }
+  | null;
+
+let selection: Selection = null;
+
+const byBirth = [...figures].sort((a, b) => a.birth - b.birth);
+
+const aliveAt = (year: number) =>
+  byBirth.filter((f) => f.birth <= year && year <= f.death);
+
+const overlapping = (figure: TimelineFigure) =>
+  byBirth.filter(
+    (f) => f !== figure && f.birth <= figure.death && figure.birth <= f.death,
+  );
+
+const paintBars = (lit: TimelineFigure[] | null, selected: TimelineFigure | null) => {
+  const litIds = new Set(lit?.map((f) => f.id));
+  for (const [id, bar] of barMap) {
+    bar.classList.toggle("figure-bar--active", litIds.has(id));
+    bar.classList.toggle("figure-bar--dimmed", lit !== null && !litIds.has(id));
+    bar.classList.toggle("figure-bar--selected", id === selected?.id);
+  }
+};
+
+const syncAddress = () => {
+  const params = new URLSearchParams();
+  if (getView() !== "timeline") params.set("view", getView());
+  if (selection?.kind === "figure") params.set("figure", selection.figure.id);
+  if (selection?.kind === "year") params.set("year", String(selection.year));
+  const query = params.toString();
+  history.replaceState(null, "", query ? `?${query}` : location.pathname);
+};
+
+const select = (next: Selection) => {
+  selection = next;
+  if (next?.kind === "figure") {
+    const alongside = overlapping(next.figure);
+    scrubber.setYear(null);
+    minimap.setScrubberYear(null);
+    paintBars([next.figure, ...alongside], next.figure);
+    companion.showFigure(next.figure, alongside);
+  } else if (next?.kind === "year") {
+    const alive = aliveAt(next.year);
+    scrubber.setYear(next.year);
+    minimap.setScrubberYear(next.year);
+    paintBars(alive, null);
+    companion.showYear(next.year, alive);
+  } else {
+    scrubber.setYear(null);
+    minimap.setScrubberYear(null);
+    paintBars(null, null);
+    companion.hide();
+  }
+  syncAddress();
+};
+
+const selectFigure = (id: string) => {
+  const figure = figures.find((f) => f.id === id);
+  if (figure) select({ kind: "figure", figure });
+};
+
+const selectYear = (year: number) => {
+  select({ kind: "year", year: Math.min(MAX_YEAR, Math.max(MIN_YEAR, year)) });
+};
+
+const step = (direction: -1 | 1) => {
+  if (selection?.kind === "year") {
+    selectYear(selection.year + direction * YEAR_STEP);
+  } else if (selection?.kind === "figure") {
+    const next = byBirth[byBirth.indexOf(selection.figure) + direction];
+    if (next) {
+      select({ kind: "figure", figure: next });
+      centerOnFigure(next);
+    }
+  }
+};
+
+const scrubber = initScrubber(mainViewport, axisViewport, {
+  onYear: selectYear,
+  onFigure: selectFigure,
+});
+
+const companion = initCompanion(stage, {
+  onFigure: (id) => {
+    selectFigure(id);
+    if (selection?.kind === "figure") centerOnFigure(selection.figure);
+  },
+  onStep: step,
+  onClose: () => select(null),
+  renderYearExtra: renderNarrativeExtra,
+});
 
 // ─── Tooltip ─────────────────────────────────────────────────────
 
@@ -373,7 +458,13 @@ const repositionAll = () => {
   positionTicks();
   positionEraMarkers();
 
-  const newHeights = repositionBars(timelineView, figures, barMap);
+  const newHeights = repositionBars(
+    timelineView,
+    figures,
+    barMap,
+    mainViewport.clientHeight,
+    mainViewport.clientWidth / (MAX_YEAR - MIN_YEAR),
+  );
   syncLaneLabels(newHeights);
 
   lineageHandle.reposition();
@@ -383,7 +474,63 @@ const repositionAll = () => {
   minimap.syncScroll();
 };
 
-initZoom(mainViewport, headerControls, repositionAll);
+const zoom = initZoom(mainViewport, zoomControls, repositionAll);
+
+// ─── Navigation ──────────────────────────────────────────────────
+
+const centerOnFigure = (figure: TimelineFigure) => {
+  const bar = barMap.get(figure.id);
+  const mid = yearToX((figure.birth + figure.death) / 2);
+  mainViewport.scrollLeft = mid - mainViewport.clientWidth / 2;
+  if (bar) {
+    const top = bar.getBoundingClientRect().top - mainInner.getBoundingClientRect().top;
+    mainViewport.scrollTop = top - mainViewport.clientHeight / 2;
+  }
+};
+
+const focusFigure = (figure: TimelineFigure) => {
+  const span = Math.max(figure.death - figure.birth, MIN_FOCUS_YEARS);
+  const padding = span * FOCUS_PADDING_RATIO;
+  zoom.focusRange(figure.birth - padding, figure.birth + span + padding);
+  centerOnFigure(figure);
+};
+
+eraSelect.addEventListener("change", () => {
+  const era = ERA_BANDS[Number(eraSelect.value)];
+  if (eraSelect.value && era) zoom.focusRange(era.startYear, era.endYear);
+  eraSelect.value = "";
+});
+
+initSearch(headerCenter!, (result: SearchResult) => {
+  if (result.kind === "figure") {
+    select({ kind: "figure", figure: result.figure });
+    focusFigure(result.figure);
+  } else if (result.kind === "year") {
+    selectYear(result.year);
+    mainViewport.scrollLeft = yearToX(result.year) - mainViewport.clientWidth / 2;
+  } else {
+    zoom.focusRange(result.era.startYear, result.era.endYear);
+  }
+});
+
+// ─── About ───────────────────────────────────────────────────────
+
+const about = document.querySelector<HTMLDialogElement>("#about")!;
+
+aboutButton.addEventListener("click", () => about.showModal());
+about.addEventListener("click", (e) => {
+  if (e.target === about) about.close();
+});
+
+// ─── Keyboard ────────────────────────────────────────────────────
+
+document.addEventListener("keydown", (e) => {
+  const target = e.target as HTMLElement;
+  if (about.open || target.matches("input, select, textarea")) return;
+  if (e.key === "Escape") select(null);
+  else if (e.key === "ArrowLeft") step(-1);
+  else if (e.key === "ArrowRight") step(1);
+});
 
 // ─── Scroll Sync ─────────────────────────────────────────────────
 
@@ -399,3 +546,26 @@ laneLabels.addEventListener("wheel", (e) => {
   mainViewport.scrollTop += e.deltaY;
   mainViewport.scrollLeft += e.deltaX;
 }, { passive: false });
+
+// ─── Address ─────────────────────────────────────────────────────
+
+const params = new URLSearchParams(location.search);
+const initialView = params.get("view");
+const initialFigure = figures.find((f) => f.id === params.get("figure"));
+const initialYear = Number(params.get("year"));
+
+if (initialView === "lineage" || initialView === "narrative") {
+  setView(initialView satisfies ViewMode);
+}
+
+if (initialFigure) {
+  select({ kind: "figure", figure: initialFigure });
+  focusFigure(initialFigure);
+} else if (params.get("year") && Number.isInteger(initialYear)) {
+  selectYear(initialYear);
+} else if (!initialView && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  timelineView.classList.add("timeline-view--intro");
+  timelineView.addEventListener("animationend", () => {
+    timelineView.classList.remove("timeline-view--intro");
+  }, { once: true });
+}

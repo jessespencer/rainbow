@@ -1,55 +1,47 @@
 # Chronos
 
-> *4,150 years rendered as a single scrollable sweep. Every bar a life, every overlap a shared moment in history.*
+> *4,150 years on one screen. Every bar a life, every overlap a shared moment in history.*
 
-Chronos is an interactive horizontal-scrolling Bible timeline — Adam through the resurrection of Jesus (~AD 33). Drag a scrubber across millennia to see who was alive at any given moment. Zoom from bird's-eye to individual king reigns.
+**▶ [Open Chronos](https://jessespencer.github.io/rainbow/timeline/)**
 
-Built with vanilla TypeScript and Vite. Chronology follows Ussher (pre-monarchy) and Thiele (divided kingdom). Part of a shared Bible visualization ecosystem with [Rainbow Reference](https://github.com/jessespencer/rainbow-reference).
-
----
+Chronos is an interactive Bible timeline, from Adam to the resurrection of Jesus (~AD 33). It opens on the whole story, then lets you zoom into any reign, read the scripture behind a person, and see who was alive at the same moment. It works on phones as well as desktops.
 
 ## Features
 
-- **108 figures** across 11 categories — antediluvian patriarchs, kings of Israel and Judah, prophets, exile-era leaders, and the Messiah
-- **Draggable scrubber** — position it anywhere on the timeline to highlight who was alive and see details in a floating panel
-- **Ctrl+Scroll zoom** — smoothly zoom from a full 4,150-year overview down to individual reign bars, anchored to cursor position
-- **Era background bands** — subtle colored bands (Primeval, Patriarchal, Judges, Monarchy, Exile, etc.) orient you at a glance
-- **Minimap** — compressed overview at the bottom with click-to-navigate and draggable viewport indicator
-- **Hover tooltips** — lifespan, reign period, scripture reference, and blurb on any figure bar
-- **Reign overlays** — kings with known lifespans show a distinct reign stripe within their lifespan bar
+- **The whole story at once.** 157 lives fit on one screen, and rows grow into named bars as you zoom in.
+- **People.** Select anyone to read about them, with BSB scripture and everyone alive alongside them.
+- **Years.** Pick any year to see who was alive. Drag across the lanes with a mouse, or along the date strip with a finger.
+- **Three views.** Timeline shows lifespans and reigns, Lineage follows the generations, and Narrative shows the story's threads rising and falling.
+- **Search.** Find a person, a year like 586 BC, or an era. Press ⌘K or Ctrl K from anywhere.
+- **Links into Rainbow.** Open any passage in [Rainbow Reference](../rainbow) to see its cross-references.
+- **Shareable.** Every selection has its own address, such as `?figure=king-david` or `?year=-586`.
+- **Phones.** Pinch to zoom, pan with a finger, and read in a bottom sheet.
 
-## Shared Design System
+## Run it
 
-Chronos uses [`@jessespencer/bible-ui`](../bible-ui) for its header, design tokens, and typography — the same package used by Rainbow Reference. Both apps share Fraunces + DM Mono typography, the navy-toned color palette, and the rainbow gradient header bar.
-
-## Scripts
+From the repo root:
 
 ```bash
-npm install       # install dependencies (including local bible-ui package)
-npm run dev       # start dev server
-npm run build     # type-check and build for production
-npm run preview   # preview production build locally
+pnpm install
+pnpm dev:chronos      # http://localhost:5174/rainbow/timeline/
+pnpm build:chronos    # type-check and build for production
 ```
 
-## Tech Stack
-
-| Layer | Choice |
-|---|---|
-| Build | Vite + TypeScript |
-| Rendering | Vanilla DOM (no framework) |
-| Styling | CSS custom properties (shared via `@jessespencer/bible-ui`) |
-| Typography | Fraunces (serif) + DM Mono (monospace) |
-| Zoom | Custom wheel handler with dynamic `pixelsPerYear` |
+Run `pnpm dev:rainbow` too if you want the links into Rainbow to work locally.
 
 ## Data
 
-108 figures with birth, death, reign dates, scripture references, and blurbs. Chronology sources:
+157 figures with birth, death, reign dates, scripture references, and blurbs. Chronology sources:
 
 | Period | Source |
 |---|---|
 | Pre-monarchy (Adam → David) | James Ussher, *Annals of the World* (1650) |
 | Divided kingdom | Edwin R. Thiele, *The Mysterious Numbers of the Hebrew Kings* (3rd ed., 1983) |
 
----
+These are particular chronologies, not a scholarly consensus. Prophets' lifespans and some genealogical dates are estimates, and for some kings the reign stands in for an unknown birth and death. Narrative's ribbons show editorial emphasis, not measured quantities.
 
-MIT
+Scripture text is the [Berean Standard Bible](https://berean.bible/), dedicated to the public domain.
+
+## License
+
+[MIT](../../LICENSE)

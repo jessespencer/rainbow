@@ -79,6 +79,9 @@ export const initTooltip = (
     activeBar = null;
   };
 
+  // Touch selects a bar instead; a tap's synthetic hover shouldn't also show a tooltip.
+  if (!matchMedia("(hover: hover)").matches) return;
+
   container.addEventListener("mouseover", (e) => {
     const bar = (e.target as HTMLElement).closest<HTMLElement>(".figure-bar");
     if (!bar || bar === activeBar) return;

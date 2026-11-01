@@ -1,32 +1,41 @@
 /**
- * Zoom controller — manages zoom level, wheel/button input,
- * and cursor-anchored scroll preservation.
+ * Zoom controller — manages zoom level, wheel, pinch and button input,
+ * and anchored scroll preservation.
  */
 
 import {
   getPixelsPerYear,
   setPixelsPerYear,
-  getDefaultPPY,
   yearToX,
   xToYear,
+  MIN_YEAR,
+  MAX_YEAR,
 } from "./scale.ts";
+import { el } from "./dom.ts";
 
-const MIN_PPY = 1;
 const MAX_PPY = 16;
 const STEP_FACTOR = Math.pow(2, 1 / 4); // ~1.19x per tick
+const BUTTON_STEPS = 3;
+const FOCUS_PADDING_PX = 32;
 
 const clamp = (v: number, lo: number, hi: number) =>
   Math.max(lo, Math.min(hi, v));
 
 export interface ZoomHandle {
-  getZoomPercent: () => number;
+  /** Show the whole timeline, and keep showing it through resizes. */
+  fit: () => void;
+  focusRange: (start: number, end: number) => void;
 }
 
 export const initZoom = (
   scrollContainer: HTMLElement,
-  gutterEl: HTMLElement,
+  controlsEl: HTMLElement,
   onZoom: () => void,
 ): ZoomHandle => {
+  let fitted = true;
+
+  const fitPpy = () => scrollContainer.clientWidth / (MAX_YEAR - MIN_YEAR);
+
   // ─── Zoom logic ──────────────────────────────────────────────
 
   const applyZoom = (
@@ -34,34 +43,26 @@ export const initZoom = (
     anchorYear: number,
     anchorViewportX: number,
   ) => {
-    const clamped = clamp(newPpy, MIN_PPY, MAX_PPY);
-    if (clamped === getPixelsPerYear()) return;
-
-    setPixelsPerYear(clamped);
-    onZoom();
+    const lowest = fitPpy();
+    const clamped = clamp(newPpy, lowest, MAX_PPY);
+    fitted = clamped === lowest;
+    if (clamped !== getPixelsPerYear()) {
+      setPixelsPerYear(clamped);
+      onZoom();
+    }
 
     // Restore anchor: the year under the cursor stays at the same screen X
-    scrollContainer.scrollLeft =
-      yearToX(anchorYear) - anchorViewportX;
-
-    updateLabel();
+    scrollContainer.scrollLeft = yearToX(anchorYear) - anchorViewportX;
   };
 
-  const zoomByDelta = (
-    delta: number,
-    anchorClientX: number,
-  ) => {
+  const zoomAt = (factor: number, anchorClientX: number) => {
     const rect = scrollContainer.getBoundingClientRect();
     const viewportX = anchorClientX - rect.left;
-    const anchorYear = xToYear(
-      scrollContainer.scrollLeft + viewportX,
-    );
-
-    const ppy = getPixelsPerYear();
-    const newPpy =
-      delta > 0 ? ppy / STEP_FACTOR : ppy * STEP_FACTOR;
-    applyZoom(newPpy, anchorYear, viewportX);
+    const anchorYear = xToYear(scrollContainer.scrollLeft + viewportX);
+    applyZoom(getPixelsPerYear() * factor, anchorYear, viewportX);
   };
+
+  const fit = () => applyZoom(fitPpy(), MIN_YEAR, 0);
 
   // ─── Wheel binding ───────────────────────────────────────────
 
@@ -70,64 +71,86 @@ export const initZoom = (
     (e) => {
       if (!e.ctrlKey && !e.metaKey) return;
       e.preventDefault();
-      zoomByDelta(e.deltaY, e.clientX);
+      zoomAt(e.deltaY > 0 ? 1 / STEP_FACTOR : STEP_FACTOR, e.clientX);
     },
     { passive: false },
   );
 
+  // ─── Pinch binding ───────────────────────────────────────────
+
+  let pinchDistance = 0;
+
+  const spread = (touches: TouchList): number =>
+    Math.hypot(
+      touches[0]!.clientX - touches[1]!.clientX,
+      touches[0]!.clientY - touches[1]!.clientY,
+    );
+
+  scrollContainer.addEventListener(
+    "touchstart",
+    (e) => {
+      if (e.touches.length === 2) pinchDistance = spread(e.touches);
+    },
+    { passive: true },
+  );
+
+  scrollContainer.addEventListener(
+    "touchmove",
+    (e) => {
+      if (e.touches.length !== 2 || pinchDistance === 0) return;
+      if (e.cancelable) e.preventDefault();
+      const distance = spread(e.touches);
+      const midX = (e.touches[0]!.clientX + e.touches[1]!.clientX) / 2;
+      zoomAt(distance / pinchDistance, midX);
+      pinchDistance = distance;
+    },
+    { passive: false },
+  );
+
+  scrollContainer.addEventListener("touchend", (e) => {
+    if (e.touches.length < 2) pinchDistance = 0;
+  });
+
   // ─── Zoom UI buttons ────────────────────────────────────────
 
-  const controls = document.createElement("div");
-  controls.className = "zoom-controls";
+  const btnFit = el("button", "canvas-btn", controlsEl);
+  btnFit.textContent = "Whole story";
 
-  const btnMinus = document.createElement("button");
-  btnMinus.className = "zoom-btn";
+  const btnMinus = el("button", "zoom-btn", controlsEl);
   btnMinus.textContent = "−";
   btnMinus.setAttribute("aria-label", "Zoom out");
 
-  const labelBtn = document.createElement("button");
-  labelBtn.className = "zoom-label";
-  labelBtn.setAttribute("aria-label", "Reset zoom");
-
-  const btnPlus = document.createElement("button");
-  btnPlus.className = "zoom-btn";
+  const btnPlus = el("button", "zoom-btn", controlsEl);
   btnPlus.textContent = "+";
   btnPlus.setAttribute("aria-label", "Zoom in");
 
-  controls.appendChild(btnMinus);
-  controls.appendChild(labelBtn);
-  controls.appendChild(btnPlus);
-  gutterEl.appendChild(controls);
-
-  const updateLabel = () => {
-    const pct = Math.round(
-      (getPixelsPerYear() / getDefaultPPY()) * 100,
-    );
-    labelBtn.textContent = `${pct}%`;
+  const zoomButton = (factor: number) => {
+    const rect = scrollContainer.getBoundingClientRect();
+    zoomAt(factor, rect.left + rect.width / 2);
   };
 
-  updateLabel();
+  btnFit.addEventListener("click", fit);
+  btnMinus.addEventListener("click", () => zoomButton(STEP_FACTOR ** -BUTTON_STEPS));
+  btnPlus.addEventListener("click", () => zoomButton(STEP_FACTOR ** BUTTON_STEPS));
 
-  const zoomButton = (direction: number) => {
-    // Anchor to viewport center
-    const rect = scrollContainer.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    zoomByDelta(direction, centerX);
-  };
+  // Deferred a frame: refitting can resize the viewport this observer is watching.
+  new ResizeObserver(() => {
+    requestAnimationFrame(() => {
+      if (fitted) fit();
+      // Row heights follow the viewport even when the zoom doesn't change.
+      onZoom();
+    });
+  }).observe(scrollContainer);
 
-  btnMinus.addEventListener("click", () => zoomButton(1));
-  btnPlus.addEventListener("click", () => zoomButton(-1));
-  labelBtn.addEventListener("click", () => {
-    const rect = scrollContainer.getBoundingClientRect();
-    const viewportX = rect.width / 2;
-    const anchorYear = xToYear(
-      scrollContainer.scrollLeft + viewportX,
-    );
-    applyZoom(getDefaultPPY(), anchorYear, viewportX);
-  });
+  fit();
 
   return {
-    getZoomPercent: () =>
-      Math.round((getPixelsPerYear() / getDefaultPPY()) * 100),
+    fit,
+    focusRange: (start, end) => {
+      const lo = Math.max(MIN_YEAR, start);
+      const hi = Math.min(MAX_YEAR, end);
+      const width = scrollContainer.clientWidth - FOCUS_PADDING_PX * 2;
+      applyZoom(width / (hi - lo), lo, FOCUS_PADDING_PX);
+    },
   };
 };

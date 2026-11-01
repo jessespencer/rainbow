@@ -1,6 +1,6 @@
 # Chronos — Bible Timeline
 
-Interactive horizontal-scrolling Bible timeline visualization. Sibling project to [Rainbow Reference](https://github.com/jessespencer/rainbow-reference). Both share the [`@jessespencer/bible-ui`](../bible-ui) design system.
+Interactive Bible timeline. Sibling to [Rainbow Reference](../rainbow), and shares the [`@jessespencer/bible-ui`](../../packages/bible-ui) design system with it.
 
 Scope: Adam through Jesus's resurrection (~AD 33). No apostolic age yet.
 
@@ -10,16 +10,20 @@ Scope: Adam through Jesus's resurrection (~AD 33). No apostolic age yet.
 - Single page: HTML + CSS + TS
 - Dark theme via shared design tokens from `@jessespencer/bible-ui`
 - Typography: Fraunces (serif, UI) + DM Mono (monospace, data)
-- Deployed as a static site at `/timeline/` base path
+- Deployed as a static site at `/rainbow/timeline/`
 
 ## Shared Design System
 
-The `@jessespencer/bible-ui` package (local dep at `../bible-ui`) provides:
-- `createHeader()` — site header with title, subtitle, gradient bar, controls slot
-- `loadFonts()` — injects Google Fonts (Fraunces + DM Mono)
-- `style.css` — design tokens (colors, fills, borders, text hierarchy, radii)
+`@jessespencer/bible-ui` provides the compact header and app switcher, the phone bottom sheet (`/sheet`), book and verse numbering (`/bible`), fonts, and design tokens. Chronos imports the shared CSS first, then layers its own tokens on top.
 
-Chronos imports the shared CSS first, then layers its own app-specific tokens (category colors, layout vars) on top.
+## Architecture
+
+- **Whole story first** — loads fitted to the viewport. `renderBars` shrinks rows to fit every lane on screen and grows them back, with names, as you zoom
+- **Selection is the state** — nothing, a figure, or a year. `select()` in `main.ts` drives the bars, scrubber, minimap, panel and URL together
+- **URL is state** — `?figure=king-david`, `?year=-586`, `?view=lineage`
+- **Input** — a mouse scrubs by dragging the lanes. A finger pans them, so touch scrubs on the axis strip and picks with a tap. Pinch is handled in `zoom.ts`
+- **Scripture comes from Rainbow** — `scripture.ts` parses each `scriptureRef` into Rainbow's verse numbering, reads Rainbow's `data/bsb.json`, and links to `?ref=` there. Every `scriptureRef` must keep parsing when you add a figure
+- **Phone** — below 760px the panel is a bottom sheet and the lane labels are gone; color carries the category
 
 ## Year Convention
 
@@ -39,28 +43,21 @@ Years are stored as **signed integers**:
 
 | File | Purpose |
 |---|---|
-| `src/main.ts` | App entry point — builds DOM, wires zoom/scrubber/minimap |
-| `src/style.css` | App-specific tokens and component styles |
-| `src/data/timeline.ts` | 108 figure records with birth/death/reign dates |
+| `src/main.ts` | Entry point — builds DOM, selection, URL, keyboard |
+| `src/data/timeline.ts` | The figures, with birth, death and reign dates |
 | `src/lib/scale.ts` | Dynamic `pixelsPerYear`, `yearToX`/`xToYear` coordinate mapping |
-| `src/lib/renderBars.ts` | Greedy sub-row layout, bar rendering and repositioning |
-| `src/lib/scrubber.ts` | Draggable scrubber, bar highlighting, floating detail panel |
-| `src/lib/zoom.ts` | Ctrl+Scroll zoom with cursor anchoring, zoom buttons |
-| `src/lib/minimap.ts` | Bottom minimap with viewport indicator and click navigation |
-| `src/lib/tooltip.ts` | Hover tooltips on figure bars (400ms delay) |
-| `src/lib/eras.ts` | Era band definitions (Primeval through Messianic) |
-| `vite.config.ts` | Vite config — sets `/timeline/` base path |
+| `src/lib/renderBars.ts` | Sub-row layout, row density, bar rendering and repositioning |
+| `src/lib/scrubber.ts` | Year line and all pointer input on the lanes and axis |
+| `src/lib/zoom.ts` | Fit, wheel, pinch and button zoom |
+| `src/lib/companion.ts` | Figure and year panel |
+| `src/lib/search.ts` | Search for people, years and eras |
+| `src/lib/scripture.ts` | Reference parsing and BSB loading |
+| `src/lib/minimap.ts` | Bottom minimap with viewport indicator |
+| `src/lib/eras.ts` | Era bands |
+| `vite.config.ts` | Base path, pinned dev port 5174, and Rainbow's data in dev |
 
 ## Code Style
 
 - `const` over `let`; never `var`
-- `camelCase` for variables and functions
-- `PascalCase` for types and interfaces
 - Named exports only — no default exports
-- Keep functions small and pure where possible
 - This is NOT a React project — do not introduce React patterns
-
-## Git Conventions
-
-- Conventional Commits: `feat:`, `fix:`, `chore:`, `refactor:`, `test:`, `docs:`
-- Imperative mood, subject under 72 characters

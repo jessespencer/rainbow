@@ -4,7 +4,7 @@ Tools for seeing the Bible whole, sharing one design system.
 
 **▶ [Open Rainbow Reference](https://jessespencer.github.io/rainbow/)** · **[Open Chronos](https://jessespencer.github.io/rainbow/timeline/)**
 
-Read the [Rainbow Reference README](apps/rainbow/README.md) for what it does, how the data works, and how to run it.
+Read the [Rainbow Reference](apps/rainbow/README.md) and [Chronos](apps/chronos/README.md) READMEs for what each one does, how the data works, and how to run it.
 
 > **Note:** the GitHub repo is currently named `rainbow` for historical reasons. It will likely be renamed once a permanent parent name lands. The internal package name is `bible-viz` as a placeholder.
 
@@ -13,8 +13,8 @@ Read the [Rainbow Reference README](apps/rainbow/README.md) for what it does, ho
 | Path | Package | Description |
 |---|---|---|
 | `apps/rainbow` | `rainbow` | Rainbow Reference — interactive arc visualization of all 344,799 Bible cross-references, with verse text. |
-| `apps/chronos` | `chronos` | Chronos — horizontal-scrolling Bible timeline (Adam → resurrection). |
-| `packages/bible-ui` | `@jessespencer/bible-ui` | Shared header, fonts, and design tokens. |
+| `apps/chronos` | `chronos` | Chronos — timeline of 157 biblical lives from Adam to the resurrection, with verse text. |
+| `packages/bible-ui` | `@jessespencer/bible-ui` | Shared header, app switcher, bottom sheet, verse numbering, fonts, and design tokens. |
 
 ## Stack
 
@@ -25,7 +25,7 @@ Vanilla TypeScript + Vite for both apps. No framework. The shared `bible-ui` pac
 ```bash
 pnpm install
 pnpm dev:rainbow      # http://localhost:5173/rainbow/
-pnpm dev:chronos      # http://localhost:5173/rainbow/timeline/
+pnpm dev:chronos      # http://localhost:5174/rainbow/timeline/
 pnpm build            # builds both apps
 ```
 
@@ -36,7 +36,7 @@ Both apps are deployed together to GitHub Pages via `.github/workflows/deploy.ym
 - Rainbow Reference → `https://jessespencer.github.io/rainbow/`
 - Chronos → `https://jessespencer.github.io/rainbow/timeline/`
 
-The workflow builds each app and assembles a combined `dist/` with chronos nested under `timeline/`.
+The workflow builds each app and assembles a combined `dist/` with chronos nested under `timeline/`. Chronos has no data of its own to ship: it reads Rainbow's `data/bsb.json` from one level up.
 
 ## History
 
