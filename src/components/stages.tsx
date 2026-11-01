@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { prefersStillness } from '../lib/motion'
 import { cleanWord, shuffled, vanishOrder, type Token } from '../lib/text'
 import { PassageText, type Reveal, type WordState } from './PassageText'
 
@@ -31,7 +32,7 @@ export const TypedStage = ({ tokens, lines, reveal, targets, verseNumbers, onDon
     if (!longPassage) return
     document
       .querySelector(`[data-word="${targets[position]}"]`)
-      ?.scrollIntoView({ block: 'center', behavior: position ? 'smooth' : 'instant' })
+      ?.scrollIntoView({ block: 'center', behavior: position && !prefersStillness() ? 'smooth' : 'instant' })
   }, [longPassage, position, targets])
 
   const step = (asHelp: boolean) => {
@@ -150,6 +151,7 @@ export const OrderStage = ({ lines, onDone }: OrderStageProps) => {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return
       const pick = remaining[Number(e.key) - 1]
       if (pick !== undefined) chooseRef.current(pick)
     }

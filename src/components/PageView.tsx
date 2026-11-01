@@ -30,11 +30,13 @@ export const PageView = (props: PageViewProps) => {
   const { book, chapter, translation, progress, theme } = props
   const [loaded, setLoaded] = useState<{ id: string; verses: Verse[] }>()
   const [failure, setFailure] = useState<{ id: string; message: string; needsKey: boolean }>()
-  const [selection, setSelection] = useState<[number, number]>()
+  const [chosen, setChosen] = useState<{ id: string; range: [number, number] }>()
   const [keyAttempt, setKeyAttempt] = useState(0)
   const pageId = `${translation}:${book.code}:${chapter}:${keyAttempt}`
+  const selection = chosen?.id === pageId ? chosen.range : undefined
   const verses = loaded?.id === pageId ? loaded.verses : []
   const problem = failure?.id === pageId ? failure : undefined
+  const opening = !verses.length && !problem
 
   useEffect(() => {
     let current = true
@@ -42,7 +44,7 @@ export const PageView = (props: PageViewProps) => {
       .then((v) => {
         if (!current) return
         setLoaded({ id: pageId, verses: v })
-        setSelection(undefined)
+        setFailure(undefined)
       })
       .catch((e: Error) => {
         if (current) setFailure({ id: pageId, message: e.message, needsKey: e instanceof MissingKeyError })
@@ -53,7 +55,7 @@ export const PageView = (props: PageViewProps) => {
   }, [translation, book, chapter, pageId])
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setSelection(undefined)
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setChosen(undefined)
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
@@ -74,10 +76,10 @@ export const PageView = (props: PageViewProps) => {
   ]
 
   const select = (verse: number) => {
-    if (!selection) return setSelection([verse, verse])
+    if (!selection) return setChosen({ id: pageId, range: [verse, verse] })
     const [from, to] = selection
-    if (verse >= from && verse <= to) return setSelection(undefined)
-    setSelection([Math.min(from, verse), Math.max(to, verse)])
+    if (verse >= from && verse <= to) return setChosen(undefined)
+    setChosen({ id: pageId, range: [Math.min(from, verse), Math.max(to, verse)] })
   }
 
   const learnSelection = ([from, to]: [number, number]) => {
@@ -88,7 +90,7 @@ export const PageView = (props: PageViewProps) => {
 
   const chapterCount = (n: number) => kept.filter(([key]) => parseKey(key).chapter === n).length
   const lastVerse = verses[verses.length - 1]?.verse ?? 1
-  const titleStyle = { '--letters': Math.max(...book.name.split(' ').map((word) => word.length), 8) } as CSSProperties
+  const titleStyle = { '--letters': Math.max(book.name.length, 8) } as CSSProperties
 
   return (
     <div className="page">
@@ -137,7 +139,13 @@ export const PageView = (props: PageViewProps) => {
             disabled={!todayItems.length}
             onClick={() => props.onStart(todayItems)}
           >
-            {due.length ? 'Begin today’s verses' : nextNew ? `Learn verse ${nextNew.verse}` : 'Nothing due today'}
+            {due.length
+              ? 'Begin today’s verses'
+              : nextNew
+                ? `Learn verse ${nextNew.verse}`
+                : opening
+                  ? 'Opening the book…'
+                  : 'Nothing due today'}
           </button>
           <button
             type="button"
@@ -156,16 +164,15 @@ export const PageView = (props: PageViewProps) => {
               )
             }
           >
-            Recite all of {book.name}
+            Recite the book
           </button>
           {props.onMap && (
-            <button type="button" className="quiet" onClick={props.onMap}>
-              The structure of {book.name}
+            <button type="button" className="quiet" aria-label={`The structure of ${book.name}`} onClick={props.onMap}>
+              Structure
             </button>
           )}
         </div>
       </section>
-
 
       <nav className="chapters" aria-label="Chapters">
         {Array.from({ length: book.chapters }, (_, i) => i + 1).map((n) => (

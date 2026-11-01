@@ -25,16 +25,32 @@ export type Progress = Record<string, VerseRecord>
 const INTERVALS = [0, 1, 3, 7, 14, 30, 60, 120, 240]
 const progressStore = 'byheart.progress'
 
-export const loadProgress = (): Progress => {
+export const loadProgress = (store = progressStore): Progress => {
   try {
-    return JSON.parse(localStorage.getItem(progressStore) ?? '{}') as Progress
+    return (JSON.parse(localStorage.getItem(store) ?? '{}') ?? {}) as Progress
   } catch {
     return {}
   }
 }
 
-export const saveProgress = (progress: Progress) =>
-  localStorage.setItem(progressStore, JSON.stringify(progress))
+// Cached Bible text can always be fetched again, so it makes way when storage is full.
+// If even that is not enough, the app carries on from memory rather than falling over.
+export const writeStore = (key: string, value: string) => {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith('byheart.text.'))
+      .forEach((k) => localStorage.removeItem(k))
+    try {
+      localStorage.setItem(key, value)
+    } catch {
+      // Nothing left to clear.
+    }
+  }
+}
+
+export const saveProgress = (progress: Progress, store = progressStore) => writeStore(store, JSON.stringify(progress))
 
 export const verseKey = (translation: string, book: string, chapter: number, verse: number) =>
   `${translation}:${book}:${chapter}:${verse}`

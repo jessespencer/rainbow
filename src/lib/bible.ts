@@ -55,12 +55,17 @@ interface ContentPart {
   text?: string
 }
 
+const unreachable = (book: Book, chapter: number) =>
+  new Error(`Could not reach ${book.name} ${chapter}. Check your connection.`)
+
 const fetchPublicDomain = async (t: Translation, book: Book, chapter: number): Promise<Verse[]> => {
   const storeKey = `byheart.text.${t.id}.${book.code}.${chapter}`
   const cached = localStorage.getItem(storeKey)
   if (cached) return JSON.parse(cached) as Verse[]
 
-  const res = await fetch(`https://bible.helloao.org/api/${t.apiId}/${book.code}/${chapter}.json`)
+  const res = await fetch(`https://bible.helloao.org/api/${t.apiId}/${book.code}/${chapter}.json`).catch(() => {
+    throw unreachable(book, chapter)
+  })
   if (!res.ok) throw new Error(`Could not load ${book.name} ${chapter}`)
   const data = (await res.json()) as {
     chapter: { content: { type: string; number?: number; content?: (string | ContentPart)[] }[] }
@@ -104,7 +109,8 @@ const fetchEsv = async (book: Book, chapter: number): Promise<Verse[]> => {
   const key = getEsvKey()
   if (!key) throw new MissingKeyError()
   const params = new URLSearchParams({
-    q: `${book.name} ${chapter}`,
+    // A chapter number on a one-chapter book would read as a verse.
+    q: book.chapters === 1 ? book.name : `${book.name} ${chapter}`,
     'include-passage-references': 'false',
     'include-first-verse-numbers': 'true',
     'include-verse-numbers': 'true',
@@ -120,6 +126,10 @@ const fetchEsv = async (book: Book, chapter: number): Promise<Verse[]> => {
   })
   const res = await fetch(`https://api.esv.org/v3/passage/text/?${params}`, {
     headers: { Authorization: `Token ${key}` },
+  }).catch(() => {
+    // Crossway sends rejections without CORS headers, so a bad key arrives here as a failed
+    // request rather than a 403. Only being offline rules the key out.
+    throw navigator.onLine ? new MissingKeyError('Crossway turned that request away. Check your key.') : unreachable(book, chapter)
   })
   if (res.status === 401 || res.status === 403) throw new MissingKeyError('That ESV key was not accepted.')
   if (!res.ok) throw new Error(`Could not load ${book.name} ${chapter}`)

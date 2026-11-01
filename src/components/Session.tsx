@@ -85,7 +85,7 @@ export const Session = ({ items, book, translation, progress, onRecord, onExit, 
   }, [item, chapterText])
 
   const previousVerse = useMemo(() => {
-    if (!item || !chapterText || item.kind !== 'learn') return undefined
+    if (!item || chapterText?.chapter !== item.chapter || item.kind !== 'learn') return undefined
     const before = chapterText.verses.find((v) => v.verse === item.from - 1)
     const known = before && (progress[verseKey(translation, book.code, before.chapter, before.verse)]?.box ?? 0) > 0
     return known ? before : undefined
@@ -166,9 +166,9 @@ export const Session = ({ items, book, translation, progress, onRecord, onExit, 
       const own = tokens.filter((t) => t.verseIndex === verseIndex)
       const misses = own.filter((t) => helped.has(t.id)).length
       const ok = misses <= Math.floor(own.length / 20)
-      if (ok) clean += 1
-      else stumbles += 1
       const existing = progress[verseKey(translation, book.code, verse.chapter, verse.verse)] ?? emptyRecord()
+      if (ok) clean += 1
+      else if (existing.box > 0) stumbles += 1
       if (ok && existing.box > 0 && !isDue(existing)) return
       if (!ok && existing.box === 0) return
       record(verse.verse, (r) => gradeRecall({ ...r, stage: Math.max(r.stage, ok ? RUN_STAGE : r.stage) }, ok))
@@ -177,7 +177,7 @@ export const Session = ({ items, book, translation, progress, onRecord, onExit, 
     afterFlourish(nextItem)
   }
 
-  const backLabel = section ? 'Back to the map' : 'Back to the page'
+  const backLabel = section ? 'Back to the structure' : 'Back to the page'
 
   if (loadError) {
     return (
@@ -216,7 +216,10 @@ export const Session = ({ items, book, translation, progress, onRecord, onExit, 
   const speakable = (stage === 'bare' || stage === 'thread') && canSpeak()
 
   const renderStage = () => {
-    if (!tokens.length) return <p className="session-message">Opening the book…</p>
+    if (!tokens.length) {
+      const loaded = chapterText?.chapter === item.chapter
+      return <p className="session-message">{loaded ? 'This passage is not in this translation.' : 'Opening the book…'}</p>
+    }
     if (flourish === 'pass') {
       return (
         <div className="flourish">
@@ -272,7 +275,7 @@ export const Session = ({ items, book, translation, progress, onRecord, onExit, 
   return (
     <main className={`session session-${stage}`}>
       <header className="session-head">
-        <Back to={section ? 'Structure' : book.name} label={backLabel} onClick={onExit} />
+        <Back to={section ? 'Structure' : book.name} onClick={onExit} />
         <h1 className="session-ref">{reference}</h1>
         <span className="session-count">
           {translation}
@@ -288,6 +291,7 @@ export const Session = ({ items, book, translation, progress, onRecord, onExit, 
               className={s === stage ? 'on' : ''}
               aria-current={s === stage ? 'step' : undefined}
               onClick={() => {
+                if (flourish) return
                 setStage(s)
                 setSpeaking(false)
                 setAttempt(attempt + 1)

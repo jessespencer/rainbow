@@ -2,13 +2,21 @@ import { flushSync } from 'react-dom'
 
 export const prefersStillness = () => matchMedia('(prefers-reduced-motion: reduce)').matches
 
+let latest: ViewTransition | undefined
+
 // Browsers without view transitions simply change straight away.
 export const withTransition = (kind: 'screen' | 'theme', update: () => void) => {
   if (!document.startViewTransition || prefersStillness()) return update()
   const root = document.documentElement
   root.dataset.transition = kind
   const transition = document.startViewTransition(() => flushSync(update))
-  transition.finished.finally(() => delete root.dataset.transition)
+  latest = transition
+  // A skipped transition rejects this, but the update itself still runs.
+  transition.ready.catch(() => {})
+  // A newer transition takes over the marker, so only the latest may clear it.
+  transition.finished.finally(() => {
+    if (latest === transition) delete root.dataset.transition
+  })
 }
 
 // The new theme spreads out from the button that asked for it.

@@ -17,14 +17,13 @@ interface StructureMapProps {
   translation: string
   progress: Progress
   recall: Progress
-  theme: 'light' | 'dark'
   onBack: () => void
   onRecite: (section: Section) => void
   onQuiz: () => void
 }
 
 export const StructureMap = (props: StructureMapProps) => {
-  const { book, outline, translation, progress, recall, theme } = props
+  const { book, outline, translation, progress, recall } = props
   const sections = outlineSections(outline)
   const held = sections.filter((s) => sectionHeld(outline, s, recall)).length
 
@@ -40,11 +39,12 @@ export const StructureMap = (props: StructureMapProps) => {
     const ink = Math.round(levels.reduce((sum, level) => sum + level, 0) / levels.length)
     const known = verses.filter((r) => r?.box).length
     const isHeld = sectionHeld(outline, section, recall)
+    const position = sections.indexOf(section)
     const label = `Recite ${section.name}, ${book.name} ${sectionLabel(section)}. ${known} of ${verses.length} verses by heart${isHeld ? ', and its place in the order held' : ''}.`
     return (
-      <li key={section.id} style={{ '--row': sections.indexOf(section) } as CSSProperties}>
+      <li key={section.id} style={{ '--row': position } as CSSProperties}>
         <button type="button" className="map-row" aria-label={label} onClick={() => props.onRecite(section)}>
-          <span className={`map-number ${isHeld ? 'held' : ''}`}>{sections.indexOf(section) + 1}</span>
+          <span className={`map-number ${isHeld ? 'held' : ''}`}>{position + 1}</span>
           <span className={`map-name ink-${ink}`}>{section.name}</span>
           <span className="map-dots">
             {verses.map((record, i) => (
@@ -64,7 +64,7 @@ export const StructureMap = (props: StructureMapProps) => {
   return (
     <main className="map">
       <header className="session-head">
-        <Back to={book.name} label={`Back to ${book.name}`} onClick={props.onBack} />
+        <Back to={book.name} onClick={props.onBack} />
         <h1 className="session-ref">The structure of {book.name}</h1>
         <span className="session-count">{translation}</span>
       </header>
@@ -80,16 +80,16 @@ export const StructureMap = (props: StructureMapProps) => {
 
       {outline.parts.map((part) => (
         <section key={part.name} className="map-part">
-          <h3>
+          <h2>
             {part.name} <span>{part.chapters}</span>
-          </h3>
+          </h2>
           <ol>{part.sections.map(row)}</ol>
         </section>
       ))}
 
       <p className="map-note">
-        Tap a section to recite it. Each dot is a verse, printed darker as you learn it. A numeral turns{' '}
-        {theme === 'light' ? 'red' : 'gold'} once you know where its section belongs.
+        Tap a section to recite it. Each dot is a verse, printed darker as you learn it. A numeral lights up once you
+        know where its section belongs.
       </p>
     </main>
   )

@@ -1,4 +1,4 @@
-import { emptyRecord, gradeRecall, today, verseKey, type Progress, type VerseRecord } from './memory'
+import { gradeRecall, loadProgress, saveProgress, today, verseKey, type Progress, type VerseRecord } from './memory'
 import { shuffled } from './text'
 
 export interface Section {
@@ -108,21 +108,15 @@ export const sectionRecords = (outline: Outline, section: Section, translation: 
 // store, keyed by book alone: the shape of Ephesians is the same in every translation.
 const recallStore = 'byheart.structure'
 
-export const loadStructureRecall = (): Progress => {
-  try {
-    return JSON.parse(localStorage.getItem(recallStore) ?? '{}') as Progress
-  } catch {
-    return {}
-  }
-}
+export const loadStructureRecall = () => loadProgress(recallStore)
 
-export const saveStructureRecall = (recall: Progress) => localStorage.setItem(recallStore, JSON.stringify(recall))
+export const saveStructureRecall = (recall: Progress) => saveProgress(recall, recallStore)
 
 const isReady = (r: VerseRecord | undefined) => !r || r.box === 0 || r.due <= today()
 
 // Unlike a verse, a miss here clears the section entirely. Answering early leaves the
 // schedule where it was, so a second round in one day cannot rush a section up the boxes.
-export const gradeStructure = (record: VerseRecord = emptyRecord(), clean: boolean): VerseRecord => {
+export const gradeStructure = (record: VerseRecord, clean: boolean): VerseRecord => {
   if (!clean) return { ...gradeRecall(record, false), box: 0 }
   return isReady(record) ? gradeRecall(record, true) : record
 }

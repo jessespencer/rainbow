@@ -27,10 +27,7 @@ export const StructureQuiz = ({ book, outline, recall, focus, onGrade, onExit }:
   const question = queue[index] as Question | undefined
   const missed = !!picked && picked !== question?.answer
 
-  useEffect(() => {
-    window.scrollTo(0, 0)
-    return () => clearTimeout(timer.current)
-  }, [])
+  useEffect(() => () => clearTimeout(timer.current), [])
 
   const advance = () => {
     setPicked(undefined)
@@ -61,18 +58,16 @@ export const StructureQuiz = ({ book, outline, recall, focus, onGrade, onExit }:
     setAsked(0)
   }
 
-  const chooseRef = useRef(choose)
-  chooseRef.current = choose
-
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') return onExit()
-      const option = queue[index]?.options[Number(e.key) - 1]
-      if (option) chooseRef.current(option)
+      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return
+      const option = question?.options[Number(e.key) - 1]
+      if (option) choose(option)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [queue, index, onExit])
+  })
 
   if (!question) {
     const misses = asked - firstTime
@@ -85,7 +80,7 @@ export const StructureQuiz = ({ book, outline, recall, focus, onGrade, onExit }:
           {misses > 0 && `, ${misses} to come back to tomorrow`}.
         </p>
         <button type="button" className="primary" onClick={onExit}>
-          Back to the map
+          Back to the structure
         </button>
         <button type="button" className="quiet" onClick={restart}>
           Another round
@@ -97,7 +92,7 @@ export const StructureQuiz = ({ book, outline, recall, focus, onGrade, onExit }:
   return (
     <main className="session">
       <header className="session-head">
-        <Back to="Structure" label="Back to the map" onClick={onExit} />
+        <Back to="Structure" onClick={onExit} />
         <h1 className="session-ref">What comes next?</h1>
         <span className="session-count">
           {index + 1} of {queue.length}

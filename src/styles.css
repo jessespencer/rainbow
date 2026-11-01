@@ -2,7 +2,6 @@
   --paper: #f5f0e6;
   --ink: #17140f;
   --rubric: #c8321e;
-  --lapis: #1f3a8a;
   --hair: color-mix(in srgb, var(--ink) 18%, transparent);
   --soft: color-mix(in srgb, var(--ink) 58%, transparent);
   --ghost: 0.4;
@@ -20,7 +19,6 @@
   --paper: #101b3d;
   --ink: #efe7d6;
   --rubric: #e8b64c;
-  --lapis: #8fa8ee;
   --ghost: 0.46;
   --slip: #f5f0e6;
   --slip-ink: #17140f;
@@ -208,7 +206,11 @@ kbd {
 .hero h1 {
   font-family: var(--display);
   font-weight: 400;
-  /* Sized to the longest word, so no title runs past the column. Nehemiah is the widest. */
+  /* One line sized to fit the column, in a fixed slot so the controls below never move. */
+  display: flex;
+  align-items: flex-end;
+  height: min(8.74rem, 21.85cqw);
+  white-space: nowrap;
   font-size: min(9.5rem, calc(190cqw / var(--letters)));
   line-height: 0.92;
   letter-spacing: -0.025em;
@@ -238,6 +240,13 @@ kbd {
   align-items: center;
   gap: 0.35rem 1.1rem;
   margin-top: 1.4rem;
+}
+
+/* Wide enough for one row or not, every book keeps the same height here. */
+@container (max-width: 37rem) {
+  .hero-actions {
+    min-height: 6.4rem;
+  }
 }
 
 .chapters {
@@ -883,12 +892,10 @@ kbd {
 }
 
 .map-part {
-  clear: both;
   margin-top: 1.1rem;
 }
 
-.map-part h3 {
-  margin: 0;
+.map-part h2 {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
@@ -901,7 +908,7 @@ kbd {
   border-bottom: 1px solid var(--ink);
 }
 
-.map-part h3 span {
+.map-part h2 span {
   font-family: var(--display);
   font-variant-caps: normal;
   letter-spacing: 0;
@@ -1173,10 +1180,6 @@ kbd {
 }
 
 /* Whole-screen changes. Ordinary transitions wait so they cannot blur the snapshots. */
-::view-transition {
-  pointer-events: none;
-}
-
 :root[data-transition],
 :root[data-transition] * {
   transition: none !important;
@@ -1220,6 +1223,12 @@ kbd {
 
   .picker select {
     max-width: 5.6rem;
+  }
+
+  .session-head .back {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    margin-block: -0.6rem;
   }
 
   .session-head .back span {

@@ -5,7 +5,7 @@ import { StructureMap } from './components/StructureMap'
 import { StructureQuiz } from './components/StructureQuiz'
 import { getBook } from './lib/bible'
 import { revealFrom, withTransition } from './lib/motion'
-import { emptyRecord, loadProgress, saveProgress, type Progress, type VerseRecord } from './lib/memory'
+import { emptyRecord, loadProgress, saveProgress, writeStore, type Progress, type VerseRecord } from './lib/memory'
 import {
   gradeStructure,
   loadStructureRecall,
@@ -47,14 +47,25 @@ export const App = () => {
   const outline = outlineOf(book.code)
   const mapScroll = useRef(0)
 
-  useEffect(() => {
+  // Before paint, so the theme reveal captures the new colours.
+  useLayoutEffect(() => {
     document.documentElement.dataset.theme = theme
-    localStorage.setItem('byheart.theme', theme)
+    writeStore('byheart.theme', theme)
   }, [theme])
 
-  useEffect(() => localStorage.setItem(placeStore, JSON.stringify(place)), [place])
+  useEffect(() => writeStore(placeStore, JSON.stringify(place)), [place])
   useEffect(() => saveProgress(progress), [progress])
   useEffect(() => saveStructureRecall(recall), [recall])
+
+  // Another open tab may have saved since, and this tab would otherwise write over it.
+  useEffect(() => {
+    const onStorage = () => {
+      setProgress(loadProgress())
+      setRecall(loadStructureRecall())
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
 
   const updateRecord = useCallback((key: string, update: (record: VerseRecord) => VerseRecord) => {
     setProgress((current) => ({ ...current, [key]: update(current[key] ?? emptyRecord()) }))
@@ -69,7 +80,7 @@ export const App = () => {
   const leaveQuiz = useCallback(() => withTransition('screen', () => setView('map')), [])
 
   const gradeQuestion = useCallback((key: string, clean: boolean) => {
-    setRecall((current) => ({ ...current, [key]: gradeStructure(current[key], clean) }))
+    setRecall((current) => ({ ...current, [key]: gradeStructure(current[key] ?? emptyRecord(), clean) }))
   }, [])
 
   const reciteSection = (chosen: Section) => {
@@ -81,15 +92,19 @@ export const App = () => {
   }
 
   if (session) {
-    const sectionRun = view === 'map' && section && {
-      name: section.name,
-      onNext: sectionAfter(outline!, section) && (() => {
-        withTransition('screen', () => {
-          setSession(undefined)
-          setView('quiz')
-        })
-      }),
-    }
+    const sectionRun =
+      view === 'map' && section
+        ? {
+            name: section.name,
+            onNext:
+              sectionAfter(outline!, section) &&
+              (() =>
+                withTransition('screen', () => {
+                  setSession(undefined)
+                  setView('quiz')
+                })),
+          }
+        : undefined
     return (
       <Session
         items={session}
@@ -98,7 +113,7 @@ export const App = () => {
         progress={progress}
         onRecord={updateRecord}
         onExit={leaveSession}
-        section={sectionRun || undefined}
+        section={sectionRun}
       />
     )
   }
@@ -124,7 +139,6 @@ export const App = () => {
         translation={place.translation}
         progress={progress}
         recall={recall}
-        theme={theme}
         onBack={() => withTransition('screen', () => setView('page'))}
         onRecite={reciteSection}
         onQuiz={() => {
@@ -145,13 +159,10 @@ export const App = () => {
       translation={place.translation}
       progress={progress}
       theme={theme}
-      onBook={(code) => {
-        setPlace({ ...place, book: code, chapter: 1 })
-        setView('page')
-      }}
+      onBook={(code) => setPlace({ ...place, book: code, chapter: 1 })}
       onChapter={(chapter) => setPlace({ ...place, chapter })}
       onTranslation={(translation) => setPlace({ ...place, translation })}
-      onTheme={(origin) => revealFrom(origin, () => setTheme(theme === 'light' ? 'dark' : 'light'))}
+      onTheme={(origin) => revealFrom(origin, () => setTheme((t) => (t === 'light' ? 'dark' : 'light')))}
       onStart={(items) => withTransition('screen', () => setSession(items))}
       onMap={
         outline &&
