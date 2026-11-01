@@ -1,6 +1,7 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { BOOKS, ESV_NOTICE, MissingKeyError, TRANSLATIONS, fetchChapter, getEsvKey, setEsvKey, type Book, type Verse } from '../lib/bible'
 import { inkLevel, isDue, verseKey, type Progress } from '../lib/memory'
+import { prefersStillness } from '../lib/motion'
 import type { SessionItem } from './Session'
 
 interface PageViewProps {
@@ -12,7 +13,7 @@ interface PageViewProps {
   onBook: (code: string) => void
   onChapter: (chapter: number) => void
   onTranslation: (id: string) => void
-  onTheme: () => void
+  onTheme: (origin: HTMLElement) => void
   onStart: (items: SessionItem[]) => void
   onMap?: () => void
 }
@@ -51,6 +52,12 @@ export const PageView = (props: PageViewProps) => {
     }
   }, [translation, book, chapter, pageId])
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setSelection(undefined)
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   const prefix = `${translation}:${book.code}:`
   const bookRecords = Object.entries(progress).filter(([key]) => key.startsWith(prefix))
   const kept = bookRecords.filter(([, r]) => r.box > 0)
@@ -73,8 +80,7 @@ export const PageView = (props: PageViewProps) => {
     setSelection([Math.min(from, verse), Math.max(to, verse)])
   }
 
-  const learnSelection = () => {
-    const [from, to] = selection!
+  const learnSelection = ([from, to]: [number, number]) => {
     props.onStart(
       Array.from({ length: to - from + 1 }, (_, i) => ({ kind: 'learn' as const, chapter, from: from + i, to: from + i })),
     )
@@ -82,7 +88,7 @@ export const PageView = (props: PageViewProps) => {
 
   const chapterCount = (n: number) => kept.filter(([key]) => parseKey(key).chapter === n).length
   const lastVerse = verses[verses.length - 1]?.verse ?? 1
-  const titleStyle = { '--letters': Math.max(book.name.length, 8) } as CSSProperties
+  const titleStyle = { '--letters': Math.max(...book.name.split(' ').map((word) => word.length), 8) } as CSSProperties
 
   return (
     <div className="page">
@@ -108,7 +114,7 @@ export const PageView = (props: PageViewProps) => {
             ))}
           </select>
         </label>
-        <button type="button" className="quiet theme" onClick={props.onTheme} aria-label="Switch between day and night">
+        <button type="button" className="quiet theme" onClick={(e) => props.onTheme(e.currentTarget)} aria-label="Switch between day and night">
           {theme === 'light' ? '☾' : '☼'}
         </button>
       </header>
@@ -160,6 +166,7 @@ export const PageView = (props: PageViewProps) => {
         </div>
       </section>
 
+
       <nav className="chapters" aria-label="Chapters">
         {Array.from({ length: book.chapters }, (_, i) => i + 1).map((n) => (
           <button
@@ -180,7 +187,7 @@ export const PageView = (props: PageViewProps) => {
       ) : problem ? (
         <p className="session-message">{problem.message}</p>
       ) : (
-        <article className="leaf">
+        <article className="leaf" key={loaded?.id}>
           <span className="drop" aria-hidden="true">
             {chapterName(book, chapter)}
           </span>
@@ -229,25 +236,57 @@ export const PageView = (props: PageViewProps) => {
         )}
       </footer>
 
-      {selection && (
-        <aside className="dock">
-          <span className="dock-ref">
-            {book.name} {chapter}:{selection[0]}
-            {selection[1] !== selection[0] && `–${selection[1]}`}
-          </span>
-          <button type="button" className="primary" onClick={learnSelection}>
-            Learn
-          </button>
-          <button
-            type="button"
-            className="quiet"
-            onClick={() => props.onStart([{ kind: 'run', chapter, from: selection[0], to: selection[1] }])}
-          >
-            Recite
-          </button>
-        </aside>
-      )}
+      <VerseSlip
+        book={book}
+        chapter={chapter}
+        selection={selection}
+        onLearn={learnSelection}
+        onRecite={([from, to]) => props.onStart([{ kind: 'run', chapter, from, to }])}
+      />
     </div>
+  )
+}
+
+interface VerseSlipProps {
+  book: Book
+  chapter: number
+  selection?: [number, number]
+  onLearn: (selection: [number, number]) => void
+  onRecite: (selection: [number, number]) => void
+}
+
+// Holds on to the last selection so the slip can animate away after it is cleared.
+const VerseSlip = ({ book, chapter, selection, onLearn, onRecite }: VerseSlipProps) => {
+  const [held, setHeld] = useState(selection)
+  if (selection && selection !== held) setHeld(selection)
+  if (!selection && held && prefersStillness()) setHeld(undefined)
+  if (!held) return null
+  const leaving = selection ? '' : 'dock-leaving'
+  return (
+    <>
+      <div className={`dock-veil ${leaving}`} aria-hidden="true" />
+      <aside
+        className={`dock ${leaving}`}
+        onAnimationEnd={(e) => {
+          if (!selection && e.target === e.currentTarget) setHeld(undefined)
+        }}
+      >
+        <div className="dock-slip">
+          <span className="dock-ref">
+            {book.name} {chapter}:{held[0]}
+            {held[1] !== held[0] && `–${held[1]}`}
+          </span>
+          <span className="dock-actions">
+            <button type="button" className="primary" onClick={() => onLearn(held)}>
+              Learn
+            </button>
+            <button type="button" className="quiet" onClick={() => onRecite(held)}>
+              Recite
+            </button>
+          </span>
+        </div>
+      </aside>
+    </>
   )
 }
 

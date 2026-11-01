@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { PageView } from './components/PageView'
 import { Session, type SessionItem } from './components/Session'
 import { StructureMap } from './components/StructureMap'
 import { StructureQuiz } from './components/StructureQuiz'
 import { getBook } from './lib/bible'
+import { revealFrom, withTransition } from './lib/motion'
 import { emptyRecord, loadProgress, saveProgress, type Progress, type VerseRecord } from './lib/memory'
 import {
   gradeStructure,
@@ -44,6 +45,7 @@ export const App = () => {
   const [recall, setRecall] = useState<Progress>(loadStructureRecall)
   const book = getBook(place.book)
   const outline = outlineOf(book.code)
+  const mapScroll = useRef(0)
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -58,24 +60,34 @@ export const App = () => {
     setProgress((current) => ({ ...current, [key]: update(current[key] ?? emptyRecord()) }))
   }, [])
 
-  const leaveSession = useCallback(() => setSession(undefined), [])
-  const leaveQuiz = useCallback(() => setView('map'), [])
+  // Coming back from a recital or the quiz lands on the row you left, not the top.
+  useLayoutEffect(() => {
+    if (!session) window.scrollTo(0, view === 'map' ? mapScroll.current : 0)
+  }, [session, view])
+
+  const leaveSession = useCallback(() => withTransition('screen', () => setSession(undefined)), [])
+  const leaveQuiz = useCallback(() => withTransition('screen', () => setView('map')), [])
 
   const gradeQuestion = useCallback((key: string, clean: boolean) => {
     setRecall((current) => ({ ...current, [key]: gradeStructure(current[key], clean) }))
   }, [])
 
   const reciteSection = (chosen: Section) => {
-    setSection(chosen)
-    setSession(sectionSpans(outline!, chosen).map((span) => ({ kind: 'run', ...span })))
+    mapScroll.current = window.scrollY
+    withTransition('screen', () => {
+      setSection(chosen)
+      setSession(sectionSpans(outline!, chosen).map((span) => ({ kind: 'run', ...span })))
+    })
   }
 
   if (session) {
     const sectionRun = view === 'map' && section && {
       name: section.name,
       onNext: sectionAfter(outline!, section) && (() => {
-        setSession(undefined)
-        setView('quiz')
+        withTransition('screen', () => {
+          setSession(undefined)
+          setView('quiz')
+        })
       }),
     }
     return (
@@ -113,12 +125,14 @@ export const App = () => {
         progress={progress}
         recall={recall}
         theme={theme}
-        onTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-        onBack={() => setView('page')}
+        onBack={() => withTransition('screen', () => setView('page'))}
         onRecite={reciteSection}
         onQuiz={() => {
-          setSection(undefined)
-          setView('quiz')
+          mapScroll.current = window.scrollY
+          withTransition('screen', () => {
+            setSection(undefined)
+            setView('quiz')
+          })
         }}
       />
     )
@@ -131,12 +145,21 @@ export const App = () => {
       translation={place.translation}
       progress={progress}
       theme={theme}
-      onBook={(code) => setPlace({ ...place, book: code, chapter: 1 })}
+      onBook={(code) => {
+        setPlace({ ...place, book: code, chapter: 1 })
+        setView('page')
+      }}
       onChapter={(chapter) => setPlace({ ...place, chapter })}
       onTranslation={(translation) => setPlace({ ...place, translation })}
-      onTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-      onStart={setSession}
-      onMap={outline && (() => setView('map'))}
+      onTheme={(origin) => revealFrom(origin, () => setTheme(theme === 'light' ? 'dark' : 'light'))}
+      onStart={(items) => withTransition('screen', () => setSession(items))}
+      onMap={
+        outline &&
+        (() => {
+          mapScroll.current = 0
+          withTransition('screen', () => setView('map'))
+        })
+      }
     />
   )
 }

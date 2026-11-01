@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, type CSSProperties } from 'react'
 import type { Book } from '../lib/bible'
 import { inkLevel, isDue, type Progress } from '../lib/memory'
 import {
@@ -9,6 +9,7 @@ import {
   type Outline,
   type Section,
 } from '../lib/outline'
+import { Back } from './Back'
 
 interface StructureMapProps {
   book: Book
@@ -17,7 +18,6 @@ interface StructureMapProps {
   progress: Progress
   recall: Progress
   theme: 'light' | 'dark'
-  onTheme: () => void
   onBack: () => void
   onRecite: (section: Section) => void
   onQuiz: () => void
@@ -26,13 +26,7 @@ interface StructureMapProps {
 export const StructureMap = (props: StructureMapProps) => {
   const { book, outline, translation, progress, recall, theme } = props
   const sections = outlineSections(outline)
-  const records = sections.flatMap((s) => sectionRecords(outline, s, translation, progress))
-  const kept = records.filter((r) => r?.box).length
   const held = sections.filter((s) => sectionHeld(outline, s, recall)).length
-
-  useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && props.onBack()
@@ -48,13 +42,17 @@ export const StructureMap = (props: StructureMapProps) => {
     const isHeld = sectionHeld(outline, section, recall)
     const label = `Recite ${section.name}, ${book.name} ${sectionLabel(section)}. ${known} of ${verses.length} verses by heart${isHeld ? ', and its place in the order held' : ''}.`
     return (
-      <li key={section.id}>
+      <li key={section.id} style={{ '--row': sections.indexOf(section) } as CSSProperties}>
         <button type="button" className="map-row" aria-label={label} onClick={() => props.onRecite(section)}>
           <span className={`map-number ${isHeld ? 'held' : ''}`}>{sections.indexOf(section) + 1}</span>
           <span className={`map-name ink-${ink}`}>{section.name}</span>
           <span className="map-dots">
             {verses.map((record, i) => (
-              <i key={i} className={`ink-${inkLevel(record)} ${isDue(record) ? 'due' : ''}`} />
+              <i
+                key={i}
+                className={`ink-${inkLevel(record)} ${isDue(record) ? 'due' : ''}`}
+                style={{ '--dot': i } as CSSProperties}
+              />
             ))}
           </span>
           <span className="map-ref">{sectionLabel(section)}</span>
@@ -64,48 +62,35 @@ export const StructureMap = (props: StructureMapProps) => {
   }
 
   return (
-    <div className="page map">
-      <header className="masthead">
-        <button type="button" className="wordmark" onClick={props.onBack}>
-          By Heart
-        </button>
-        <button type="button" className="quiet" onClick={props.onBack}>
-          Back to the page
-        </button>
-        <button type="button" className="quiet theme" onClick={props.onTheme} aria-label="Switch between day and night">
-          {theme === 'light' ? '☾' : '☼'}
-        </button>
+    <main className="map">
+      <header className="session-head">
+        <Back to={book.name} label={`Back to ${book.name}`} onClick={props.onBack} />
+        <h1 className="session-ref">The structure of {book.name}</h1>
+        <span className="session-count">{translation}</span>
       </header>
 
-      <section className="map-hero">
-        <p className="map-kicker">The structure of</p>
-        <h1>{book.name}</h1>
+      <div className="map-head">
         <p className="tally">
-          <strong>{kept}</strong> of {records.length} verses by heart · <strong className="rubric">{held}</strong> of{' '}
-          {sections.length} sections in their place
+          <strong className="rubric">{held}</strong> of {sections.length} sections in their place
         </p>
-        <div className="hero-actions">
-          <button type="button" className="primary" onClick={props.onQuiz}>
-            What comes next?
-          </button>
-        </div>
-      </section>
+        <button type="button" className="primary" onClick={props.onQuiz}>
+          What comes next?
+        </button>
+      </div>
 
       {outline.parts.map((part) => (
         <section key={part.name} className="map-part">
-          <h2>
+          <h3>
             {part.name} <span>{part.chapters}</span>
-          </h2>
+          </h3>
           <ol>{part.sections.map(row)}</ol>
         </section>
       ))}
 
-      <footer className="colophon">
-        <p>
-          Tap a section to recite it. Each dot is a verse, printed darker as you learn it ({translation}). A numeral
-          turns {theme === 'light' ? 'red' : 'gold'} once you know where its section belongs.
-        </p>
-      </footer>
-    </div>
+      <p className="map-note">
+        Tap a section to recite it. Each dot is a verse, printed darker as you learn it. A numeral turns{' '}
+        {theme === 'light' ? 'red' : 'gold'} once you know where its section belongs.
+      </p>
+    </main>
   )
 }

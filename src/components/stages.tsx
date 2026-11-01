@@ -23,14 +23,15 @@ export const TypedStage = ({ tokens, lines, reveal, targets, verseNumbers, onDon
   const targetSet = useMemo(() => new Set(targets), [targets])
 
   useEffect(() => {
-    input.current?.focus()
+    input.current?.focus({ preventScroll: true })
   }, [])
 
+  // Follow the words smoothly, but a new passage simply opens at its first word.
   useEffect(() => {
     if (!longPassage) return
     document
       .querySelector(`[data-word="${targets[position]}"]`)
-      ?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      ?.scrollIntoView({ block: 'center', behavior: position ? 'smooth' : 'instant' })
   }, [longPassage, position, targets])
 
   const step = (asHelp: boolean) => {

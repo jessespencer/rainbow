@@ -6,6 +6,11 @@
   --hair: color-mix(in srgb, var(--ink) 18%, transparent);
   --soft: color-mix(in srgb, var(--ink) 58%, transparent);
   --ghost: 0.4;
+  --slip: #101b3d;
+  --slip-ink: #efe7d6;
+  --slip-accent: #e8b64c;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --spring: linear(0, 0.06 3%, 0.22 7%, 0.62 15%, 0.92 23%, 1.03 30%, 1.05 36%, 1.03 46%, 1.005 58%, 0.998 70%, 1);
   --book: 'EB Garamond Variable', 'EB Garamond', Garamond, Georgia, serif;
   --display: 'IM Fell Great Primer', 'EB Garamond Variable', Georgia, serif;
   color-scheme: light;
@@ -17,6 +22,9 @@
   --rubric: #e8b64c;
   --lapis: #8fa8ee;
   --ghost: 0.46;
+  --slip: #f5f0e6;
+  --slip-ink: #17140f;
+  --slip-accent: #c8321e;
   color-scheme: dark;
 }
 
@@ -26,6 +34,7 @@
 
 html {
   background: var(--paper);
+  scrollbar-gutter: stable;
   -webkit-text-size-adjust: 100%;
 }
 
@@ -92,15 +101,29 @@ kbd {
 }
 
 .primary {
-  background: var(--ink);
+  border-radius: 4px;
+  font-family: var(--display);
+  font-size: 1.3rem;
+  line-height: 1.2;
   color: var(--paper);
-  padding: 0.5em 1.15em 0.56em;
-  letter-spacing: 0.01em;
-  transition: background 0.2s ease;
+  background: var(--rubric);
+  padding: 0.42em 1.05em 0.46em;
+  transition: background 0.2s ease, transform 0.4s var(--spring);
+}
+
+.primary:active:not(:disabled) {
+  transform: scale(0.96);
+  transition-duration: 0.2s, 0.08s;
 }
 
 .primary:hover:not(:disabled) {
-  background: var(--rubric);
+  background: var(--ink);
+}
+
+.primary:disabled {
+  opacity: 1;
+  color: var(--soft);
+  background: var(--hair);
 }
 
 .quiet {
@@ -178,13 +201,15 @@ kbd {
 }
 
 .hero {
+  container-type: inline-size;
   padding: clamp(2.5rem, 9vw, 5rem) 0 1.75rem;
 }
 
 .hero h1 {
   font-family: var(--display);
   font-weight: 400;
-  font-size: min(9.5rem, calc(150vw / var(--letters)));
+  /* Sized to the longest word, so no title runs past the column. Nehemiah is the widest. */
+  font-size: min(9.5rem, calc(190cqw / var(--letters)));
   line-height: 0.92;
   letter-spacing: -0.025em;
   margin-left: -0.04em;
@@ -247,6 +272,7 @@ kbd {
 }
 
 .leaf {
+  animation: arrive 0.5s var(--ease-out) backwards;
   padding-top: 2rem;
   font-size: 1.3rem;
   line-height: 1.56;
@@ -268,7 +294,7 @@ kbd {
 .verse {
   cursor: pointer;
   opacity: var(--ghost);
-  transition: opacity 0.5s ease, background 0.15s ease;
+  transition: opacity 0.5s var(--ease-out), background 0.25s var(--ease-out);
   border-radius: 2px;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
@@ -276,6 +302,7 @@ kbd {
 
 .verse:hover {
   opacity: 1;
+  transition-duration: 0.15s, 0.25s;
 }
 
 .verse:focus-visible {
@@ -324,28 +351,104 @@ kbd {
   margin-top: 0.4rem;
 }
 
+/* The verses blur and fade into the paper behind the slip. This sits apart from .dock,
+   whose filter would stop a backdrop blur from seeing the page. */
+.dock-veil {
+  position: fixed;
+  z-index: 4;
+  inset: auto 0 0;
+  height: 8.5rem;
+  pointer-events: none;
+  background: linear-gradient(to top, var(--paper) 20%, transparent);
+  backdrop-filter: blur(5px);
+  mask: linear-gradient(to top, #000 50%, transparent);
+  animation: veil-in 0.45s var(--ease-out) backwards;
+}
+
+.dock-veil.dock-leaving {
+  animation: veil-out 0.2s ease-in forwards;
+}
+
+/* A slip of the other theme laid on the page: night by day, parchment by night. */
 .dock {
   position: fixed;
   z-index: 5;
-  left: 50%;
-  bottom: max(1rem, env(safe-area-inset-bottom));
-  transform: translateX(-50%);
+  inset: auto 1rem max(1rem, env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  filter: blur(0) drop-shadow(0 10px 18px rgb(10 12 30 / 0.34));
+  animation: slip-in 0.55s var(--spring) backwards;
+}
+
+.dock-leaving {
+  animation: slip-out 0.2s ease-in forwards;
+}
+
+.dock-slip {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  width: max-content;
-  max-width: calc(100vw - 2rem);
-  padding: 0.5rem 0.75rem 0.5rem 1.1rem;
-  background: var(--paper);
-  border: 1px solid var(--ink);
-  box-shadow: 0 10px 34px -14px color-mix(in srgb, var(--ink) 55%, transparent);
-  animation: rise 0.25s ease-out;
+  min-width: 0;
+  border-radius: 4px;
+  max-width: 100%;
+  padding: 0.6rem 0.7rem 0.6rem 1.15rem;
+  background: var(--slip);
+  color: var(--slip-ink);
+  pointer-events: auto;
+}
+
+.dock-leaving .dock-slip {
+  pointer-events: none;
 }
 
 .dock-ref {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 0.9rem;
   font-family: var(--display);
   font-style: italic;
+  font-size: 1.2rem;
   white-space: nowrap;
+}
+
+.dock-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-left: 0.9rem;
+  border-left: 1px dashed color-mix(in srgb, var(--slip-ink) 38%, transparent);
+}
+
+.dock .primary {
+  font-size: 1.15rem;
+  color: var(--slip);
+  background: var(--slip-accent);
+}
+
+.dock .primary:hover:not(:disabled) {
+  background: var(--slip-ink);
+}
+
+.dock .primary:focus-visible {
+  outline-color: var(--slip-accent);
+}
+
+.dock .quiet {
+  font-family: var(--display);
+  font-size: 1.15rem;
+  color: var(--slip-ink);
+  text-decoration-color: color-mix(in srgb, var(--slip-ink) 38%, transparent);
+  padding: 0.2em 0.15em;
+}
+
+.dock .quiet:hover:not(:disabled) {
+  color: var(--slip-accent);
+}
+
+.dock .quiet:focus-visible {
+  outline-color: var(--slip-accent);
 }
 
 .key-form {
@@ -393,11 +496,38 @@ kbd {
   padding-top: 0.8rem;
 }
 
-.close {
+.back {
   justify-self: start;
-  font-size: 1.7rem;
-  line-height: 1;
-  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.3rem 0;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+  color: var(--soft);
+  transition: color 0.2s ease;
+}
+
+.back:hover {
+  color: var(--rubric);
+}
+
+.back svg {
+  position: relative;
+  top: 0.09em;
+  flex: none;
+  width: 0.42em;
+  height: 0.7em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.25s var(--spring);
+}
+
+.back:hover svg {
+  transform: translateX(-0.14em);
 }
 
 .session-ref {
@@ -411,6 +541,7 @@ kbd {
 
 .session-count {
   justify-self: end;
+  white-space: nowrap;
   font-variant-caps: all-small-caps;
   letter-spacing: 0.08em;
   color: var(--soft);
@@ -486,7 +617,7 @@ kbd {
   font-size: 2rem;
   color: var(--rubric);
   text-align: center;
-  animation: bloom 0.7s ease-out both;
+  animation: bloom 0.8s var(--spring) both;
 }
 
 .passage {
@@ -543,7 +674,7 @@ kbd {
 
 .w-done .core,
 .w-helped .core {
-  animation: blot 0.34s ease-out both;
+  animation: blot 0.45s var(--ease-out) both;
 }
 
 .w-helped {
@@ -562,7 +693,7 @@ kbd {
 }
 
 .w-wrong {
-  animation: shake 0.28s ease;
+  animation: shake 0.38s var(--ease-out);
 }
 
 .w-wrong::before {
@@ -603,15 +734,33 @@ kbd {
   box-shadow: inset 0 -2px 0 var(--rubric);
 }
 
+/* Words dissolve outward a few at a time. Only transforms move, so the lines hold still. */
 .w-gone {
   opacity: 0;
-  filter: blur(6px);
-  letter-spacing: 0.12em;
-  transition: opacity 0.9s ease, filter 0.9s ease, letter-spacing 0.9s ease;
+  filter: blur(10px);
+  transform: translateY(-0.14em) scale(1.14);
+  transition: opacity 0.85s var(--ease-out), filter 0.85s var(--ease-out), transform 0.85s var(--ease-out);
+}
+
+.w-gone:nth-child(3n + 1) {
+  transition-delay: 0.08s;
+}
+
+.w-gone:nth-child(3n + 2) {
+  transition-delay: 0.16s;
 }
 
 .w-plain {
-  transition: opacity 0.25s ease, filter 0.25s ease, letter-spacing 0.25s ease;
+  transition: opacity 0.3s var(--ease-out), filter 0.3s var(--ease-out), transform 0.3s var(--ease-out);
+}
+
+/* Not on .typed itself: a transform there would drag its fixed input down the page. */
+.typed .passage,
+.typed .stage-tools,
+.order,
+.vanish,
+.quiz {
+  animation: arrive 0.45s var(--ease-out) backwards;
 }
 
 .typed {
@@ -645,6 +794,10 @@ kbd {
   animation: caret 1.8s ease-in-out infinite;
 }
 
+.flourish .passage {
+  animation: settle 0.9s var(--ease-out);
+}
+
 .flourish .fleuron {
   margin-top: 1.25rem;
 }
@@ -676,7 +829,7 @@ kbd {
 }
 
 .order-in {
-  animation: blot 0.34s ease-out both;
+  animation: blot 0.45s var(--ease-out) both;
 }
 
 .order-pile {
@@ -708,39 +861,34 @@ kbd {
 
 /* The structure map */
 
-.map-hero {
-  padding: clamp(1.5rem, 5vw, 2.75rem) 0 1.25rem;
+.map {
+  width: min(100%, 44rem);
+  margin: 0 auto;
+  padding: 0 1rem 3rem;
 }
 
-.map-kicker {
-  font-style: italic;
-  font-size: 1.2rem;
-  color: var(--soft);
+.map-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 1.1rem 0 0.4rem;
+  animation: arrive 0.45s var(--ease-out) backwards;
 }
 
-.map-hero h1 {
-  font-family: var(--display);
-  font-weight: 400;
-  font-size: clamp(3.6rem, 13vw, 5.75rem);
-  line-height: 0.95;
-  letter-spacing: -0.025em;
-  margin-left: -0.03em;
-}
-
-.map-hero .tally {
-  margin-top: 0.7rem;
+.map-head .tally {
+  margin: 0;
   font-size: 1.1rem;
 }
 
-.map-hero .hero-actions {
-  margin-top: 1rem;
-}
-
 .map-part {
+  clear: both;
   margin-top: 1.1rem;
 }
 
-.map-part h2 {
+.map-part h3 {
+  margin: 0;
   display: flex;
   justify-content: space-between;
   align-items: baseline;
@@ -753,7 +901,7 @@ kbd {
   border-bottom: 1px solid var(--ink);
 }
 
-.map-part h2 span {
+.map-part h3 span {
   font-family: var(--display);
   font-variant-caps: normal;
   letter-spacing: 0;
@@ -763,6 +911,17 @@ kbd {
   list-style: none;
   margin: 0;
   padding: 0;
+}
+
+.map-part li {
+  animation: arrive 0.45s var(--ease-out) backwards;
+  animation-delay: calc(var(--row) * 24ms + 40ms);
+}
+
+.map-note {
+  margin-top: 1rem;
+  font-size: 0.88rem;
+  color: var(--soft);
 }
 
 .map-row {
@@ -788,13 +947,18 @@ kbd {
   font-family: var(--display);
   font-size: 1.4rem;
   line-height: 1.2;
-  transition: opacity 0.2s ease, color 0.15s ease;
+  transition: opacity 0.2s ease, color 0.15s ease, transform 0.35s var(--spring);
+}
+
+.map-row:active .map-name {
+  transform: translateX(0.2rem);
 }
 
 @media (hover: hover) {
   .map-row:hover .map-name {
     opacity: 1;
     color: var(--rubric);
+    transform: translateX(0.2rem);
   }
 }
 
@@ -816,6 +980,8 @@ kbd {
   height: 0.34rem;
   border-radius: 50%;
   background: currentColor;
+  animation: dot 0.4s var(--spring) backwards;
+  animation-delay: calc(var(--row) * 24ms + var(--dot) * 9ms + 120ms);
 }
 
 .map-dots .ink-0 {
@@ -863,8 +1029,21 @@ kbd {
   cursor: default;
 }
 
+.quiz .order-pile li {
+  animation: arrive 0.4s var(--ease-out) backwards;
+}
+
+.quiz .order-pile li:nth-child(2) { animation-delay: 45ms; }
+.quiz .order-pile li:nth-child(3) { animation-delay: 90ms; }
+.quiz .order-pile li:nth-child(4) { animation-delay: 135ms; }
+
+.quiz .order-pile button {
+  transition: color 0.15s ease, opacity 0.3s ease;
+}
+
 .quiz .order-pile .quiz-right {
   color: var(--rubric);
+  animation: pop 0.45s var(--spring);
 }
 
 .quiz .order-pile .quiz-miss {
@@ -881,10 +1060,6 @@ kbd {
   width: 0.8em;
 }
 
-.quiz .primary {
-  font-size: 1rem;
-}
-
 .quiz .again-note {
   margin: 0;
   font-size: 1.05rem;
@@ -893,7 +1068,7 @@ kbd {
 @keyframes blot {
   from {
     opacity: 0.1;
-    filter: blur(2.5px);
+    filter: blur(3px);
   }
 }
 
@@ -904,22 +1079,124 @@ kbd {
 }
 
 @keyframes shake {
-  25% { transform: translateX(-0.06em); }
-  75% { transform: translateX(0.06em); }
+  15% { transform: translateX(-0.09em); }
+  35% { transform: translateX(0.07em); }
+  55% { transform: translateX(-0.04em); }
+  75% { transform: translateX(0.02em); }
 }
 
 @keyframes bloom {
   from {
     opacity: 0;
-    transform: scale(0.6) rotate(-12deg);
+    filter: blur(3px);
+    transform: scale(0.5) rotate(-24deg);
   }
 }
 
-@keyframes rise {
+@keyframes arrive {
   from {
     opacity: 0;
-    transform: translate(-50%, 0.5rem);
+    filter: blur(3px);
+    transform: translateY(0.45rem);
   }
+}
+
+@keyframes settle {
+  35% {
+    transform: scale(1.012);
+  }
+}
+
+@keyframes pop {
+  40% {
+    transform: scale(1.025);
+  }
+}
+
+@keyframes dot {
+  from {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+}
+
+@keyframes veil-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes veil-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes slip-in {
+  from {
+    opacity: 0;
+    filter: blur(5px) drop-shadow(0 2px 4px rgb(10 12 30 / 0));
+    transform: translateY(1.5rem) scale(0.94);
+  }
+}
+
+@keyframes slip-out {
+  to {
+    opacity: 0;
+    filter: blur(3px) drop-shadow(0 2px 4px rgb(10 12 30 / 0));
+    transform: translateY(0.8rem) scale(0.97);
+  }
+}
+
+@keyframes screen-out {
+  to {
+    opacity: 0;
+    filter: blur(4px);
+  }
+}
+
+@keyframes screen-in {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translateY(0.6rem);
+  }
+}
+
+@keyframes theme-reveal {
+  from {
+    clip-path: circle(0 at var(--reveal-x) var(--reveal-y));
+  }
+  to {
+    clip-path: circle(var(--reveal-r) at var(--reveal-x) var(--reveal-y));
+  }
+}
+
+/* Whole-screen changes. Ordinary transitions wait so they cannot blur the snapshots. */
+::view-transition {
+  pointer-events: none;
+}
+
+:root[data-transition],
+:root[data-transition] * {
+  transition: none !important;
+}
+
+:root[data-transition='screen']::view-transition-old(root) {
+  animation: screen-out 0.16s ease-in both;
+}
+
+:root[data-transition='screen']::view-transition-new(root) {
+  animation: screen-in 0.38s var(--ease-out) 0.06s both;
+}
+
+:root[data-transition='theme']::view-transition-old(root) {
+  animation: none;
+}
+
+:root[data-transition='theme']::view-transition-new(root) {
+  animation: theme-reveal 0.7s var(--ease-out) both;
+  mix-blend-mode: normal;
 }
 
 @media (max-width: 34rem) {
@@ -943,6 +1220,10 @@ kbd {
 
   .picker select {
     max-width: 5.6rem;
+  }
+
+  .session-head .back span {
+    display: none;
   }
 
   .map-row {

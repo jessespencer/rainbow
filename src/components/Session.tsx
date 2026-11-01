@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { fetchChapter, refLabel, type Book, type Verse } from '../lib/bible'
 import {
   LADDER,
@@ -12,6 +12,7 @@ import {
   type VerseRecord,
 } from '../lib/memory'
 import { pickBlanks, senseLines, tokenize } from '../lib/text'
+import { Back } from './Back'
 import { PassageText, type Reveal } from './PassageText'
 import { OrderStage, ReciteStage, TypedStage, VanishStage, canSpeak } from './stages'
 
@@ -68,7 +69,7 @@ export const Session = ({ items, book, translation, progress, onRecord, onExit, 
     }
   }, [item, chapterText, translation, book])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     window.scrollTo(0, 0)
   }, [])
 
@@ -271,9 +272,7 @@ export const Session = ({ items, book, translation, progress, onRecord, onExit, 
   return (
     <main className={`session session-${stage}`}>
       <header className="session-head">
-        <button type="button" className="quiet close" onClick={onExit} aria-label="Leave and return to the page">
-          ×
-        </button>
+        <Back to={section ? 'Structure' : book.name} label={backLabel} onClick={onExit} />
         <h1 className="session-ref">{reference}</h1>
         <span className="session-count">
           {translation}

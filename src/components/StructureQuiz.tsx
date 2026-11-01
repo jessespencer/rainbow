@@ -3,6 +3,7 @@ import type { Book } from '../lib/bible'
 import type { Progress } from '../lib/memory'
 import { quizRound, type Outline, type Question, type Section } from '../lib/outline'
 import { shuffled } from '../lib/text'
+import { Back } from './Back'
 
 interface StructureQuizProps {
   book: Book
@@ -96,9 +97,7 @@ export const StructureQuiz = ({ book, outline, recall, focus, onGrade, onExit }:
   return (
     <main className="session">
       <header className="session-head">
-        <button type="button" className="quiet close" onClick={onExit} aria-label="Leave and return to the map">
-          ×
-        </button>
+        <Back to="Structure" label="Back to the map" onClick={onExit} />
         <h1 className="session-ref">What comes next?</h1>
         <span className="session-count">
           {index + 1} of {queue.length}
