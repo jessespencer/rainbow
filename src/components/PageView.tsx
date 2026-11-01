@@ -2,6 +2,7 @@ import { useEffect, useState, type CSSProperties } from 'react'
 import { BOOKS, ESV_NOTICE, MissingKeyError, TRANSLATIONS, fetchChapter, getEsvKey, setEsvKey, type Book, type Verse } from '../lib/bible'
 import { inkLevel, isDue, verseKey, type Progress } from '../lib/memory'
 import { prefersStillness } from '../lib/motion'
+import { FleuronMark } from './Fleuron'
 import type { SessionItem } from './Session'
 
 interface PageViewProps {
@@ -93,7 +94,10 @@ export const PageView = (props: PageViewProps) => {
   return (
     <div className="page">
       <header className="masthead">
-        <span className="wordmark">By Heart</span>
+        <span className="wordmark">
+          <FleuronMark />
+          By Heart
+        </span>
         <label className="picker">
           <span className="sr-only">Book</span>
           <select value={book.code} onChange={(e) => props.onBook(e.target.value)}>

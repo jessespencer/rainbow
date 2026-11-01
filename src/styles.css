@@ -171,6 +171,14 @@ kbd {
   color: var(--rubric);
 }
 
+.wordmark svg {
+  display: inline-block;
+  width: 1.5rem;
+  margin-right: 0.4rem;
+  vertical-align: -0.08em;
+  fill: currentColor;
+}
+
 .picker select {
   appearance: none;
   background: none;
@@ -614,10 +622,15 @@ kbd {
 }
 
 .fleuron {
-  font-size: 2rem;
   color: var(--rubric);
-  text-align: center;
   animation: bloom 0.8s var(--spring) both;
+}
+
+.fleuron svg {
+  display: block;
+  width: 3.25rem;
+  margin: 0 auto;
+  fill: currentColor;
 }
 
 .passage {

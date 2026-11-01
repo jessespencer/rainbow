@@ -13,6 +13,7 @@ import {
 } from '../lib/memory'
 import { pickBlanks, senseLines, tokenize } from '../lib/text'
 import { Back } from './Back'
+import { Fleuron } from './Fleuron'
 import { PassageText, type Reveal } from './PassageText'
 import { OrderStage, ReciteStage, TypedStage, VanishStage, canSpeak } from './stages'
 
@@ -193,7 +194,7 @@ export const Session = ({ items, book, translation, progress, onRecord, onExit, 
   if (!item) {
     return (
       <main className="session session-end">
-        <p className="fleuron">❦</p>
+        <Fleuron />
         <h1>It is written.</h1>
         <p className="session-message">
           {tally.verses === 1 ? 'One verse' : `${tally.verses} verses`} kept
@@ -221,7 +222,7 @@ export const Session = ({ items, book, translation, progress, onRecord, onExit, 
       return (
         <div className="flourish">
           <PassageText lines={lines} reveal="blank" stateOf={() => 'plain'} verseNumbers={verseNumbers} />
-          <p className="fleuron">❦</p>
+          <Fleuron />
         </div>
       )
     }
