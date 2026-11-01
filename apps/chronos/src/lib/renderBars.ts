@@ -6,15 +6,22 @@
  * using a greedy first-fit algorithm (sorted by birth year).
  */
 
-import { yearToX } from "./scale.ts";
+import { getPixelsPerYear, yearToX } from "./scale.ts";
 import type { TimelineFigure, Category } from "../data/timeline.ts";
 
-const SUB_ROW_H = 24;
-const SUB_ROW_GAP = 4;
-const LANE_PAD_Y = 6;
-const MIN_LANE_H = 80;
-const MIN_BAR_W = 8;
-const BAR_GAP_X = 2;
+const FULL_ROW_H = 24;
+const MIN_ROW_H = 3;
+const FULL_GAP = 4;
+const COMPACT_GAP = 1;
+const FULL_LANE_PAD = 6;
+const COMPACT_LANE_PAD = 3;
+/** Rows reach full height, with names, at this zoom. */
+const FULL_PPY = 1;
+const MIN_LANE_H = 18;
+const MIN_NAMED_BAR_W = 36;
+const MIN_NAMED_ROW_H = 16;
+const MIN_BAR_W = 4;
+const BAR_GAP_X = 1;
 
 interface Placement {
   figure: TimelineFigure;
@@ -43,18 +50,49 @@ const computePlacements = (figures: TimelineFigure[]): Placement[] => {
   });
 };
 
+interface Density {
+  rowH: number;
+  gap: number;
+  pad: number;
+}
+
+/**
+ * Zoomed all the way out, rows shrink so every lane fits the viewport at once.
+ * They grow back to full height, with names, as you zoom in.
+ */
+const densityFor = (totalRows: number, laneCount: number, fitHeight: number, fitPpy: number): Density => {
+  const fit = (fitHeight - laneCount * 2 * COMPACT_LANE_PAD) / totalRows - COMPACT_GAP;
+  const fitRow = Math.max(MIN_ROW_H, Math.min(FULL_ROW_H, fit));
+  const span = Math.log(FULL_PPY / fitPpy);
+  const progress = span > 0 ? Math.log(getPixelsPerYear() / fitPpy) / span : 1;
+  const t = Math.max(0, Math.min(1, progress));
+  return {
+    rowH: fitRow + (FULL_ROW_H - fitRow) * t,
+    gap: COMPACT_GAP + (FULL_GAP - COMPACT_GAP) * t,
+    pad: COMPACT_LANE_PAD + (FULL_LANE_PAD - COMPACT_LANE_PAD) * t,
+  };
+};
+
 /** Compute lane height from sub-row count. */
-const laneHeightForRows = (rowCount: number): number =>
-  Math.max(MIN_LANE_H, rowCount * (SUB_ROW_H + SUB_ROW_GAP) - SUB_ROW_GAP + 2 * LANE_PAD_Y);
+const laneHeightForRows = (rowCount: number, { rowH, gap, pad }: Density): number =>
+  Math.max(MIN_LANE_H, rowCount * (rowH + gap) - gap + 2 * pad);
+
+const FULL_DENSITY: Density = { rowH: FULL_ROW_H, gap: FULL_GAP, pad: FULL_LANE_PAD };
 
 /** Apply position + reign to a bar element. */
 const applyBarPosition = (
   bar: HTMLElement,
   { figure, row, left, width }: Placement,
+  { rowH, gap, pad }: Density,
 ) => {
   bar.style.left = `${left}px`;
   bar.style.width = `${width}px`;
-  bar.style.top = `${LANE_PAD_Y + row * (SUB_ROW_H + SUB_ROW_GAP)}px`;
+  bar.style.top = `${pad + row * (rowH + gap)}px`;
+  bar.style.height = `${rowH}px`;
+  bar.classList.toggle(
+    "figure-bar--unnamed",
+    width < MIN_NAMED_BAR_W || rowH < MIN_NAMED_ROW_H,
+  );
 
   // Update reign overlay if present
   if (figure.reignStart != null && figure.reignEnd != null &&
@@ -79,7 +117,6 @@ const createBar = (placement: Placement): HTMLDivElement => {
   bar.className = "figure-bar";
   bar.dataset.category = figure.category;
   bar.dataset.id = figure.id;
-  bar.style.height = `${SUB_ROW_H}px`;
   bar.style.setProperty("--bar-color", `var(--cat-${figure.category})`);
 
   const name = document.createElement("span");
@@ -98,7 +135,7 @@ const createBar = (placement: Placement): HTMLDivElement => {
     bar.appendChild(reign);
   }
 
-  applyBarPosition(bar, placement);
+  applyBarPosition(bar, placement, FULL_DENSITY);
   return bar;
 };
 
@@ -136,7 +173,7 @@ export const renderBars = (
 
     const placements = computePlacements(catFigures);
     const maxRow = placements.reduce((m, p) => Math.max(m, p.row), 0);
-    const h = laneHeightForRows(maxRow + 1);
+    const h = laneHeightForRows(maxRow + 1, FULL_DENSITY);
     lane.style.height = `${h}px`;
     laneHeights.set(cat, h);
 
@@ -159,6 +196,8 @@ export const repositionBars = (
   container: HTMLElement,
   figures: TimelineFigure[],
   barMap: Map<string, HTMLElement>,
+  fitHeight: number,
+  fitPpy: number,
 ): Map<Category, number> => {
   const byCategory = new Map<Category, TimelineFigure[]>();
   for (const f of figures) {
@@ -170,23 +209,27 @@ export const repositionBars = (
     }
   }
 
+  const lanes = [...container.querySelectorAll<HTMLElement>(".lane[data-category]")]
+    .flatMap((lane) => {
+      const catFigures = byCategory.get(lane.dataset.category as Category);
+      if (!catFigures) return [];
+      const placements = computePlacements(catFigures);
+      const rows = placements.reduce((m, p) => Math.max(m, p.row), 0) + 1;
+      return [{ lane, placements, rows }];
+    });
+
+  const totalRows = lanes.reduce((sum, { rows }) => sum + rows, 0);
+  const density = densityFor(totalRows, lanes.length, fitHeight, fitPpy);
   const laneHeights = new Map<Category, number>();
-  const lanes = container.querySelectorAll<HTMLElement>(".lane[data-category]");
 
-  for (const lane of lanes) {
-    const cat = lane.dataset.category as Category;
-    const catFigures = byCategory.get(cat);
-    if (!catFigures) continue;
-
-    const placements = computePlacements(catFigures);
-    const maxRow = placements.reduce((m, p) => Math.max(m, p.row), 0);
-    const h = laneHeightForRows(maxRow + 1);
+  for (const { lane, placements, rows } of lanes) {
+    const h = laneHeightForRows(rows, density);
     lane.style.height = `${h}px`;
-    laneHeights.set(cat, h);
+    laneHeights.set(lane.dataset.category as Category, h);
 
     for (const placement of placements) {
       const bar = barMap.get(placement.figure.id);
-      if (bar) applyBarPosition(bar, placement);
+      if (bar) applyBarPosition(bar, placement, density);
     }
   }
 

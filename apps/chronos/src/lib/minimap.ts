@@ -9,16 +9,15 @@ import { ERA_BANDS } from "./eras.ts";
 
 export interface MinimapHandle {
   /** Call when the scrubber year changes. */
-  setScrubberYear: (year: number) => void;
+  setScrubberYear: (year: number | null) => void;
   /** Call when the main viewport scrolls. */
   syncScroll: () => void;
 }
 
 export const initMinimap = (
   scrollContainer: HTMLElement,
+  parent: HTMLElement,
 ): MinimapHandle => {
-  const app = document.getElementById("app")!;
-
   // ─── Build DOM ──────────────────────────────────────────────
 
   const minimap = document.createElement("div");
@@ -50,7 +49,7 @@ export const initMinimap = (
   scrubLine.className = "minimap__scrubber";
   track.appendChild(scrubLine);
 
-  app.appendChild(minimap);
+  parent.appendChild(minimap);
 
   // ─── Helpers ────────────────────────────────────────────────
 
@@ -64,7 +63,9 @@ export const initMinimap = (
     viewportRect.style.width = `${width * 100}%`;
   };
 
-  const setScrubberYear = (year: number) => {
+  const setScrubberYear = (year: number | null) => {
+    scrubLine.hidden = year === null;
+    if (year === null) return;
     const pct = yearToX(year) / getTimelineWidth();
     scrubLine.style.left = `${pct * 100}%`;
   };

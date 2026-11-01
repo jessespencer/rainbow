@@ -48,7 +48,8 @@ body {
 #app .bui-header {
   padding: 10px 24px;
   border-bottom: 1px solid var(--border-faint);
-  z-index: 10;
+  /* Above the canvas chrome (10) and panel (50) so the app switcher menu can open over them. */
+  z-index: 60;
 }
 
 /* Equal outer columns keep search in the true center of the page. */
@@ -1172,7 +1173,7 @@ body {
   }
 
   /* Leaves room for Shuffle alone, so search and the view toggle wrap to the next row. */
-  #app .bui-header__title-group { flex: 1 0 calc(100% - 44px); }
+  #app .bui-header__brand { flex: 1 0 calc(100% - 44px); }
 
   #app .bui-header__title {
     font-size: 18px;
