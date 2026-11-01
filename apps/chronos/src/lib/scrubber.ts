@@ -94,16 +94,8 @@ export const initScrubber = (
 
   // ─── Lanes ───────────────────────────────────────────────────
 
-  const isOnScrollbar = (e: PointerEvent): boolean => {
-    const rect = scrollContainer.getBoundingClientRect();
-    return (
-      e.clientX - rect.left >= scrollContainer.clientWidth ||
-      e.clientY - rect.top >= scrollContainer.clientHeight
-    );
-  };
-
   scrollContainer.addEventListener("pointerdown", (e) => {
-    if (e.button !== 0 || isOnScrollbar(e)) return;
+    if (e.button !== 0) return;
     // A second finger means a pinch, not a tap.
     if (press) {
       press = null;

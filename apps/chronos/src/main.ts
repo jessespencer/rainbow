@@ -31,7 +31,7 @@ import { familyLine, initLineageView } from "./lib/renderLineage.ts";
 const TICK_INTERVAL = 100;
 const LABEL_INTERVAL = 500;
 const MIN_ERA_LABEL_GAP = 34;
-const CREDITS_CLEARANCE_PX = 28;
+const ERA_CHAR_PX = 7;
 const MIN_TICK_LABEL_GAP = 60;
 const YEAR_STEP = 10;
 const MIN_FOCUS_YEARS = 60;
@@ -123,7 +123,7 @@ ERA_BANDS.forEach((era, i) => {
 });
 const zoomControls = el("div", "zoom-controls", overlays);
 
-const credits = el("div", "canvas-credits", canvasArea);
+const credits = el("footer", "canvas-credits", app);
 const aboutButton = el("button", "about-button", credits);
 aboutButton.textContent = "About";
 const dataCredit = el("span", undefined, credits);
@@ -232,6 +232,9 @@ const positionEraMarkers = () => {
     element.style.left = `${x}px`;
     element.hidden = x - lastX < MIN_ERA_LABEL_GAP;
     if (!element.hidden) lastX = x;
+    // Near the end of the axis, the label runs back from its year so it isn't cut off.
+    const labelWidth = (element.textContent?.length ?? 0) * ERA_CHAR_PX;
+    element.classList.toggle("era-label--end", x + labelWidth > getTimelineWidth() + END_PADDING_PX);
   }
   for (const { element, year } of eraLineEls) {
     element.style.left = `${yearToX(year)}px`;
@@ -427,8 +430,7 @@ const reposition = () => {
   if (view === "timeline") {
     positionEraBands();
     const fitPpy = mainViewport.clientWidth / (MAX_YEAR - MIN_YEAR);
-    const fitHeight = mainViewport.clientHeight - CREDITS_CLEARANCE_PX;
-    syncLaneLabels(repositionBars(lanes, barMap, fitHeight, fitPpy));
+    syncLaneLabels(repositionBars(lanes, barMap, mainViewport.clientHeight, fitPpy));
   } else {
     lineageHandle.reposition(mainViewport.clientHeight);
   }

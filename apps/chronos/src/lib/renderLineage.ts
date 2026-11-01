@@ -17,7 +17,7 @@ const NS = "http://www.w3.org/2000/svg";
 const MIN_H = 440;
 /** Clears the controls in the top right corner. */
 const PAD_TOP = 76;
-const PAD_BOTTOM = 36;
+const PAD_BOTTOM = 16;
 const FADE_PX = 60;
 const MIN_CURVE_PX = 30;
 const TIER_OFFSET_PX = 12;
@@ -27,7 +27,6 @@ const BRANCH_CHAR_PX = 6.8;
 /** Detail arrives with zoom, so the whole story stays a clean map. */
 const MIN_DATES_PPY = 0.6;
 const MIN_BLURB_PPY = 1.2;
-const CREDITS_CLEARANCE_PX = 28;
 const ENDING_CHAR_PX = 6.2;
 const ENDING_GAP_PX = 10;
 const ENDING_H = 14;
@@ -400,7 +399,7 @@ export const initLineageView = (
     const canvasHeight = Math.max(lastHeight, MIN_H);
     const isClear = (rect: Rect, ignore?: Claim) =>
       rect.top >= 0 &&
-      rect.bottom <= canvasHeight - CREDITS_CLEARANCE_PX &&
+      rect.bottom <= canvasHeight &&
       [...endings.values()].every((e) => !overlaps(e.rect, rect)) &&
       claims.every((c) => c === ignore || !overlaps(c.rect, rect));
     const ordered = [...stations].sort(

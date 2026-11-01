@@ -34,7 +34,6 @@
   --label-w:   140px;
   --lane-h:    56px;
   --minimap-h: 36px;
-  --credits-clearance: 28px;
 }
 
 /* ─── Reset ───────────────────────────────────────────────────── */
@@ -243,6 +242,12 @@ body {
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-x pan-y;
+  /* The minimap is the scrollbar here. */
+  scrollbar-width: none;
+}
+
+.main-viewport::-webkit-scrollbar {
+  display: none;
 }
 
 .main-inner {
@@ -370,6 +375,11 @@ body {
 
 .figure-bar--unnamed .figure-bar__name {
   display: none;
+}
+
+.era-label--end {
+  transform: translateX(-100%) rotate(-18deg);
+  transform-origin: bottom right;
 }
 
 .era-label[hidden],
@@ -570,38 +580,12 @@ body {
   box-shadow: 0 0 4px 1px var(--accent-glow);
 }
 
-/* ─── Scrollbar Styling ───────────────────────────────────────── */
-
-.main-viewport::-webkit-scrollbar {
-  height: 6px;
-  width: 4px;
-}
-
-.main-viewport::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.main-viewport::-webkit-scrollbar-thumb {
-  background: var(--border-default);
-  border-radius: 2px;
-}
-
-.main-viewport::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
-}
-
 /* ─── View Containers ─────────────────────────────────────────── */
 
 .timeline-view,
 .lineage-view {
   position: relative;
   width: 100%;
-}
-
-/* Lets the last lane scroll clear of the credits. Lane names scroll with it. */
-.timeline-view,
-.lane-labels > div {
-  padding-bottom: var(--credits-clearance);
 }
 
 /* ─── Lineage ─────────────────────────────────────────────────── */
@@ -980,16 +964,111 @@ body {
 /* ─── Canvas Overlays ─────────────────────────────────────────── */
 /* Match Rainbow's. Overlay blocks let the timeline take input; only their controls catch the pointer. */
 
-.canvas-status,
-.canvas-credits {
+.canvas-status {
   position: absolute;
   z-index: 35;
   pointer-events: none;
 }
 
 .canvas-status button,
-.canvas-status label,
-.canvas-credits button,
+.canvas-status label {
+  pointer-events: auto;
+}
+
+.canvas-status {
+  top: calc(var(--axis-h) + 14px);
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.status-row,
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-row {
+  gap: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-shadow: 0 0 4px var(--bg-base), 0 0 8px var(--bg-base);
+}
+
+.era-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.era-select {
+  width: 76px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-pill);
+  background: var(--fill-subtle);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  backdrop-filter: blur(8px);
+}
+
+.canvas-btn,
+.preset-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-pill);
+  background: var(--fill-subtle);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  white-space: nowrap;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.canvas-btn {
+  gap: 5px;
+  padding: 0 12px;
+}
+
+.canvas-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2;
+}
+
+.preset-btn {
+  padding: 0 14px;
+}
+
+.canvas-btn:hover,
+.preset-btn:hover {
+  background: var(--fill-hover);
+  color: var(--text-secondary);
+}
+
+/* A real row, not an overlay, so it sits at the very bottom like Rainbow's. */
+.canvas-credits {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 12px;
+  padding: 6px 24px calc(6px + env(safe-area-inset-bottom));
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
 .canvas-credits a {
   pointer-events: auto;
 }
@@ -1478,7 +1557,7 @@ a:focus-visible {
   }
 
   .canvas-credits {
-    left: 16px;
+    padding-left: 16px;
     font-size: 10px;
   }
 
