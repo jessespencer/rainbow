@@ -42,7 +42,6 @@ function passageText(texts: VerseTexts, start: number, end: number): string {
 }
 
 function copyButton(start: number, end: number): string {
-  if (!navigator.clipboard) return '';
   return `<button class="cp-copy" data-copy="${start}-${end}" aria-label="Copy ${formatRange(start, end)} with a link" title="Copy with a link">${COPY_ICON}</button>`;
 }
 

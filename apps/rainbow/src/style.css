@@ -722,6 +722,11 @@ body {
   opacity: 1;
 }
 
+.cp-copy.copy-failed {
+  color: var(--crimson);
+  opacity: 1;
+}
+
 @media (hover: none) {
   .cp-copy { opacity: 0.6; }
 }

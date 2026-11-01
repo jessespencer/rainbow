@@ -424,9 +424,26 @@ async function copyPassage(button: HTMLElement, start: number, end: number) {
   const lines = [];
   for (let verse = start; verse <= end; verse++) lines.push(texts?.[verse] ?? '');
   const url = `${window.location.origin}${window.location.pathname}?ref=${passageToParam(passage)}`;
-  await navigator.clipboard.writeText(`${lines.join(' ')}\n— ${passage.label} (BSB)\n${url}`);
-  button.classList.add('copied');
-  setTimeout(() => button.classList.remove('copied'), COPIED_FEEDBACK_MS);
+  const copied = await writeClipboard(`${lines.join(' ')}\n— ${passage.label} (BSB)\n${url}`);
+  const state = copied ? 'copied' : 'copy-failed';
+  button.classList.add(state);
+  setTimeout(() => button.classList.remove(state), COPIED_FEEDBACK_MS);
+}
+
+async function writeClipboard(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    // Some browsers and embedded views refuse the clipboard API, but allow the older command.
+    const field = document.createElement('textarea');
+    field.value = text;
+    document.body.append(field);
+    field.select();
+    const copied = document.execCommand('copy');
+    field.remove();
+    return copied;
+  }
 }
 
 function setHoveredLink(id: number | null) {
