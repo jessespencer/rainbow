@@ -19,7 +19,8 @@
         <button id="btn-shuffle" class="canvas-btn">Shuffle</button>
         <div id="view-toggle">
           <button id="view-arcs" class="active">Arcs</button>
-          <button id="view-heatmap">Heatmap</button>
+          <button id="view-heatmap" aria-label="Heatmap"><span class="label-long">Heatmap</span><span class="label-short">Map</span></button>
+          <button id="view-galaxy">Galaxy</button>
         </div>
       </div>
     </div>
@@ -27,6 +28,8 @@
       <div id="canvas-container">
         <canvas id="arc-canvas"></canvas>
         <canvas id="main-canvas"></canvas>
+        <div id="galaxy-container"></div>
+        <div id="galaxy-status" class="hidden">Loading galaxy...</div>
         <div id="category-filters"></div>
         <div id="canvas-status">
           <div id="status-row">
@@ -49,6 +52,28 @@
             <button id="zoom-fit" class="canvas-btn">Fit</button>
             <button id="zoom-ot" class="preset-btn"><span class="label-long">Old Testament</span><span class="label-short">OT</span></button>
             <button id="zoom-nt" class="preset-btn"><span class="label-long">New Testament</span><span class="label-short">NT</span></button>
+            <details id="galaxy-layers">
+              <summary class="canvas-btn">Layers</summary>
+              <div id="galaxy-layers-panel">
+                <label><input type="checkbox" id="galaxy-links" checked /> Strongest links</label>
+                <label><input type="checkbox" id="galaxy-bridges" /> OT&ndash;NT links only</label>
+                <label><input type="checkbox" id="galaxy-labels" checked /> Book labels</label>
+                <label>Color
+                  <select id="galaxy-color">
+                    <option value="genre" selected>Section</option>
+                    <option value="testament">Testament</option>
+                    <option value="heat">Link count</option>
+                    <option value="book">Book</option>
+                  </select>
+                </label>
+                <label>Size
+                  <select id="galaxy-size">
+                    <option value="uniform" selected>Uniform</option>
+                    <option value="connections">Link count</option>
+                  </select>
+                </label>
+              </div>
+            </details>
           </div>
         </div>
         <div id="canvas-credits">
@@ -78,6 +103,7 @@
       <ul>
         <li>Tap an arc to read both passages together, then page through every link between those two books.</li>
         <li>Tap the book strip to read a passage with everything it connects to. Zoom in to go from books to chapters to single verses.</li>
+        <li>Open Galaxy to see every verse as a star. Tap one to light up what it connects to; drag to orbit, and pinch or scroll to zoom. Only the strongest links are drawn until you pick a verse.</li>
         <li>Search for a passage like John 3:16, Ps 23, or 1 Cor 13:4-7.</li>
         <li>Press Shuffle for a random connection. On a keyboard, ⌘K or Ctrl K jumps to search, the arrow keys step through verses, chapters, or links, and Esc clears everything.</li>
         <li>Every view has its own address, so you can share what you're looking at.</li>

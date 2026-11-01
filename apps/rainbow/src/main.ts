@@ -5,6 +5,7 @@ import { GENRES } from './data/genres';
 import { BOOKS } from './data/books';
 import { NT_LEFT, OT_RIGHT, WORLD_WIDTH, pixelsPerVerse, verseAtX, xOfVerse } from './lib/layout';
 import { createArcRenderer, MAX_DPR, type ArcRenderer } from './lib/arcGl';
+import type { ColorMode, GalaxyFocus, GalaxyHandle, SizeMode } from './lib/galaxy';
 import {
   createLinkStore, DEFAULT_MIN_VOTES, filterLinks, findLink, linkFrom, linksBetweenBooks,
   linksInPassage, linkToEnd, linkToStart, linkVotes, type LinkFilter, type LinkStore,
@@ -23,6 +24,8 @@ import {
 type Selection =
   | { kind: 'passage'; passage: Passage; expanded: Set<string>; highlight: number | null }
   | { kind: 'link'; id: number };
+
+type ViewMode = 'arcs' | 'heatmap' | 'galaxy';
 
 const PHONE_QUERY = '(max-width: 760px)';
 const INTRO_MS = 2800;
@@ -43,7 +46,9 @@ let selection: Selection | null = null;
 let preview: Passage | null = null;
 let hoveredLink: number | null = null;
 let shuffleLink: number | null = null;
-let viewMode: 'arcs' | 'heatmap' = 'arcs';
+let viewMode: ViewMode = 'arcs';
+let galaxy: GalaxyHandle | null = null;
+let galaxyLoad: Promise<GalaxyHandle> | null = null;
 let fitted = true;
 let fitRange: [number, number] = [0, WORLD_WIDTH];
 let introStart: number | null = null;
@@ -69,6 +74,7 @@ const selectedPassage = () => selection?.kind === 'passage' ? selection.passage 
 const selectedLink = () => selection?.kind === 'link' ? selection.id : null;
 const companion = () => document.getElementById('companion')!;
 const companionOpen = () => !companion().classList.contains('hidden');
+const sheetInset = () => isPhone() && companionOpen() ? companion().getBoundingClientRect().height * 0.52 : 0;
 
 function resizeCanvas() {
   const rect = canvas.parentElement!.getBoundingClientRect();
@@ -94,7 +100,7 @@ function render() {
 
   if (viewMode === 'heatmap') {
     renderHeatmap(ctx, heatmapData, width, height);
-  } else {
+  } else if (viewMode === 'arcs') {
     const dimmed = preview !== null || selection !== null || filter.genre !== null;
     arcs.draw({ ...transform(), width, height, dpr, reveal: introProgress(), backgroundAlpha: dimmed ? BACKGROUND_DIM : 1 });
     renderDivider(ctx, transform(), height);
@@ -105,7 +111,7 @@ function render() {
   }
 
   if (shuffleLink !== null) renderShuffleArc();
-  if (introStart !== null) scheduleRender();
+  if (introStart !== null && viewMode === 'arcs') scheduleRender();
 }
 
 function scheduleRender() {
@@ -129,8 +135,7 @@ function renderShuffleArc() {
 function fitView(left: number, right: number, animated: boolean) {
   fitRange = [left, right];
   if (width <= FIT_PADDING * 2 || height <= FIT_PADDING * 2 + LABEL_SPACE) return;
-  const sheetInset = isPhone() && companionOpen() ? companion().getBoundingClientRect().height * 0.52 : 0;
-  const usable = Math.max(height - sheetInset, 160);
+  const usable = Math.max(height - sheetInset(), 160);
   const span = right - left;
   const k = (isPhone() ? 1 : FIT_SCALE) * Math.min(
     (width - FIT_PADDING * 2) / span,
@@ -147,7 +152,86 @@ function refreshFocus() {
   const focused = preview ?? selectedPassage();
   if (focused) arcs.setFocus(store, linksInPassage(store, focused.start, focused.end, filter));
   else arcs.setFocus(store, filter.genre !== null ? visible : null);
+  if (viewMode === 'galaxy') {
+    galaxy?.setFocus(galaxyFocus());
+    updateStats();
+  }
   scheduleRender();
+}
+
+function galaxyFocus(): GalaxyFocus | null {
+  const passage = preview ?? selectedPassage();
+  if (passage) {
+    return { ranges: [[passage.start, passage.end]], links: linksInPassage(store, passage.start, passage.end, filter) };
+  }
+  const id = selectedLink();
+  if (id === null) return null;
+  return {
+    ranges: [[linkFrom(store, id), linkFrom(store, id)], [linkToStart(store, id), linkToEnd(store, id)]],
+    links: Int32Array.of(id),
+  };
+}
+
+function updateStats() {
+  const stats = document.getElementById('footer-stats')!;
+  if (viewMode === 'galaxy' && galaxy) {
+    const { drawn, total } = galaxy.drawCount();
+    stats.textContent = `${drawn.toLocaleString()} of ${total.toLocaleString()} links drawn`;
+  } else {
+    stats.textContent = `${visible.length.toLocaleString()} of ${store.count.toLocaleString()} links shown`;
+  }
+}
+
+function galaxyOptions() {
+  return {
+    links: (document.getElementById('galaxy-links') as HTMLInputElement).checked,
+    bridgesOnly: (document.getElementById('galaxy-bridges') as HTMLInputElement).checked,
+    labels: (document.getElementById('galaxy-labels') as HTMLInputElement).checked,
+    color: (document.getElementById('galaxy-color') as HTMLSelectElement).value as ColorMode,
+    size: (document.getElementById('galaxy-size') as HTMLSelectElement).value as SizeMode,
+  };
+}
+
+// Three.js loads with the first visit to this view, so Arcs never pays for it.
+function loadGalaxy(): Promise<GalaxyHandle> {
+  galaxyLoad ??= import('./lib/galaxy').then(({ createGalaxy }) =>
+    createGalaxy(document.getElementById('galaxy-container')!, store, {
+      onHover(verse, connections, x, y) {
+        if (verse === null) hideTooltip();
+        else showPassageTooltip(formatVerse(verse), connections, x, y);
+      },
+      onSelect(verse) {
+        if (verse === null) applySelection(null);
+        else selectPassage(versePassage(verse));
+      },
+    }));
+  return galaxyLoad;
+}
+
+async function openGalaxy() {
+  const status = document.getElementById('galaxy-status')!;
+  status.classList.remove('hidden');
+  try {
+    galaxy = await loadGalaxy();
+  } catch (err) {
+    console.error(err);
+    galaxyLoad = null;
+    if (viewMode === 'galaxy') {
+      setViewMode('arcs');
+      writeUrl('replace');
+    }
+    return;
+  } finally {
+    status.classList.add('hidden');
+  }
+  if (viewMode !== 'galaxy') return;
+  galaxy.setOptions(galaxyOptions());
+  galaxy.setLinks(visible, filter.genre);
+  galaxy.setFocus(galaxyFocus());
+  galaxy.setInset(sheetInset());
+  galaxy.setActive(true);
+  galaxy.flyToFocus();
+  updateStats();
 }
 
 function companionTarget(): CompanionTarget {
@@ -187,7 +271,7 @@ function writeUrl(mode: 'push' | 'replace') {
   }
   if (filter.minVotes !== DEFAULT_MIN_VOTES) params.set('votes', String(filter.minVotes));
   if (filter.genre !== null) params.set('genre', GENRES[filter.genre].id);
-  if (viewMode === 'heatmap') params.set('view', 'heatmap');
+  if (viewMode !== 'arcs') params.set('view', viewMode);
   const query = params.toString().replace(/%3A/g, ':');
   const url = `${window.location.pathname}${query ? `?${query}` : ''}`;
   if (mode === 'push') window.history.pushState(null, '', url);
@@ -211,6 +295,10 @@ function applySelection(next: Selection | null, url: 'push' | 'none' = 'push') {
   if (url === 'push') writeUrl('push');
   // The docked panel changes the canvas through the resize observer; the phone sheet does not.
   if (isPhone() && fitted && wasOpen !== (next !== null)) fitView(fitRange[0], fitRange[1], true);
+  if (viewMode === 'galaxy') {
+    galaxy?.setInset(sheetInset());
+    galaxy?.flyToFocus();
+  }
 }
 
 function selectPassage(passage: Passage, highlight: number | null = null) {
@@ -226,8 +314,8 @@ function applyFilter() {
   // A section filter fades the other links back instead of hiding them.
   arcs.setArcs(store, filter.genre === null ? visible : filterLinks(store, { ...filter, genre: null }));
   heatmapData = buildHeatmapData(store, visible);
-  document.getElementById('footer-stats')!.textContent =
-    `${visible.length.toLocaleString()} of ${store.count.toLocaleString()} links shown`;
+  if (viewMode === 'galaxy') galaxy?.setLinks(visible, filter.genre);
+  updateStats();
   renderCompanion();
   updateClearButton();
   refreshFocus();
@@ -246,11 +334,17 @@ function syncFilterControls() {
   (document.getElementById('votes-filter') as HTMLSelectElement).value = String(filter.minVotes);
 }
 
-function setViewMode(mode: 'arcs' | 'heatmap') {
+function setViewMode(mode: ViewMode) {
   viewMode = mode;
   document.getElementById('view-arcs')!.classList.toggle('active', mode === 'arcs');
   document.getElementById('view-heatmap')!.classList.toggle('active', mode === 'heatmap');
-  document.getElementById('arc-canvas')!.classList.toggle('hidden', mode === 'heatmap');
+  document.getElementById('view-galaxy')!.classList.toggle('active', mode === 'galaxy');
+  document.getElementById('arc-canvas')!.classList.toggle('hidden', mode !== 'arcs');
+  document.getElementById('app')!.classList.toggle('galaxy-mode', mode === 'galaxy');
+  hideTooltip();
+  galaxy?.setActive(mode === 'galaxy');
+  if (mode === 'galaxy') void openGalaxy();
+  updateStats();
   scheduleRender();
 }
 
@@ -292,6 +386,10 @@ function setupZoomPresets() {
   const ntBtn = document.getElementById('zoom-nt')!;
 
   document.getElementById('zoom-fit')!.addEventListener('click', () => {
+    if (viewMode === 'galaxy') {
+      galaxy?.fit();
+      return;
+    }
     otBtn.classList.remove('active');
     ntBtn.classList.remove('active');
     fitView(0, WORLD_WIDTH, true);
@@ -308,12 +406,20 @@ function setupZoomPresets() {
 }
 
 function setupViewToggle() {
-  const choose = (mode: 'arcs' | 'heatmap') => () => {
+  const choose = (mode: ViewMode) => () => {
     setViewMode(mode);
     writeUrl('replace');
   };
   document.getElementById('view-arcs')!.addEventListener('click', choose('arcs'));
   document.getElementById('view-heatmap')!.addEventListener('click', choose('heatmap'));
+  document.getElementById('view-galaxy')!.addEventListener('click', choose('galaxy'));
+}
+
+function setupGalaxyLayers() {
+  document.getElementById('galaxy-layers')!.addEventListener('change', () => {
+    galaxy?.setOptions(galaxyOptions());
+    updateStats();
+  });
 }
 
 function setupSearch() {
@@ -449,6 +555,7 @@ async function writeClipboard(text: string): Promise<boolean> {
 function setHoveredLink(id: number | null) {
   if (id === hoveredLink) return;
   hoveredLink = id;
+  galaxy?.setHighlight(id);
   scheduleRender();
 }
 
@@ -686,7 +793,8 @@ function readUrl(): Selection | null {
   filter.minVotes = params.has('votes') && Number.isFinite(votes) ? votes : DEFAULT_MIN_VOTES;
   const genre = GENRES.findIndex(g => g.id === params.get('genre'));
   filter.genre = genre >= 0 ? genre : null;
-  setViewMode(params.get('view') === 'heatmap' ? 'heatmap' : 'arcs');
+  const view = params.get('view');
+  setViewMode(view === 'heatmap' || view === 'galaxy' ? view : 'arcs');
 
   const ref = params.get('ref');
   const passage = ref ? passageFromParam(ref) : null;
@@ -758,6 +866,7 @@ async function main() {
   setupFilters();
   setupZoomPresets();
   setupViewToggle();
+  setupGalaxyLayers();
   setupSearch();
   setupInteraction();
   setupShuffle();
@@ -791,6 +900,7 @@ async function main() {
   new ResizeObserver(() => {
     resizeCanvas();
     if (fitted) fitView(fitRange[0], fitRange[1], false);
+    if (viewMode === 'galaxy') galaxy?.resize();
     render();
   }).observe(canvas.parentElement!);
 }

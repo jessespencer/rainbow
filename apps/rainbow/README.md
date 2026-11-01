@@ -30,6 +30,10 @@ Tap a verse, chapter, or book on the axis to bring its arcs forward while the re
 
 The heatmap collapses the same links into a 66×66 grid, where each cell's brightness shows how many links join two books. Tap a cell to open the strongest one.
 
+### See it as a galaxy
+
+Galaxy turns every verse into a star on a two-armed spiral, one arm per Testament, in reading order from the core out. It opens with the strongest 6,000 links, because drawing all of them would only be a white blur. Tap a star to open it in the panel and light up everything it connects to. Drag to orbit, scroll or pinch to zoom, and use Layers to change the colors, star sizes, and labels. Filters, search, and sharing work as they do everywhere else.
+
 ### Find, filter, and share
 
 - **Search** for `John 3:16`, `ps 23`, `1 cor 13:4-7`, or a book name.
@@ -44,13 +48,13 @@ The heatmap collapses the same links into a 66×66 grid, where each cell's brigh
 | `to` | `?ref=John.3.16&to=Rom.5.8` | The other end of a connection |
 | `votes` | `?votes=25` | Minimum reader votes |
 | `genre` | `?genre=gospels` | Section filter |
-| `view` | `?view=heatmap` | Open the heatmap |
+| `view` | `?view=heatmap`, `?view=galaxy` | Open the heatmap or the galaxy |
 
 On a keyboard, `⌘K` or `Ctrl K` jumps to search, `←` and `→` step to the previous or next verse, chapter, or connection, and `Esc` clears everything.
 
 ### Use it on your phone
 
-The panel becomes a bottom sheet you can drag up to read and pull down to close. Slide a finger along the book strip to preview passages. Everywhere else, drag to pan and pinch to zoom.
+The panel becomes a bottom sheet you can drag up to read and pull down to close. Slide a finger along the book strip to preview passages. Everywhere else, drag to pan and pinch to zoom. In Galaxy, one finger orbits, two zoom, and the selected stars stay in view above the sheet.
 
 ## How to read it
 
@@ -135,6 +139,7 @@ apps/rainbow/
         ├── companion.ts         # Passage and connection panel
         ├── sheet.ts             # Phone bottom sheet
         ├── heatmap.ts           # Matrix view
+        ├── galaxy.ts            # 3D star view, loaded on first use
         ├── layout.ts            # World coordinates
         ├── tooltip.ts           # Hover tooltip
         └── zoom.ts              # D3-based zoom and pan
@@ -146,6 +151,7 @@ Vanilla TypeScript and Vite, with no UI framework.
 
 - **Arcs are WebGL 2.** Each link is one instanced line strip, and the shader computes its semicircle. A Canvas 2D layer on top draws the axis, highlights, and heatmap, and takes the input.
 - **Links are 8 bytes each.** `links.bin` holds Int16 rows of `[from, toStart, toEnd, votes]`, sorted by votes, so a lower id always means a stronger link. A per-verse index built on load makes finding a passage's links instant.
+- **Galaxy loads on demand.** Three.js sits in its own chunk that's only fetched when you open the view, so the arcs don't pay for it. It stops rendering whenever it's out of sight, and respects your reduced-motion setting.
 - **The world is fixed.** Arcs live in a coordinate space that doesn't depend on the screen, so resizing or opening the panel keeps your place.
 
 The site deploys to GitHub Pages from `main` through [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml).
