@@ -163,4 +163,4 @@ Arc diagram concept by [Chris Harrison](https://www.chrisharrison.net/index.php/
 
 ## License
 
-The code is released under the MIT License. The data keeps its own licenses, listed above.
+The code is released under the [MIT License](../../LICENSE). The data keeps its own licenses, listed above.
