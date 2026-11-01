@@ -19,9 +19,11 @@ Scope: Adam through Jesus's resurrection (~AD 33). No apostolic age yet.
 ## Architecture
 
 - **Whole story first** — loads fitted to the viewport. `renderBars` shrinks rows to fit every lane on screen and grows them back, with names, as you zoom
+- **Camera zoom** — every input in \`zoom.ts\` sets a target and one frame loop moves toward it, so route new zoom moves through it rather than setting the scale directly. Rows are assigned once, in years, so bars never change row while zooming. Only the visible view redraws on each frame
+- **Lineage labels are HTML** over the SVG lines, so they keep their size at any zoom. `placeLabels` gives each a turn by priority, then adds dates and descriptions where its neighbor leaves room. Jesus always comes first and never dims, here and on the Timeline
 - **Selection is the state** — nothing, a figure, or a year. `select()` in `main.ts` drives the bars, scrubber, minimap, panel and URL together
 - **URL is state** — `?figure=king-david`, `?year=-586`, `?view=lineage`
-- **Input** — a mouse scrubs by dragging the lanes. A finger pans them, so touch scrubs on the axis strip and picks with a tap. Pinch is handled in `zoom.ts`
+- **Input** — a mouse scrubs by dragging the lanes. A finger pans them, so touch scrubs on the axis strip and picks with a tap. Pinch also pans, and lives in `zoom.ts`
 - **Scripture comes from Rainbow** — `scripture.ts` parses each `scriptureRef` into Rainbow's verse numbering, reads Rainbow's `data/bsb.json`, and links to `?ref=` there. Every `scriptureRef` must keep parsing when you add a figure
 - **Phone** — below 760px the panel is a bottom sheet and the lane labels are gone; color carries the category
 
@@ -47,8 +49,9 @@ Years are stored as **signed integers**:
 | `src/data/timeline.ts` | The figures, with birth, death and reign dates |
 | `src/lib/scale.ts` | Dynamic `pixelsPerYear`, `yearToX`/`xToYear` coordinate mapping |
 | `src/lib/renderBars.ts` | Sub-row layout, row density, bar rendering and repositioning |
+| `src/lib/renderLineage.ts` | Subway-map lines, stations and label placement |
 | `src/lib/scrubber.ts` | Year line and all pointer input on the lanes and axis |
-| `src/lib/zoom.ts` | Fit, wheel, pinch and button zoom |
+| `src/lib/zoom.ts` | Camera: fit, wheel, pinch, buttons and jumps |
 | `src/lib/companion.ts` | Figure and year panel |
 | `src/lib/search.ts` | Search for people, years and eras |
 | `src/lib/scripture.ts` | Reference parsing and BSB loading |

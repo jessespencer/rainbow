@@ -7,8 +7,9 @@ import {
   getTimelineWidth,
   MIN_YEAR,
   MAX_YEAR,
+  END_PADDING_PX,
 } from "./lib/scale.ts";
-import { renderBars, repositionBars } from "./lib/renderBars.ts";
+import { CHRIST_ID, renderBars, repositionBars } from "./lib/renderBars.ts";
 import { initScrubber } from "./lib/scrubber.ts";
 import { initTooltip, showTooltip, hideTooltip } from "./lib/tooltip.ts";
 import { initMinimap } from "./lib/minimap.ts";
@@ -22,16 +23,15 @@ import { ERA_BANDS } from "./lib/eras.ts";
 import { figures } from "./data/timeline.ts";
 import type { Category, TimelineFigure } from "./data/timeline.ts";
 import { onViewChange, getView, setView } from "./lib/viewState.ts";
-import type { ViewMode } from "./lib/viewState.ts";
 import { initHeader } from "./lib/header.ts";
-import { initLineageView } from "./lib/renderLineage.ts";
-import { initNarrativeView } from "./lib/renderNarrative.ts";
+import { familyLine, initLineageView } from "./lib/renderLineage.ts";
 
 // ─── Constants ───────────────────────────────────────────────────
 
 const TICK_INTERVAL = 100;
 const LABEL_INTERVAL = 500;
 const MIN_ERA_LABEL_GAP = 34;
+const CREDITS_CLEARANCE_PX = 28;
 const MIN_TICK_LABEL_GAP = 60;
 const YEAR_STEP = 10;
 const MIN_FOCUS_YEARS = 60;
@@ -84,7 +84,7 @@ const canvasArea = el("div", "canvas-area", stage);
 
 // -- Axis row --
 const axisRow = el("div", "axis-row", canvasArea);
-const axisGutter = el("div", "label-gutter", axisRow);
+el("div", "label-gutter", axisRow);
 
 const axisViewport = el("div", "axis-viewport", axisRow);
 const axisInner = el("div", "axis-inner", axisViewport);
@@ -95,6 +95,9 @@ const contentRow = el("div", "content-row", canvasArea);
 const laneLabels = el("div", "lane-labels", contentRow);
 const laneLabelsInner = el("div", undefined, laneLabels);
 
+const lineageGutter = el("div", "lineage-gutter", contentRow);
+lineageGutter.style.display = "none";
+
 const mainViewport = el("div", "main-viewport", contentRow);
 const mainInner = el("div", "main-inner", mainViewport);
 
@@ -102,14 +105,16 @@ const mainInner = el("div", "main-inner", mainViewport);
 const timelineView = el("div", "timeline-view", mainInner);
 const lineageView = el("div", "lineage-view", mainInner);
 lineageView.style.display = "none";
-const narrativeView = el("div", "narrative-view", mainInner);
-narrativeView.style.display = "none";
 
 // -- Canvas overlays --
 const overlays = el("div", "canvas-status", canvasArea);
-const eraSelect = el("select", "era-select", overlays);
+const statusRow = el("div", "status-row", overlays);
+el("span", undefined, statusRow).textContent = `${figures.length} lives`;
+const eraControl = el("label", "era-control", statusRow);
+el("span", undefined, eraControl).textContent = "Jump to";
+const eraSelect = el("select", "era-select", eraControl);
 eraSelect.setAttribute("aria-label", "Jump to an era");
-el("option", undefined, eraSelect).textContent = "Jump to era";
+el("option", undefined, eraSelect).textContent = "Era";
 eraSelect.options[0]!.value = "";
 ERA_BANDS.forEach((era, i) => {
   const option = el("option", undefined, eraSelect);
@@ -117,13 +122,23 @@ ERA_BANDS.forEach((era, i) => {
   option.textContent = era.name;
 });
 const zoomControls = el("div", "zoom-controls", overlays);
-const aboutButton = el("button", "canvas-btn", overlays);
+
+const credits = el("div", "canvas-credits", canvasArea);
+const aboutButton = el("button", "about-button", credits);
 aboutButton.textContent = "About";
+const dataCredit = el("span", undefined, credits);
+dataCredit.append("Data: ");
+const bsbLink = el("a", undefined, dataCredit);
+bsbLink.href = "https://berean.bible/";
+bsbLink.target = "_blank";
+bsbLink.rel = "noopener";
+bsbLink.textContent = "BSB";
+dataCredit.append(", Ussher, Thiele");
 
 // ─── Set initial widths ──────────────────────────────────────────
 
 const applyWidths = () => {
-  const w = `${getTimelineWidth()}px`;
+  const w = `${getTimelineWidth() + END_PADDING_PX}px`;
   mainInner.style.width = w;
   axisInner.style.width = w;
 };
@@ -263,7 +278,7 @@ for (const cat of CATEGORY_ORDER) {
 
 // ─── Render Figure Bars ──────────────────────────────────────────
 
-const { laneHeights, barMap } = renderBars(timelineView, figures);
+const { lanes, laneHeights, barMap } = renderBars(timelineView, figures);
 
 const syncLaneLabels = (heights: Map<Category, number>) => {
   CATEGORY_ORDER.forEach((cat, i) => {
@@ -278,21 +293,17 @@ syncLaneLabels(laneHeights);
 
 // ─── Lineage View ────────────────────────────────────────────────
 
-const lineageHandle = initLineageView(lineageView);
-
-// ─── Narrative View ──────────────────────────────────────────────
-
-const narrativeHandle = initNarrativeView(narrativeView);
+const lineageHandle = initLineageView(lineageView, lineageGutter);
 
 // ─── View Switching ──────────────────────────────────────────────
 
 onViewChange((view) => {
   timelineView.style.display = view === "timeline" ? "" : "none";
   lineageView.style.display = view === "lineage" ? "" : "none";
-  narrativeView.style.display = view === "narrative" ? "" : "none";
   laneLabels.style.display = view === "timeline" ? "" : "none";
-  axisGutter.style.display = view === "timeline" ? "" : "none";
+  lineageGutter.style.display = view === "lineage" ? "" : "none";
   hideTooltip();
+  reposition();
   syncAddress();
 });
 
@@ -301,54 +312,6 @@ onViewChange((view) => {
 const minimap = initMinimap(mainViewport, canvasArea);
 
 // ─── Scrubber ────────────────────────────────────────────────────
-
-// ─── Narrative value-word helper ─────────────────────────────────
-
-const narrativeValueWord = (v: number): string => {
-  if (v >= 80) return "overwhelming";
-  if (v >= 60) return "dominant";
-  if (v >= 40) return "strong";
-  if (v >= 20) return "present";
-  return "faint";
-};
-
-const renderNarrativeExtra = (body: HTMLElement, year: number) => {
-  if (getView() !== "narrative") return;
-
-  const values = narrativeHandle.getThreadValuesAt(year)
-    .filter((t) => t.value > 5)
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 3);
-
-  if (values.length === 0) return;
-
-  const section = document.createElement("div");
-  section.className = "cp-section narrative-story";
-
-  const title = document.createElement("h3");
-  title.className = "cp-section-title";
-  title.textContent = "Story at this moment";
-  section.appendChild(title);
-
-  for (const { id, name, value } of values) {
-    const entry = document.createElement("div");
-    entry.className = "narrative-story__entry";
-
-    const swatch = document.createElement("span");
-    swatch.className = "narrative-story__swatch";
-    swatch.style.background = `var(--thread-${id})`;
-    entry.appendChild(swatch);
-
-    const label = document.createElement("span");
-    label.className = "narrative-story__label";
-    label.textContent = `${name} — ${narrativeValueWord(value)}`;
-    entry.appendChild(label);
-
-    section.appendChild(entry);
-  }
-
-  body.appendChild(section);
-};
 
 // ─── Selection ───────────────────────────────────────────────────
 
@@ -373,7 +336,7 @@ const paintBars = (lit: TimelineFigure[] | null, selected: TimelineFigure | null
   const litIds = new Set(lit?.map((f) => f.id));
   for (const [id, bar] of barMap) {
     bar.classList.toggle("figure-bar--active", litIds.has(id));
-    bar.classList.toggle("figure-bar--dimmed", lit !== null && !litIds.has(id));
+    bar.classList.toggle("figure-bar--dimmed", lit !== null && !litIds.has(id) && id !== CHRIST_ID);
     bar.classList.toggle("figure-bar--selected", id === selected?.id);
   }
 };
@@ -394,17 +357,20 @@ const select = (next: Selection) => {
     scrubber.setYear(null);
     minimap.setScrubberYear(null);
     paintBars([next.figure, ...alongside], next.figure);
+    lineageHandle.setFocus(new Set(familyLine(next.figure).map((f) => f.id)), next.figure.id);
     companion.showFigure(next.figure, alongside);
   } else if (next?.kind === "year") {
     const alive = aliveAt(next.year);
     scrubber.setYear(next.year);
     minimap.setScrubberYear(next.year);
     paintBars(alive, null);
+    lineageHandle.setFocus(new Set(alive.map((f) => f.id)), null);
     companion.showYear(next.year, alive);
   } else {
     scrubber.setYear(null);
     minimap.setScrubberYear(null);
     paintBars(null, null);
+    lineageHandle.setFocus(null, null);
     companion.hide();
   }
   syncAddress();
@@ -443,7 +409,6 @@ const companion = initCompanion(stage, {
   },
   onStep: step,
   onClose: () => select(null),
-  renderYearExtra: renderNarrativeExtra,
 });
 
 // ─── Tooltip ─────────────────────────────────────────────────────
@@ -452,47 +417,61 @@ initTooltip(mainViewport, figures);
 
 // ─── Zoom ────────────────────────────────────────────────────────
 
-const repositionAll = () => {
+const reposition = () => {
   applyWidths();
-  positionEraBands();
   positionTicks();
   positionEraMarkers();
 
-  const newHeights = repositionBars(
-    timelineView,
-    figures,
-    barMap,
-    mainViewport.clientHeight,
-    mainViewport.clientWidth / (MAX_YEAR - MIN_YEAR),
-  );
-  syncLaneLabels(newHeights);
-
-  lineageHandle.reposition();
-  narrativeHandle.reposition();
+  // Only the visible view is redrawn while zooming; switching views catches up.
+  const view = getView();
+  if (view === "timeline") {
+    positionEraBands();
+    const fitPpy = mainViewport.clientWidth / (MAX_YEAR - MIN_YEAR);
+    const fitHeight = mainViewport.clientHeight - CREDITS_CLEARANCE_PX;
+    syncLaneLabels(repositionBars(lanes, barMap, fitHeight, fitPpy));
+  } else {
+    lineageHandle.reposition(mainViewport.clientHeight);
+  }
 
   scrubber.reposition();
+};
+
+const syncScroll = () => {
+  axisViewport.scrollLeft = mainViewport.scrollLeft;
+  laneLabels.scrollTop = mainViewport.scrollTop;
   minimap.syncScroll();
 };
 
-const zoom = initZoom(mainViewport, zoomControls, repositionAll);
+const zoom = initZoom(mainViewport, zoomControls, { onZoom: reposition, onMove: syncScroll });
 
 // ─── Navigation ──────────────────────────────────────────────────
 
-const centerOnFigure = (figure: TimelineFigure) => {
+const smoothScroll = (): ScrollBehavior =>
+  matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+
+const figureTop = (figure: TimelineFigure): number => {
   const bar = barMap.get(figure.id);
-  const mid = yearToX((figure.birth + figure.death) / 2);
-  mainViewport.scrollLeft = mid - mainViewport.clientWidth / 2;
-  if (bar) {
-    const top = bar.getBoundingClientRect().top - mainInner.getBoundingClientRect().top;
-    mainViewport.scrollTop = top - mainViewport.clientHeight / 2;
-  }
+  if (!bar || getView() !== "timeline") return mainViewport.scrollTop;
+  const top = bar.getBoundingClientRect().top - mainInner.getBoundingClientRect().top;
+  return top - mainViewport.clientHeight / 2;
+};
+
+const centerOnFigure = (figure: TimelineFigure) => {
+  mainViewport.scrollTo({
+    left: yearToX((figure.birth + figure.death) / 2) - mainViewport.clientWidth / 2,
+    top: figureTop(figure),
+    behavior: smoothScroll(),
+  });
 };
 
 const focusFigure = (figure: TimelineFigure) => {
   const span = Math.max(figure.death - figure.birth, MIN_FOCUS_YEARS);
   const padding = span * FOCUS_PADDING_RATIO;
-  zoom.focusRange(figure.birth - padding, figure.birth + span + padding);
-  centerOnFigure(figure);
+  const startTop = mainViewport.scrollTop;
+  zoom.focusRange(figure.birth - padding, figure.birth + span + padding, (progress) => {
+    mainViewport.scrollTop = startTop + (figureTop(figure) - startTop) * progress;
+    syncScroll();
+  });
 };
 
 eraSelect.addEventListener("change", () => {
@@ -507,7 +486,10 @@ initSearch(headerCenter!, (result: SearchResult) => {
     focusFigure(result.figure);
   } else if (result.kind === "year") {
     selectYear(result.year);
-    mainViewport.scrollLeft = yearToX(result.year) - mainViewport.clientWidth / 2;
+    mainViewport.scrollTo({
+      left: yearToX(result.year) - mainViewport.clientWidth / 2,
+      behavior: smoothScroll(),
+    });
   } else {
     zoom.focusRange(result.era.startYear, result.era.endYear);
   }
@@ -534,11 +516,7 @@ document.addEventListener("keydown", (e) => {
 
 // ─── Scroll Sync ─────────────────────────────────────────────────
 
-mainViewport.addEventListener("scroll", () => {
-  axisViewport.scrollLeft = mainViewport.scrollLeft;
-  laneLabels.scrollTop = mainViewport.scrollTop;
-  minimap.syncScroll();
-});
+mainViewport.addEventListener("scroll", syncScroll);
 
 // Forward wheel events from lane labels to main viewport
 laneLabels.addEventListener("wheel", (e) => {
@@ -554,9 +532,7 @@ const initialView = params.get("view");
 const initialFigure = figures.find((f) => f.id === params.get("figure"));
 const initialYear = Number(params.get("year"));
 
-if (initialView === "lineage" || initialView === "narrative") {
-  setView(initialView satisfies ViewMode);
-}
+if (initialView === "lineage") setView(initialView);
 
 if (initialFigure) {
   select({ kind: "figure", figure: initialFigure });

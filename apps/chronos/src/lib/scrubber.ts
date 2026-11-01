@@ -8,6 +8,8 @@ import { yearToX, xToYear, formatYear, MIN_YEAR, MAX_YEAR } from "./scale.ts";
 import { el } from "./dom.ts";
 
 const TAP_SLOP_PX = 8;
+const FINGER_REACH_PX = 16;
+const PICKABLE = ".figure-bar, circle.lineage-station";
 
 const clamp = (v: number, lo: number, hi: number) =>
   Math.max(lo, Math.min(hi, v));
@@ -72,6 +74,24 @@ export const initScrubber = (
 
   const scrubTo = (clientX: number) => onYear(yearAt(clientX));
 
+  /** Bars can be thinner than a fingertip, so a tap takes the nearest one in reach. */
+  const figureNear = (clientX: number, clientY: number): string | null => {
+    let nearest: string | null = null;
+    let best = FINGER_REACH_PX;
+    for (const node of mainInner.querySelectorAll<HTMLElement | SVGElement>(PICKABLE)) {
+      const rect = node.getBoundingClientRect();
+      if (rect.width === 0) continue;
+      const dx = Math.max(rect.left - clientX, 0, clientX - rect.right);
+      const dy = Math.max(rect.top - clientY, 0, clientY - rect.bottom);
+      const distance = Math.hypot(dx, dy);
+      if (distance < best) {
+        best = distance;
+        nearest = node.dataset.id ?? null;
+      }
+    }
+    return nearest;
+  };
+
   // ─── Lanes ───────────────────────────────────────────────────
 
   const isOnScrollbar = (e: PointerEvent): boolean => {
@@ -89,7 +109,7 @@ export const initScrubber = (
       press = null;
       return;
     }
-    const bar = (e.target as HTMLElement).closest<HTMLElement>(".figure-bar");
+    const bar = (e.target as Element).closest<HTMLElement | SVGElement>(".figure-bar, .lineage-station");
     press = {
       pointerId: e.pointerId,
       x: e.clientX,
@@ -115,7 +135,8 @@ export const initScrubber = (
 
   scrollContainer.addEventListener("pointerup", (e) => {
     if (press?.pointerId !== e.pointerId) return;
-    const { moved, figureId } = press;
+    const { moved, isMouse } = press;
+    const figureId = press.figureId ?? (isMouse ? null : figureNear(e.clientX, e.clientY));
     press = null;
     if (moved) return;
     if (figureId) onFigure(figureId);

@@ -8,6 +8,9 @@
 export const MIN_YEAR = -4100;
 export const MAX_YEAR = 50;
 
+/** Room past the end of the timeline, so the story doesn't finish against the edge. */
+export const END_PADDING_PX = 44;
+
 const DEFAULT_PPY = 3;
 
 let pixelsPerYear = 1;

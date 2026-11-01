@@ -27,21 +27,14 @@
   --lineage-edomite:     #a06040;
   --lineage-tribes:      #7090b0;
   --lineage-israel-king: #40b8a0;
-
-  /* Narrative thread palette */
-  --thread-covenant:       #D4A84B;
-  --thread-kingdom-united: #6E4BA8;
-  --thread-kingdom-north:  #A85050;
-  --thread-kingdom-south:  #3B7A7A;
-  --thread-prophecy:       #9E8BC4;
-  --thread-exile:          #3A4452;
-  --thread-messianic:      #F4E8C8;
+  --lineage-christ:      #ffe9a8;
 
   /* Layout */
   --axis-h:    72px;
   --label-w:   140px;
   --lane-h:    56px;
   --minimap-h: 36px;
+  --credits-clearance: 28px;
 }
 
 /* ─── Reset ───────────────────────────────────────────────────── */
@@ -292,8 +285,64 @@ body {
 }
 
 .figure-bar--dimmed {
-  opacity: 0.18;
-  filter: saturate(0.25) brightness(0.8);
+  opacity: 0.14;
+}
+
+/* Keeps every frame of a zoom cheap: no fades or glows to repaint on 157 moving bars. */
+.zooming .figure-bar:not(.figure-bar--christ) {
+  box-shadow: none;
+  transition: none;
+}
+
+.figure-bar.figure-bar--christ {
+  overflow: visible;
+  border: 1px solid #fff;
+  border-radius: 3px;
+  background: var(--lineage-christ);
+  box-shadow: 0 0 10px 2px rgba(255, 220, 140, 0.65), 0 0 28px 8px rgba(255, 220, 140, 0.28);
+  animation: christ-bar-glow 3.6s ease-in-out infinite;
+  z-index: 12;
+}
+
+@keyframes christ-bar-glow {
+  0%, 100% { box-shadow: 0 0 10px 2px rgba(255, 220, 140, 0.55), 0 0 26px 7px rgba(255, 220, 140, 0.22); }
+  50%      { box-shadow: 0 0 14px 3px rgba(255, 220, 140, 0.75), 0 0 34px 10px rgba(255, 220, 140, 0.34); }
+}
+
+.figure-bar--christ .figure-bar__name {
+  display: none;
+}
+
+.christ-label {
+  position: absolute;
+  right: calc(100% + 12px);
+  bottom: -3px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.christ-label__name {
+  color: var(--lineage-christ);
+  font-family: var(--font-ui);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 26px;
+  text-shadow: 0 0 12px rgba(255, 220, 140, 0.55), 0 0 4px var(--bg-base), 0 0 8px var(--bg-base);
+}
+
+.christ-label__dates {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 14px;
+  text-shadow: 0 0 4px var(--bg-base), 0 0 8px var(--bg-base);
+}
+
+.zooming .scrubber {
+  box-shadow: none;
 }
 
 .figure-bar__name {
@@ -544,189 +593,245 @@ body {
 /* ─── View Containers ─────────────────────────────────────────── */
 
 .timeline-view,
-.lineage-view,
-.narrative-view {
+.lineage-view {
   position: relative;
   width: 100%;
 }
 
-/* ─── Lineage SVG ─────────────────────────────────────────────── */
+/* Lets the last lane scroll clear of the credits. Lane names scroll with it. */
+.timeline-view,
+.lane-labels > div {
+  padding-bottom: var(--credits-clearance);
+}
+
+/* ─── Lineage ─────────────────────────────────────────────────── */
+
+.lineage-view {
+  overflow: hidden;
+}
 
 .lineage-svg {
   display: block;
+  /* The end padding is outside the drawing, and Jesus's glow reaches into it. */
+  overflow: visible;
 }
 
-.lineage-svg text {
-  pointer-events: none;
-  user-select: none;
+.lineage-svg path,
+.lineage-svg line {
+  transition: opacity 0.2s;
 }
 
-.lineage-svg circle {
+.lineage-svg--focused path:not(.lineage-line--lit),
+.lineage-svg--focused line:not(.lineage-line--lit) {
+  opacity: 0.25;
+}
+
+.lineage-station {
   cursor: pointer;
-  transition: r 0.15s, filter 0.15s;
 }
 
-.lineage-svg circle:hover {
-  filter: brightness(1.3);
+.lineage-svg circle.lineage-station {
+  transition: opacity 0.15s;
 }
 
-.lineage--dimmed {
-  opacity: 0.15;
-  transition: opacity 0.2s;
+.lineage--dimmed,
+.lineage-station--dimmed {
+  opacity: 0.18;
 }
 
-.lineage--highlighted {
-  opacity: 1;
-  transition: opacity 0.2s;
+.lineage-station--selected {
+  stroke: #fff;
+  stroke-width: 2.5;
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   Narrative Stream Graph
-   ═══════════════════════════════════════════════════════════════════ */
-
-.narrative-view {
-  min-height: 500px;
+.lineage-labels {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  pointer-events: none;
 }
 
-.narrative-svg {
+.lineage-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  text-align: left;
+  text-shadow: 0 0 4px var(--bg-base), 0 0 8px var(--bg-base), 0 0 2px var(--bg-base);
+  white-space: nowrap;
+  pointer-events: auto;
+  transition: opacity 0.15s;
+}
+
+.lineage-label:hover .lineage-label__name,
+.lineage-label--selected .lineage-label__name {
+  color: var(--text-bright);
+}
+
+.lineage-label--dimmed {
+  opacity: 0.22;
+}
+
+.lineage-label--hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.lineage-label--selected {
+  z-index: 2;
+}
+
+.lineage-halo {
+  pointer-events: none;
+  animation: christ-glow 3.6s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes christ-glow {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50%      { opacity: 1; transform: scale(1.12); }
+}
+
+.lineage-label--christ {
+  z-index: 3;
+}
+
+.lineage-label--flipped {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.lineage-label--christ .lineage-label__name {
+  color: var(--lineage-christ);
+  font-family: var(--font-ui);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 28px;
+  text-shadow: 0 0 12px rgba(255, 220, 140, 0.55), 0 0 4px var(--bg-base);
+}
+
+.lineage-label--christ .lineage-label__dates {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.lineage-label__name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 15px;
+}
+
+.lineage-label--trunk:not(.lineage-label--christ) .lineage-label__name {
+  color: var(--text-bright);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.lineage-label--tribe .lineage-label__name {
+  font-size: 11px;
+  line-height: 13px;
+}
+
+.lineage-label--tribe {
+  flex-direction: row;
+  gap: 8px;
+}
+
+.lineage-label__dates,
+.lineage-label__blurb {
+  display: none;
+}
+
+.lineage-label__dates {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 13px;
+}
+
+.lineage-label__blurb {
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: normal;
+}
+
+.lineage-label--trunk .lineage-label__blurb {
+  -webkit-line-clamp: 3;
+}
+
+.lineage-label--dated .lineage-label__dates {
   display: block;
 }
 
-.narrative-svg path {
-  opacity: 0.85;
-  transition: opacity 0.15s ease;
+.lineage-label--described .lineage-label__blurb {
+  display: -webkit-box;
 }
 
-.narrative--dimmed {
-  opacity: 0.15 !important;
-  transition: opacity 0.15s ease !important;
-}
-
-.narrative--highlighted {
-  opacity: 1 !important;
-  filter: brightness(1.1);
-  transition: opacity 0.15s ease !important;
-}
-
-/* ─── Entrance animation ─────────────────────────────────────────── */
-
-@keyframes narrative-fade-in {
-  from { opacity: 0; transform: scaleY(0.3); }
-  to   { opacity: 0.85; transform: scaleY(1); }
-}
-
-.narrative-path--animate {
-  animation: narrative-fade-in 600ms ease-out both;
-}
-
-/* ─── Era annotations ────────────────────────────────────────────── */
-
-.narrative-era-line {
-  stroke: var(--text-dim, #888);
-  stroke-width: 0.5;
-  opacity: 0.3;
-}
-
-.narrative-era-label {
-  font-family: var(--font-mono, "DM Mono", monospace);
-  font-size: 9px;
-  fill: var(--text-dim, #888);
-  opacity: 0.6;
-}
-
-/* ─── Legend ──────────────────────────────────────────────────────── */
-
-.narrative-legend {
-  position: fixed;
-  bottom: 76px;
-  left: 20px;
-  background: rgba(20, 22, 28, 0.88);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--border-faint, rgba(255, 255, 255, 0.08));
-  border-radius: 8px;
-  padding: 10px 14px;
-  z-index: 40;
-  pointer-events: auto;
-}
-
-.narrative-legend__row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 2px 0;
-}
-
-.narrative-legend__swatch {
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-  flex-shrink: 0;
-}
-
-.narrative-legend__name {
-  font-family: var(--font-mono, "DM Mono", monospace);
-  font-size: 11px;
-  color: var(--text-dim, #888);
-}
-
-/* ─── Hover tooltip ──────────────────────────────────────────────── */
-
-.narrative-tooltip {
+.lineage-ending {
   position: absolute;
-  pointer-events: none;
-  background: rgba(20, 22, 28, 0.92);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--border-faint, rgba(255, 255, 255, 0.08));
-  border-radius: 6px;
-  padding: 8px 12px;
-  font-family: var(--font-mono, "DM Mono", monospace);
-  font-size: 11px;
-  color: var(--text-primary, #ccc);
-  line-height: 1.5;
+  top: 0;
+  left: 0;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 14px;
+  text-shadow: 0 0 4px var(--bg-base), 0 0 8px var(--bg-base);
   white-space: nowrap;
-  z-index: 50;
-  opacity: 0;
-  transition: opacity 0.1s ease;
+  transition: opacity 0.15s;
 }
 
-.narrative-tooltip--visible {
-  opacity: 1;
+.lineage-ending--final {
+  color: var(--text-secondary);
 }
 
-.narrative-tooltip__desc {
-  color: var(--text-dim, #888);
-  font-style: italic;
+.lineage-ending--dimmed {
+  opacity: 0.22;
 }
 
-.narrative-tooltip__year {
-  color: var(--text-bright, #eee);
+.lineage-gutter {
+  position: relative;
+  width: var(--label-w);
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-subtle);
+  background: var(--bg-base);
+  z-index: 10;
 }
 
-.narrative-tooltip__word {
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.lineage-gutter__name {
+  position: absolute;
+  left: 14px;
+  right: 8px;
+  transform: translateY(-50%);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
 }
 
-/* ─── Story-at-this-moment (year panel section) ──────────────────── */
-
-.narrative-story__entry {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 2px 20px;
-}
-
-.narrative-story__swatch {
+.lineage-gutter__name::before {
+  content: "";
+  display: inline-block;
   width: 6px;
   height: 6px;
+  margin-right: 8px;
   border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.narrative-story__label {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-primary);
+  background: var(--dot-color);
+  vertical-align: 1px;
 }
 
 /* ─── Search ──────────────────────────────────────────────────── */
@@ -873,65 +978,133 @@ body {
 }
 
 /* ─── Canvas Overlays ─────────────────────────────────────────── */
-/* Overlay blocks let the timeline take input; only their controls catch the pointer. */
+/* Match Rainbow's. Overlay blocks let the timeline take input; only their controls catch the pointer. */
 
-/* The story runs top left to bottom right, which leaves this corner empty. */
-.canvas-status {
+.canvas-status,
+.canvas-credits {
   position: absolute;
-  left: calc(var(--label-w) + 12px);
-  bottom: calc(var(--minimap-h) + 12px);
   z-index: 35;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
   pointer-events: none;
 }
 
-.canvas-status > * {
+.canvas-status button,
+.canvas-status label,
+.canvas-credits button,
+.canvas-credits a {
   pointer-events: auto;
 }
 
+.canvas-status {
+  top: calc(var(--axis-h) + 14px);
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.status-row,
 .zoom-controls {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.canvas-btn,
-.zoom-btn,
-.era-select {
-  height: 28px;
-  border: 1px solid var(--border-faint);
-  border-radius: var(--radius-pill);
-  background: var(--bg-elevated);
-  color: var(--text-dim);
+.status-row {
+  gap: 10px;
+  color: var(--text-muted);
   font-family: var(--font-mono);
   font-size: 11px;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  text-shadow: 0 0 4px var(--bg-base), 0 0 8px var(--bg-base);
 }
 
-.canvas-btn {
-  padding: 0 12px;
+.era-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   white-space: nowrap;
 }
 
-.zoom-btn {
-  width: 28px;
-  font-size: 14px;
+.era-select {
+  width: 76px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-pill);
+  background: var(--fill-subtle);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  backdrop-filter: blur(8px);
 }
 
-.era-select {
-  width: 116px;
-  padding: 0 8px;
+.canvas-btn,
+.preset-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-pill);
+  background: var(--fill-subtle);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  white-space: nowrap;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.canvas-btn {
+  gap: 5px;
+  padding: 0 12px;
+}
+
+.canvas-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2;
+}
+
+.preset-btn {
+  padding: 0 14px;
 }
 
 .canvas-btn:hover,
-.zoom-btn:hover,
-.era-select:hover {
+.preset-btn:hover {
   background: var(--fill-hover);
   color: var(--text-secondary);
+}
+
+.canvas-credits {
+  left: calc(var(--label-w) + 12px);
+  bottom: calc(var(--minimap-h) + 8px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-shadow: 0 0 4px var(--bg-base), 0 0 8px var(--bg-base);
+}
+
+.canvas-credits a {
+  color: inherit;
+}
+
+.canvas-credits a:hover,
+.about-button:hover {
+  color: var(--text-secondary);
+}
+
+.about-button {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 /* ─── Companion ───────────────────────────────────────────────── */
@@ -1275,7 +1448,8 @@ a:focus-visible {
 
 @media (max-width: 760px) {
   .label-gutter,
-  .lane-labels {
+  .lane-labels,
+  .lineage-gutter {
     display: none !important;
   }
 
@@ -1296,8 +1470,18 @@ a:focus-visible {
   }
 
   .canvas-status {
-    left: 10px;
-    right: 10px;
+    top: calc(var(--axis-h) + 10px);
+    right: 16px;
+  }
+
+  .status-row > span:first-child,
+  .era-control > span {
+    display: none;
+  }
+
+  .canvas-credits {
+    left: 16px;
+    font-size: 10px;
   }
 
   .companion__head {

@@ -12,6 +12,8 @@ import { CATEGORY_NAMES, CATEGORY_ORDER } from "./categories.ts";
 import { loadBible, locate, parseScripture } from "./scripture.ts";
 import type { Passage } from "./scripture.ts";
 import { ERA_BANDS } from "./eras.ts";
+import { childrenOf } from "./renderLineage.ts";
+import { figures } from "../data/timeline.ts";
 import type { Category, TimelineFigure } from "../data/timeline.ts";
 
 const PREVIEW_VERSES = 6;
@@ -26,8 +28,6 @@ interface CompanionEvents {
   onFigure: (id: string) => void;
   onStep: (step: -1 | 1) => void;
   onClose: () => void;
-  /** Adds view-specific sections to the top of the year view. */
-  renderYearExtra: (body: HTMLElement, year: number) => void;
 }
 
 const eraAt = (year: number): string =>
@@ -64,7 +64,7 @@ const figureRow = (parent: HTMLElement, figure: TimelineFigure, onFigure: (id: s
 
 export const initCompanion = (
   stage: HTMLElement,
-  { onFigure, onStep, onClose, renderYearExtra }: CompanionEvents,
+  { onFigure, onStep, onClose }: CompanionEvents,
 ): CompanionHandle => {
   const panel = el("aside", "bui-sheet companion hidden", stage);
   panel.setAttribute("aria-label", "Details");
@@ -150,6 +150,12 @@ export const initCompanion = (
       body.replaceChildren();
       el("p", "cp-text cp-lead", el("div", "cp-quote", body)).textContent = figure.blurb;
       renderScripture(figure);
+      const parent = figures.find((f) => f.id === figure.parent);
+      const family = [...(parent ? [parent] : []), ...childrenOf(figure)];
+      if (family.length > 0) {
+        const root = section(body, "Family line", family.length);
+        for (const relative of family) figureRow(root, relative, onFigure);
+      }
       if (alongside.length > 0) {
         const root = section(body, "Alive alongside", alongside.length);
         for (const other of alongside) figureRow(root, other, onFigure);
@@ -162,7 +168,6 @@ export const initCompanion = (
       const count = alive.length === 1 ? "1 person" : `${alive.length} people`;
       heading(headingEl, eraAt(year), `Alive in ${formatYear(year)}`, count);
       body.replaceChildren();
-      renderYearExtra(body, year);
 
       if (alive.length === 0) {
         el("p", "cp-empty", body).textContent = "No one on the timeline at this date.";
