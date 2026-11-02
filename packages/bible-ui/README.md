@@ -10,7 +10,8 @@ Shared design system and UI components for Bible visualization apps — [Rainbow
 - Borders (`--border-faint` → `--border-strong`, opacity-based)
 - Text hierarchy (`--text-disabled` → `--text-bright`, 6 levels)
 - Accent colors (`--accent-fill`, `--accent-border`, `--accent-text`)
-- Radius scale (`--radius-sm` → `--radius-pill`)
+- Radius scale (`--radius-sm` → `--radius-lg`)
+- `.bui-select`, a dropdown with its own chevron, and the keyboard focus ring
 - Typography (`--font-ui`: Fraunces, `--font-mono`: DM Mono)
 
 ### Components

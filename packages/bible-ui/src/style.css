@@ -37,10 +37,9 @@
   --accent-text:   #90B4F0;
 
   /* Radii */
-  --radius-sm:   6px;
-  --radius-md:   8px;
-  --radius-lg:   12px;
-  --radius-pill: 999px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
 
   /* Typography */
   --font-ui:   "Fraunces", Georgia, serif;
@@ -360,4 +359,36 @@
   ::view-transition-new(*) {
     animation: none;
   }
+}
+
+/* ─── Dropdowns and focus ─────────────────────────────────────── */
+
+/* Our own chevron, because the browser's sits hard against the edge. */
+.bui-select {
+  height: 28px;
+  padding: 0 26px 0 10px;
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-md);
+  background:
+    var(--fill-subtle)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%238090A8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3 4.5 3 3 3-3'/%3E%3C/svg%3E")
+    no-repeat right 8px center / 12px 12px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  appearance: none;
+  transition: background-color 0.15s;
+}
+
+.bui-select:hover {
+  background-color: var(--fill-hover);
+}
+
+button:focus-visible,
+select:focus-visible,
+summary:focus-visible,
+a:focus-visible {
+  outline: 1.5px solid var(--accent-text);
+  outline-offset: 1px;
 }

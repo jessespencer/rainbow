@@ -222,7 +222,7 @@ body {
   align-items: center;
   gap: 5px;
   padding: 3px 10px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-md);
   background: var(--fill-subtle);
   border: 1px solid var(--border-faint);
   color: var(--text-secondary);
@@ -298,23 +298,12 @@ body {
   white-space: nowrap;
 }
 
-#votes-filter {
-  height: 28px;
-  padding: 0 8px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--border-faint);
-  background: var(--fill-subtle);
-  color: var(--text-secondary);
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-}
-
 #view-toggle {
   display: inline-flex;
   align-items: center;
   background: var(--fill-subtle);
   border: 1px solid var(--border-faint);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-md);
   padding: 3px;
   gap: 2px;
 }
@@ -322,7 +311,7 @@ body {
 #view-toggle button {
   height: 28px;
   padding: 0 14px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   border: none;
   background: transparent;
   color: var(--text-dim);
@@ -350,7 +339,7 @@ body {
   gap: 5px;
   height: 28px;
   padding: 0 12px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-faint);
   background: var(--fill-subtle);
   color: var(--text-dim);
@@ -376,7 +365,7 @@ body {
 .preset-btn {
   height: 28px;
   padding: 0 14px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-faint);
   background: var(--fill-subtle);
   color: var(--text-dim);
@@ -405,7 +394,7 @@ body {
 #book-search {
   height: 28px;
   padding: 0 14px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
   background: var(--fill-subtle);
   color: var(--text-primary);
@@ -494,7 +483,7 @@ body {
   font-size: 11px;
   white-space: nowrap;
   padding: 1px 6px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   background: rgba(11, 13, 18, 0.65);
 }
 
@@ -556,13 +545,6 @@ body {
 
 #galaxy-layers-panel select {
   flex: 1;
-  height: 28px;
-  padding: 0 8px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--border-faint);
-  background: var(--fill-subtle);
-  color: var(--text-secondary);
-  font: inherit;
 }
 
 /* ─── TOOLTIP ────────────────────────────────────────────── */
@@ -668,7 +650,7 @@ body {
   width: 28px;
   height: 28px;
   border: 1px solid var(--border-faint);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--fill-subtle);
   color: var(--text-dim);
   font-size: 18px;
