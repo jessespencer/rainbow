@@ -90,6 +90,7 @@ body {
 #category-filters > *,
 #canvas-status button,
 #canvas-status label,
+#canvas-status select,
 #canvas-status summary,
 #canvas-credits button,
 #canvas-credits a {
@@ -506,7 +507,10 @@ body {
   display: none;
 }
 
-#app.galaxy-mode #galaxy-layers { display: block; }
+#galaxy-shape { display: none; }
+
+#app.galaxy-mode #galaxy-layers,
+#app.galaxy-mode #galaxy-shape { display: block; }
 
 #galaxy-layers summary {
   list-style: none;

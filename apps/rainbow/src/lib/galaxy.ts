@@ -8,6 +8,7 @@ import { OT_VERSES, TOTAL_VERSES, VERSE_BOOK } from './verses';
 
 export type ColorMode = 'genre' | 'testament' | 'heat' | 'book';
 export type SizeMode = 'uniform' | 'connections';
+export type ShapeMode = 'spiral' | 'ring' | 'binary';
 
 export interface GalaxyOptions {
   links: boolean;
@@ -15,6 +16,7 @@ export interface GalaxyOptions {
   labels: boolean;
   color: ColorMode;
   size: SizeMode;
+  shape: ShapeMode;
 }
 
 // The verses to frame, and the links that fan out from them, strongest first.
@@ -50,10 +52,10 @@ const FOCUS_EDGE_CAP = 4000;
 
 // A narrow lens from further back keeps the near rim from swelling past the far one.
 const FOV = 32;
-const FIT_WIDTH = 1.08;
-const FIT_HEIGHT = 0.72;
 const VISUAL_RADIUS = 0.8;
 const BASE_SIZE = 2.2;
+// Zooming spreads the stars apart; past this they stop growing, or thousands of screen-sized sprites stall the GPU.
+const MAX_STAR_SCALE = 7;
 const FOCUS_SIZE = 4;
 const FOCUS_SMALL_VERSES = 200;
 const HIT_PAD_MOUSE = 8;
@@ -65,6 +67,9 @@ const EDGE_OPACITY = 0.1;
 const FOCUS_EDGE_LIGHT = 90;
 const FOCUS_MS = 850;
 const FIT_MS = 900;
+const MORPH_MS = 1700;
+// The share of the morph spent waiting for the wave to pass from Genesis to Revelation.
+const MORPH_STAGGER = 0.4;
 const INTRO_MS = 1800;
 const SHIFT_EASE = 0.18;
 const AUTO_ROTATE_SPEED = -0.4;
@@ -78,6 +83,35 @@ const ARM_WIDTH = 4.8;
 const DISK_THICKNESS = 3;
 const BULGE = 3;
 const BULGE_FALLOFF = 0.045;
+
+// A closed loop: Revelation 22 comes back round to meet Genesis 1 at twelve o'clock.
+const RING_RADIUS = 130;
+const RING_WIDTH = 7;
+const RING_THICKNESS = 4;
+
+// One thread through two galaxies, sized by verse count: Genesis at one core,
+// out to the neck where Malachi meets Matthew, then in to Revelation at the other.
+const BINARY_OT_X = -72;
+const BINARY_NT_X = 104;
+const BINARY_OT_RIM = 96;
+const BINARY_NT_RIM = 56;
+const BINARY_CORE = 5;
+const BINARY_WRAPS = 1.6;
+const BINARY_TILT = 0.3;
+const BINARY_ARM_WIDTH = 8;
+
+// How much of each shape's radius the resting view shows across and down.
+const SHAPE_FIT: Record<ShapeMode, { width: number; height: number }> = {
+  spiral: { width: 1.08, height: 0.72 },
+  ring: { width: 1.3, height: 0.86 },
+  binary: { width: 1.08, height: 0.72 },
+};
+
+const SHAPE_LABELS: Record<ShapeMode, string> = {
+  spiral: 'Every verse of the Bible as a star in a two-armed spiral',
+  ring: 'Every verse of the Bible as a star in a closed ring, Revelation meeting Genesis',
+  binary: 'Every verse of the Bible as a star in two galaxies joined where Malachi meets Matthew',
+};
 
 const WHITE = new THREE.Color(0xffffff);
 const TESTAMENT_OT = new THREE.Color(0x4a8cd0);
@@ -98,6 +132,7 @@ const HEAT_STOPS: [number, [number, number, number]][] = [
 const VERTEX_SHADER = `
   uniform float uPixelRatio;
   uniform float uK;
+  uniform float uMaxScale;
   attribute vec3 aColor;
   attribute float size;
   attribute float aAlpha;
@@ -107,7 +142,7 @@ const VERTEX_SHADER = `
     vColor = aColor;
     vAlpha = aAlpha;
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = size * uPixelRatio * (uK / -mv.z);
+    gl_PointSize = size * uPixelRatio * min(uK / -mv.z, uMaxScale);
     gl_Position = projectionMatrix * mv;
   }
 `;
@@ -148,10 +183,12 @@ function heatColor(t: number, out: THREE.Color) {
   );
 }
 
+const gauss = (rnd: () => number) => (rnd() + rnd() + rnd() - 1.5) * 0.95;
+const verseRandom = (verse: number) => mulberry32((verse + 1) * 0x9e3779b1);
+
 // Star positions are indexed by verse, so a verse id is also its star id.
-function layoutStars(): Float32Array {
+function layoutSpiral(): Float32Array {
   const pos = new Float32Array(TOTAL_VERSES * 3);
-  const gauss = (rnd: () => number) => (rnd() + rnd() + rnd() - 1.5) * 0.95;
 
   for (let verse = 0; verse < TOTAL_VERSES; verse++) {
     const nt = verse >= OT_VERSES;
@@ -162,7 +199,7 @@ function layoutStars(): Float32Array {
     const cos = Math.cos(theta);
     const sin = Math.sin(theta);
 
-    const rnd = mulberry32((verse + 1) * 0x9e3779b1);
+    const rnd = verseRandom(verse);
     const puff = 1 + BULGE * Math.exp(-p / BULGE_FALLOFF);
     const radial = r + gauss(rnd) * ARM_WIDTH * puff;
     const tangent = gauss(rnd) * ARM_WIDTH * puff * 0.5;
@@ -171,6 +208,86 @@ function layoutStars(): Float32Array {
     pos[verse * 3 + 2] = sin * radial + cos * tangent;
   }
   return pos;
+}
+
+function layoutRing(): Float32Array {
+  const pos = new Float32Array(TOTAL_VERSES * 3);
+
+  for (let verse = 0; verse < TOTAL_VERSES; verse++) {
+    const theta = ((verse + 0.5) / TOTAL_VERSES) * 2 * Math.PI;
+    const rnd = verseRandom(verse);
+    const radial = RING_RADIUS + gauss(rnd) * RING_WIDTH;
+    pos[verse * 3] = Math.sin(theta) * radial;
+    pos[verse * 3 + 1] = gauss(rnd) * RING_THICKNESS;
+    pos[verse * 3 + 2] = -Math.cos(theta) * radial;
+  }
+  return pos;
+}
+
+function layoutBinary(): Float32Array {
+  const pos = new Float32Array(TOTAL_VERSES * 3);
+
+  for (let verse = 0; verse < TOTAL_VERSES; verse++) {
+    const nt = verse >= OT_VERSES;
+    const armLength = nt ? TOTAL_VERSES - OT_VERSES : OT_VERSES;
+    const p = (nt ? verse - OT_VERSES : verse) / (armLength - 1);
+    // 0 at a galaxy's core, 1 at the rim facing the other galaxy.
+    const out = nt ? 1 - p : p;
+    const rim = nt ? BINARY_NT_RIM : BINARY_OT_RIM;
+    const r = BINARY_CORE + (rim - BINARY_CORE) * Math.sqrt(out);
+    const theta = (nt ? Math.PI : 0) + BINARY_WRAPS * 2 * Math.PI * (1 - out);
+    const cos = Math.cos(theta);
+    const sin = Math.sin(theta);
+
+    const rnd = verseRandom(verse);
+    const scale = rim / R_RIM;
+    const puff = 1 + BULGE * Math.exp(-out / BULGE_FALLOFF);
+    const radial = r + gauss(rnd) * BINARY_ARM_WIDTH * scale * puff;
+    const tangent = gauss(rnd) * BINARY_ARM_WIDTH * scale * puff * 0.5;
+    const x = cos * radial - sin * tangent;
+    const y = gauss(rnd) * DISK_THICKNESS * scale * puff;
+    const z = sin * radial + cos * tangent;
+
+    // Tilting about the line between the galaxies leaves the neck where it is.
+    const tilt = nt ? -BINARY_TILT : BINARY_TILT;
+    pos[verse * 3] = x + (nt ? BINARY_NT_X : BINARY_OT_X);
+    pos[verse * 3 + 1] = y * Math.cos(tilt) - z * Math.sin(tilt);
+    pos[verse * 3 + 2] = y * Math.sin(tilt) + z * Math.cos(tilt);
+  }
+  return pos;
+}
+
+interface StarField {
+  positions: Float32Array;
+  center: THREE.Vector3;
+  bookCenters: THREE.Vector3[];
+  radius: number;
+}
+
+function measureField(positions: Float32Array): StarField {
+  const center = new THREE.Vector3();
+  const bookStars = new Float64Array(TOTAL_BOOKS);
+  const bookCenters = BOOKS.map(() => new THREE.Vector3());
+  for (let verse = 0; verse < TOTAL_VERSES; verse++) {
+    const book = VERSE_BOOK[verse];
+    bookStars[book]++;
+    bookCenters[book].x += positions[verse * 3];
+    bookCenters[book].y += positions[verse * 3 + 1];
+    bookCenters[book].z += positions[verse * 3 + 2];
+  }
+  bookCenters.forEach((c, book) => {
+    center.add(c);
+    c.divideScalar(bookStars[book]);
+    c.y += 14;
+  });
+  center.divideScalar(TOTAL_VERSES);
+
+  let radius = 1;
+  for (let verse = 0; verse < TOTAL_VERSES; verse++) {
+    radius = Math.max(radius, Math.hypot(
+      positions[verse * 3] - center.x, positions[verse * 3 + 1] - center.y, positions[verse * 3 + 2] - center.z));
+  }
+  return { positions, center, bookCenters, radius };
 }
 
 function createLines(scene: THREE.Scene, capacity: number, opacity: number) {
@@ -218,31 +335,28 @@ export function createGalaxy(
   store: LinkStore,
   callbacks: GalaxyCallbacks,
 ): GalaxyHandle {
-  const pos = layoutStars();
+  const fields = new Map<ShapeMode, StarField>();
+  const fieldOf = (shape: ShapeMode) => {
+    let found = fields.get(shape);
+    if (!found) {
+      found = measureField(
+        shape === 'ring' ? layoutRing() : shape === 'binary' ? layoutBinary() : layoutSpiral());
+      fields.set(shape, found);
+    }
+    return found;
+  };
+
+  // The stars as drawn, which during a morph are between two fields.
+  let field = fieldOf('spiral');
+  const pos = field.positions.slice();
   const genreOf = (verse: number) => BOOK_GENRE[VERSE_BOOK[verse]];
 
-  const center = new THREE.Vector3();
+  const center = field.center.clone();
+  const bookCenters = field.bookCenters.map(c => c.clone());
   const bookStars = new Float64Array(TOTAL_BOOKS);
-  const bookCenters = BOOKS.map(() => new THREE.Vector3());
-  for (let verse = 0; verse < TOTAL_VERSES; verse++) {
-    const book = VERSE_BOOK[verse];
-    bookStars[book]++;
-    bookCenters[book].x += pos[verse * 3];
-    bookCenters[book].y += pos[verse * 3 + 1];
-    bookCenters[book].z += pos[verse * 3 + 2];
-  }
-  bookCenters.forEach((c, book) => {
-    center.add(c);
-    c.divideScalar(bookStars[book]);
-    c.y += 14;
-  });
-  center.divideScalar(TOTAL_VERSES);
+  for (let verse = 0; verse < TOTAL_VERSES; verse++) bookStars[VERSE_BOOK[verse]]++;
 
-  let radius = 1;
-  for (let verse = 0; verse < TOTAL_VERSES; verse++) {
-    radius = Math.max(radius, Math.hypot(
-      pos[verse * 3] - center.x, pos[verse * 3 + 1] - center.y, pos[verse * 3 + 2] - center.z));
-  }
+  let radius = field.radius;
   const halfFov = THREE.MathUtils.degToRad(FOV / 2);
   const wideFitDistance = (radius / Math.sin(halfFov)) * 1.05;
 
@@ -251,8 +365,8 @@ export function createGalaxy(
 
   // The tilted disk is wider than it is tall, so portrait screens are limited by width.
   const fitDistance = () => radius * Math.max(
-    FIT_WIDTH / (Math.tan(halfFov) * camera.aspect),
-    FIT_HEIGHT / Math.tan(halfFov),
+    SHAPE_FIT[options.shape].width / (Math.tan(halfFov) * camera.aspect),
+    SHAPE_FIT[options.shape].height / Math.tan(halfFov),
   );
   const restDirection = new THREE.Vector3(0, 0.62, 0.78).normalize();
 
@@ -273,7 +387,7 @@ export function createGalaxy(
   const canvas = renderer.domElement;
   canvas.style.display = 'block';
   canvas.setAttribute('role', 'img');
-  canvas.setAttribute('aria-label', 'Every verse of the Bible as a star in a two-armed spiral');
+  canvas.setAttribute('aria-label', SHAPE_LABELS.spiral);
   container.appendChild(canvas);
 
   const labelLayer = document.createElement('div');
@@ -294,6 +408,8 @@ export function createGalaxy(
   controls.panSpeed = 0.9;
   controls.zoomSpeed = 0.9;
   controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
+  // The wheel updates the controls itself, so the loop's own update() would report no change.
+  controls.addEventListener('change', () => { needsRender = true; });
 
   // Stars
   const geometry = new THREE.BufferGeometry();
@@ -314,6 +430,7 @@ export function createGalaxy(
     uniforms: {
       uPixelRatio: { value: renderer.getPixelRatio() },
       uK: { value: uniformK },
+      uMaxScale: { value: MAX_STAR_SCALE },
     },
   }));
   stars.frustumCulled = false;
@@ -336,7 +453,9 @@ export function createGalaxy(
   const selectedBooks = new Set<number>();
 
   // State
-  let options: GalaxyOptions = { links: true, bridgesOnly: false, labels: true, color: 'genre', size: 'uniform' };
+  let options: GalaxyOptions = {
+    links: true, bridgesOnly: false, labels: true, color: 'genre', size: 'uniform', shape: 'spiral',
+  };
   let visible: Int32Array = new Int32Array(0);
   let genre: number | null = null;
   let focus: GalaxyFocus | null = null;
@@ -346,6 +465,7 @@ export function createGalaxy(
   let shift = 0;
   let insetTarget = 0;
   let hovered = -1;
+  let pointedLink: number | null = null;
   // Spin belongs to the untouched view: once the reader moves the camera it stays where they left it.
   let leftRest = false;
   let needsRender = true;
@@ -492,6 +612,7 @@ export function createGalaxy(
   }
 
   function setHighlight(link: number | null) {
+    pointedLink = link;
     if (link === null) {
       pointed.setCount(0);
     } else {
@@ -499,6 +620,13 @@ export function createGalaxy(
       pointed.setCount(1);
     }
     needsRender = true;
+  }
+
+  function placeStars() {
+    (geometry.getAttribute('position') as THREE.BufferAttribute).needsUpdate = true;
+    drawStrongest();
+    drawFan();
+    setHighlight(pointedLink);
   }
 
   // Camera
@@ -531,7 +659,7 @@ export function createGalaxy(
     const box = new THREE.Box3();
     const star = new THREE.Vector3();
     for (let i = 0; i < TOTAL_VERSES; i++) {
-      if (focusRole[i] !== 0) box.expandByPoint(star.fromArray(pos, i * 3));
+      if (focusRole[i] !== 0) box.expandByPoint(star.fromArray(field.positions, i * 3));
     }
     const middle = box.getCenter(new THREE.Vector3());
     const spread = box.getSize(star).length() / 2;
@@ -546,6 +674,49 @@ export function createGalaxy(
   function fit() {
     const position = center.clone().addScaledVector(restDirection, fitDistance());
     flyTo(center.clone(), position, FIT_MS, true);
+  }
+
+  let morph: { start: number; from: Float32Array; fromBooks: THREE.Vector3[] } | null = null;
+
+  function snapToField() {
+    morph = null;
+    pos.set(field.positions);
+    field.bookCenters.forEach((c, book) => bookCenters[book].copy(c));
+    placeStars();
+  }
+
+  function setShape(shape: ShapeMode, animate: boolean) {
+    field = fieldOf(shape);
+    center.copy(field.center);
+    radius = field.radius;
+    canvas.setAttribute('aria-label', SHAPE_LABELS[shape]);
+
+    if (animate && !reducedMotion) {
+      morph = { start: performance.now(), from: pos.slice(), fromBooks: bookCenters.map(c => c.clone()) };
+    } else {
+      snapToField();
+      if (!leftRest) controls.target.copy(center);
+    }
+    if (!animate) return;
+    if (focus) flyToFocus();
+    else fit();
+  }
+
+  function stepMorph(now: number) {
+    if (!morph) return;
+    const elapsed = Math.min(1, (now - morph.start) / MORPH_MS);
+    const { from, fromBooks } = morph;
+    const to = field.positions;
+    for (let i = 0; i < TOTAL_VERSES; i++) {
+      const delay = (i / TOTAL_VERSES) * MORPH_STAGGER;
+      const t = easeInOutCubic(THREE.MathUtils.clamp((elapsed - delay) / (1 - MORPH_STAGGER), 0, 1));
+      for (let axis = i * 3; axis < i * 3 + 3; axis++) pos[axis] = from[axis] + (to[axis] - from[axis]) * t;
+    }
+    const eased = easeInOutCubic(elapsed);
+    bookCenters.forEach((c, book) => c.lerpVectors(fromBooks[book], field.bookCenters[book], eased));
+    placeStars();
+    needsRender = true;
+    if (elapsed >= 1) morph = null;
   }
 
   function applyShift() {
@@ -588,7 +759,7 @@ export function createGalaxy(
       const sx = ((m[0] * wx + m[4] * wy + m[8] * wz + m[12]) / w + 1) * 0.5 * rect.width;
       const sy = (1 - (m[1] * wx + m[5] * wy + m[9] * wz + m[13]) / w) * 0.5 * rect.height;
       const distance = Math.hypot(sx - x, sy - y);
-      if (distance < bestDistance && distance <= 0.5 * sizeAttr.getX(i) * (uniformK / w) + pad) {
+      if (distance < bestDistance && distance <= 0.5 * sizeAttr.getX(i) * Math.min(uniformK / w, MAX_STAR_SCALE) + pad) {
         bestDistance = distance;
         best = i;
       }
@@ -696,7 +867,7 @@ export function createGalaxy(
     const progress = trip ? easeInOutCubic(Math.min(1, (now - trip.start) / trip.duration)) : 0;
     if (trip) controls.target.lerpVectors(trip.fromTarget, trip.toTarget, progress);
     controls.autoRotate = !reducedMotion && !leftRest && !flight && focus === null && hovered < 0;
-    if (controls.update()) needsRender = true;
+    controls.update();
     if (trip) {
       camera.position.lerpVectors(trip.fromPosition, trip.toPosition, progress);
       needsRender = true;
@@ -715,6 +886,8 @@ export function createGalaxy(
         needsRender = true;
       }
     }
+
+    stepMorph(now);
 
     if (!needsRender) return;
     needsRender = false;
@@ -748,6 +921,7 @@ export function createGalaxy(
       if (next.color !== previous.color) applyColors();
       if (next.size !== previous.size) applySizes();
       if (next.links !== previous.links || next.bridgesOnly !== previous.bridgesOnly) drawStrongest();
+      if (next.shape !== previous.shape) setShape(next.shape, active);
       needsRender = true;
     },
     setInset(pixels) { insetTarget = pixels; },

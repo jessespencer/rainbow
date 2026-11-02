@@ -5,7 +5,7 @@ import { GENRES } from './data/genres';
 import { BOOKS } from './data/books';
 import { NT_LEFT, OT_RIGHT, WORLD_WIDTH, pixelsPerVerse, verseAtX, xOfVerse } from './lib/layout';
 import { createArcRenderer, MAX_DPR, type ArcRenderer } from './lib/arcGl';
-import type { ColorMode, GalaxyFocus, GalaxyHandle, SizeMode } from './lib/galaxy';
+import type { ColorMode, GalaxyFocus, GalaxyHandle, ShapeMode, SizeMode } from './lib/galaxy';
 import {
   createLinkStore, DEFAULT_MIN_VOTES, filterLinks, findLink, linkFrom, linksBetweenBooks,
   linksInPassage, linkToEnd, linkToStart, linkVotes, type LinkFilter, type LinkStore,
@@ -182,6 +182,8 @@ function updateStats() {
   }
 }
 
+const shapeSelect = () => document.getElementById('galaxy-shape') as HTMLSelectElement;
+
 function galaxyOptions() {
   return {
     links: (document.getElementById('galaxy-links') as HTMLInputElement).checked,
@@ -189,6 +191,7 @@ function galaxyOptions() {
     labels: (document.getElementById('galaxy-labels') as HTMLInputElement).checked,
     color: (document.getElementById('galaxy-color') as HTMLSelectElement).value as ColorMode,
     size: (document.getElementById('galaxy-size') as HTMLSelectElement).value as SizeMode,
+    shape: shapeSelect().value as ShapeMode,
   };
 }
 
@@ -272,6 +275,7 @@ function writeUrl(mode: 'push' | 'replace') {
   if (filter.minVotes !== DEFAULT_MIN_VOTES) params.set('votes', String(filter.minVotes));
   if (filter.genre !== null) params.set('genre', GENRES[filter.genre].id);
   if (viewMode !== 'arcs') params.set('view', viewMode);
+  if (viewMode === 'galaxy' && shapeSelect().selectedIndex > 0) params.set('shape', shapeSelect().value);
   const query = params.toString().replace(/%3A/g, ':');
   const url = `${window.location.pathname}${query ? `?${query}` : ''}`;
   if (mode === 'push') window.history.pushState(null, '', url);
@@ -419,6 +423,10 @@ function setupGalaxyLayers() {
   document.getElementById('galaxy-layers')!.addEventListener('change', () => {
     galaxy?.setOptions(galaxyOptions());
     updateStats();
+  });
+  shapeSelect().addEventListener('change', () => {
+    galaxy?.setOptions(galaxyOptions());
+    writeUrl('replace');
   });
 }
 
@@ -793,6 +801,10 @@ function readUrl(): Selection | null {
   filter.minVotes = params.has('votes') && Number.isFinite(votes) ? votes : DEFAULT_MIN_VOTES;
   const genre = GENRES.findIndex(g => g.id === params.get('genre'));
   filter.genre = genre >= 0 ? genre : null;
+  const shape = shapeSelect();
+  shape.value = params.get('shape') ?? '';
+  if (shape.selectedIndex < 0) shape.selectedIndex = 0;
+  galaxy?.setOptions(galaxyOptions());
   const view = params.get('view');
   setViewMode(view === 'heatmap' || view === 'galaxy' ? view : 'arcs');
 
