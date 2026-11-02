@@ -1145,7 +1145,8 @@ kbd {
 .typed .stage-tools,
 .order,
 .vanish,
-.quiz {
+.quiz,
+.where {
   animation: arrive 0.45s var(--ease-out) backwards;
 }
 
@@ -1447,6 +1448,80 @@ kbd {
 .quiz .again-note {
   margin: 0;
   font-size: 1.05rem;
+}
+
+/* Where is it? */
+
+/* Held from the top, so the verse stays put as the answer opens beneath it. */
+.session-where .stage {
+  justify-content: flex-start;
+  padding-top: 14vh;
+}
+
+.where {
+  width: min(100%, 34rem);
+  margin: 0 auto;
+  text-align: center;
+}
+
+.where-verse {
+  margin: 0 0 1.5rem;
+  font-size: clamp(1.4rem, 3.3vw, 1.75rem);
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+
+.where-answer .quiz-prompt {
+  font-size: clamp(1.9rem, 6vw, 2.75rem);
+  color: var(--rubric);
+}
+
+.where-answer .again-note {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.where-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-top: 1.1rem;
+  animation: arrive 0.3s var(--ease-out) backwards;
+}
+
+.where-grid button {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  font-family: var(--display);
+  font-size: 1.2rem;
+  color: var(--soft);
+  border-radius: 4px;
+  transition: color 0.15s ease, opacity 0.3s ease;
+}
+
+.where-grid button:hover:not(:disabled),
+.where-grid .where-typed {
+  color: var(--ink);
+  background: var(--hair);
+}
+
+.where-grid button:disabled {
+  opacity: 1;
+}
+
+.where-grid .quiz-right {
+  color: var(--rubric);
+  animation: pop 0.45s var(--spring);
+}
+
+.where-grid .quiz-miss {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.where-grid button.quiz-other {
+  opacity: 0.45;
 }
 
 @keyframes blot {

@@ -4,6 +4,7 @@ import { Session, type SessionItem } from './components/Session'
 import { StructureMap } from './components/StructureMap'
 import { StructureQuiz } from './components/StructureQuiz'
 import { Welcome } from './components/Welcome'
+import { WhereIsIt } from './components/WhereIsIt'
 import { getBook } from './lib/bible'
 import { revealFrom, withTransition } from './lib/motion'
 import { emptyRecord, loadProgress, saveProgress, writeStore, type Progress, type VerseRecord } from './lib/memory'
@@ -16,6 +17,7 @@ import {
   sectionSpans,
   type Section,
 } from './lib/outline'
+import { WHERE_MINIMUM, startedVerses } from './lib/where'
 
 type Theme = 'light' | 'dark'
 
@@ -42,7 +44,7 @@ export const App = () => {
   const [progress, setProgress] = useState<Progress>(loadProgress)
   const [session, setSession] = useState<SessionItem[]>()
   const [theme, setTheme] = useState<Theme>(initialTheme)
-  const [view, setView] = useState<'page' | 'map' | 'quiz'>('page')
+  const [view, setView] = useState<'page' | 'map' | 'quiz' | 'where'>('page')
   const [section, setSection] = useState<Section>()
   const [recall, setRecall] = useState<Progress>(loadStructureRecall)
   const book = getBook(place.book)
@@ -83,6 +85,7 @@ export const App = () => {
 
   const leaveSession = useCallback(() => withTransition('screen', () => setSession(undefined)), [])
   const leaveQuiz = useCallback(() => withTransition('screen', () => setView('map')), [])
+  const leaveWhere = useCallback(() => withTransition('screen', () => setView('page')), [])
 
   const gradeQuestion = useCallback((key: string, clean: boolean) => {
     setRecall((current) => ({ ...current, [key]: gradeStructure(current[key] ?? emptyRecord(), clean) }))
@@ -151,6 +154,10 @@ export const App = () => {
     )
   }
 
+  if (view === 'where') {
+    return <WhereIsIt book={book} translation={place.translation} progress={progress} onExit={leaveWhere} />
+  }
+
   if (view === 'map' && outline) {
     return (
       <StructureMap
@@ -190,6 +197,11 @@ export const App = () => {
           mapScroll.current = 0
           withTransition('screen', () => setView('map'))
         })
+      }
+      onWhere={
+        startedVerses(progress, place.translation, book.code).length >= WHERE_MINIMUM
+          ? () => withTransition('screen', () => setView('where'))
+          : undefined
       }
     />
   )

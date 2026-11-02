@@ -18,6 +18,10 @@ Books with an outline get a one-page map, reached from the main page. Each secti
 
 Quiz recall is scheduled like verses but kept in its own store, apart from verse progress and shared across translations.
 
+## Where is it?
+
+Once three verses of a book are begun, the main page offers a drill in the other direction: a random verse from those you have begun, shown whole, and you find its chapter and verse. Tap or type the numbers. Answers are tallied for the round only and do not change when a verse is next due.
+
 ## Translations
 
 BSB, WEB, NET, LEB, KJV, ASV and the Geneva Bible load from the free [Bible API](https://bible.helloao.org) and are cached in the browser. NET and LEB are copyrighted, so the app shows their required credits and links.
