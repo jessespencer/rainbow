@@ -113,7 +113,7 @@ const overlays = el("div", "canvas-status", canvasArea);
 const statusRow = el("div", "status-row", overlays);
 const livesCount = el("span", undefined, statusRow);
 livesCount.textContent = `${figures.length} lives`;
-const eraSelect = el("select", "era-select", statusRow);
+const eraSelect = el("select", "era-select bui-select", statusRow);
 eraSelect.setAttribute("aria-label", "Jump to an era");
 el("option", undefined, eraSelect).textContent = "Era";
 eraSelect.options[0]!.value = "";

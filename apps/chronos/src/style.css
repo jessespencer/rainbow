@@ -526,7 +526,7 @@ body {
   font-size: 10px;
   font-weight: 500;
   padding: 3px 10px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   white-space: nowrap;
   pointer-events: none;
   user-select: none;
@@ -898,7 +898,7 @@ body {
   height: 28px;
   padding: 0 48px 0 14px;
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-md);
   outline: none;
   background: var(--fill-subtle);
   color: var(--text-primary);
@@ -1001,7 +1001,7 @@ body {
   gap: 2px;
   padding: 3px;
   border: 1px solid var(--border-faint);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-md);
   background: var(--fill-subtle);
 }
 
@@ -1009,7 +1009,7 @@ body {
   height: 28px;
   padding: 0 14px;
   border: none;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-dim);
   font-family: var(--font-mono);
@@ -1071,14 +1071,6 @@ body {
 
 .era-select {
   width: 76px;
-  height: 28px;
-  padding: 0 8px;
-  border: 1px solid var(--border-faint);
-  border-radius: var(--radius-pill);
-  background: var(--fill-subtle);
-  color: var(--text-secondary);
-  font-family: var(--font-mono);
-  font-size: 11px;
   backdrop-filter: blur(8px);
 }
 
@@ -1088,7 +1080,7 @@ body {
   align-items: center;
   height: 28px;
   border: 1px solid var(--border-faint);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-md);
   background: var(--fill-subtle);
   color: var(--text-dim);
   font-family: var(--font-mono);
@@ -1177,7 +1169,7 @@ body {
   margin-right: auto;
   padding: 2px;
   border: 1px solid var(--border-faint);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-md);
   background: var(--fill-subtle);
   backdrop-filter: blur(8px);
 }
@@ -1190,7 +1182,7 @@ body {
   height: 22px;
   padding: 0 12px;
   border: none;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-dim);
   font-family: var(--font-mono);
@@ -1308,7 +1300,7 @@ body {
   width: 28px;
   height: 28px;
   border: 1px solid var(--border-faint);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--fill-subtle);
   color: var(--text-dim);
   font-size: 18px;
@@ -1578,15 +1570,6 @@ body {
 
 .timeline-view--intro {
   animation: timeline-sweep 1.6s cubic-bezier(0.3, 0, 0.2, 1) both;
-}
-
-/* ─── Keyboard Focus ──────────────────────────────────────────── */
-
-button:focus-visible,
-select:focus-visible,
-a:focus-visible {
-  outline: 2px solid var(--accent-text);
-  outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
