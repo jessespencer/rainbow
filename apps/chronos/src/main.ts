@@ -6,6 +6,7 @@ import { initSelectMenus } from "@jessespencer/bible-ui/select-menu";
 import { Compass, createElement } from "lucide";
 import {
   yearToX,
+  xToYear,
   formatYear,
   getTimelineWidth,
   MIN_YEAR,
@@ -23,7 +24,7 @@ import { initSearch } from "./lib/search.ts";
 import type { SearchResult } from "./lib/search.ts";
 import { el } from "./lib/dom.ts";
 import { CATEGORY_DESCRIPTIONS, CATEGORY_NAMES, CATEGORY_ORDER } from "./lib/categories.ts";
-import { ERA_BANDS } from "./lib/eras.ts";
+import { ERA_BANDS, type EraBand } from "./lib/eras.ts";
 import { figures } from "./data/timeline.ts";
 import type { Category, TimelineFigure } from "./data/timeline.ts";
 import { onViewChange, getView, setView } from "./lib/viewState.ts";
@@ -43,6 +44,8 @@ const MIN_TICK_LABEL_GAP = 60;
 const YEAR_STEP = 10;
 const MIN_FOCUS_YEARS = 60;
 const FOCUS_PADDING_RATIO = 0.15;
+// Space kept above an era's first bar when its lives don't all fit on screen
+const ERA_TOP_MARGIN = 24;
 
 interface EraMarker {
   year: number;
@@ -519,10 +522,52 @@ const focusFigure = (figure: TimelineFigure) => {
   });
 };
 
+/** Where to scroll so the era's lives are on screen: all of them centred, or the first at the top. */
+const eraTop = (era: EraBand): number => {
+  if (getView() !== "timeline") return mainViewport.scrollTop;
+  const origin = mainInner.getBoundingClientRect().top;
+  let top = Infinity;
+  let bottom = -Infinity;
+  for (const figure of figures) {
+    if (figure.death < era.startYear || figure.birth > era.endYear) continue;
+    const rect = barMap.get(figure.id)?.getBoundingClientRect();
+    if (!rect) continue;
+    top = Math.min(top, rect.top - origin);
+    bottom = Math.max(bottom, rect.bottom - origin);
+  }
+  if (top === Infinity) return mainViewport.scrollTop;
+  const room = mainViewport.clientHeight;
+  return bottom - top <= room - ERA_TOP_MARGIN * 2
+    ? (top + bottom) / 2 - room / 2
+    : top - ERA_TOP_MARGIN;
+};
+
+// The era a jump landed on, shown in the menu until the view leaves it.
+let shownEra: EraBand | null = null;
+
+const focusEra = (era: EraBand) => {
+  shownEra = era;
+  eraSelect.value = String(ERA_BANDS.indexOf(era));
+  const startTop = mainViewport.scrollTop;
+  // Measured each frame, since rows grow as the zoom does.
+  zoom.focusRange(era.startYear, era.endYear, (progress) => {
+    mainViewport.scrollTop = startTop + (eraTop(era) - startTop) * progress;
+    syncScroll();
+  });
+};
+
 eraSelect.addEventListener("change", () => {
   const era = ERA_BANDS[Number(eraSelect.value)];
-  if (eraSelect.value && era) zoom.focusRange(era.startYear, era.endYear);
-  eraSelect.value = "";
+  if (eraSelect.value && era) focusEra(era);
+});
+
+mainViewport.addEventListener("scroll", () => {
+  if (!shownEra || document.body.classList.contains("zooming")) return;
+  const center = xToYear(mainViewport.scrollLeft + mainViewport.clientWidth / 2);
+  if (center < shownEra.startYear || center > shownEra.endYear) {
+    shownEra = null;
+    eraSelect.value = "";
+  }
 });
 
 initSearch(headerCenter!, (result: SearchResult) => {
@@ -538,7 +583,7 @@ initSearch(headerCenter!, (result: SearchResult) => {
       behavior: smoothScroll(),
     });
   } else {
-    zoom.focusRange(result.era.startYear, result.era.endYear);
+    focusEra(result.era);
   }
 });
 
