@@ -95,8 +95,8 @@ export function renderHeatmap(
       const count = heatmap.matrix[r * N + c];
       if (count === 0) continue;
       if (scale === 'expected') {
-        if (r === c) continue;
-        const lift = heatmap.lift[r * N + c];
+        // The diagonal isn't scored, so it gets the faint grid fill and a rule drawn below, never black
+        const lift = r === c ? 0 : heatmap.lift[r * N + c];
         // Pairs at or below chance stay as a faint grid so the shape of the canon still reads
         ctx.fillStyle = lift > 1 ? LIFT_COLOR : '#8A8F9C';
         ctx.globalAlpha = lift > 1 ? 0.06 + 0.94 * Math.min(1, Math.log(lift) / Math.log(LIFT_FULL)) : 0.06;
@@ -142,6 +142,19 @@ export function renderHeatmap(
   ctx.moveTo(offsetX, offsetY + otEnd * cellSize);
   ctx.lineTo(offsetX + size, offsetY + otEnd * cellSize);
   ctx.stroke();
+
+  if (scale === 'expected') {
+    ctx.beginPath();
+    ctx.moveTo(offsetX, offsetY);
+    ctx.lineTo(offsetX + size, offsetY + size);
+    ctx.stroke();
+
+    ctx.font = '10px "DM Mono", monospace';
+    ctx.fillStyle = 'rgba(180,180,190,0.6)';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText('Diagonal: a book with itself, not scored', offsetX, offsetY + size + 8);
+  }
 }
 
 export function heatmapHitTest(
