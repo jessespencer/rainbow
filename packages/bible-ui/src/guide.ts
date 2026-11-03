@@ -60,6 +60,19 @@ const markSeen = (id: string) => {
   }
 };
 
+/** Stops a press, and the click it would become, from reaching anything else. */
+export const swallowPress = (event: PointerEvent): void => {
+  event.stopPropagation();
+  event.preventDefault();
+  const click = (e: Event) => {
+    e.stopPropagation();
+    e.preventDefault();
+  };
+  document.addEventListener("click", click, { capture: true, once: true });
+  // A press that never becomes a click (a drag) mustn't leave the next real click swallowed.
+  setTimeout(() => document.removeEventListener("click", click, true), 600);
+};
+
 const node = <K extends keyof HTMLElementTagNameMap>(tag: K, className: string, parent?: HTMLElement) => {
   const el = document.createElement(tag);
   el.className = className;
@@ -125,9 +138,12 @@ export const createGuide = ({ parent, stage, icon }: GuideConfig): GuideHandle =
     hideTip();
     if (e.key === "Escape") details.open = false;
   });
+  // A press outside only closes the panel: caught before the view sees it, so it can't also pick something.
   document.addEventListener("pointerdown", (e) => {
-    if (details.open && !details.contains(e.target as Node)) details.open = false;
-  });
+    if (!details.open || details.contains(e.target as Node)) return;
+    details.open = false;
+    swallowPress(e);
+  }, true);
   details.addEventListener("toggle", hideTip);
   touchOnly.addEventListener("change", render);
 

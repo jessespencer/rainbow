@@ -3,6 +3,7 @@
  * Bibles on offer, grouped by language, with the chosen one's licence underneath.
  */
 
+import { swallowPress } from "./guide";
 import { TRANSLATIONS, type Translation } from "./translations";
 
 export interface TranslationPickerConfig {
@@ -85,8 +86,10 @@ export const createTranslationPicker = ({ parent, current, onChange }: Translati
     setOpen(panel.hidden);
   });
   document.addEventListener("pointerdown", (event) => {
-    if (!panel.hidden && !root.contains(event.target as Node)) setOpen(false);
-  });
+    if (panel.hidden || root.contains(event.target as Node)) return;
+    setOpen(false);
+    swallowPress(event);
+  }, true);
   root.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !panel.hidden) {
       event.stopPropagation();

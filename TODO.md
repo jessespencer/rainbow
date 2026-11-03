@@ -22,8 +22,8 @@ Work agreed but not done yet, roughly in order. Tick items off in the commit tha
 - [x] Favicons from the app icons
 
 ## Fixes and checks
-- [ ] Check wheel zoom in Firefox (trekhleb's app crashed there)
-- [ ] Lineage: closing the Controls panel by clicking the timeline also picks a year
+- [x] Check wheel zoom in Firefox (trekhleb's app crashed there): line and page wheel deltas, Firefox's kind, zoom cleanly in both apps. Not yet run in Firefox itself
+- [x] Lineage: closing the Controls panel by clicking the timeline also picks a year
 - [ ] Family Tree label widths still estimated for DM Mono
 - [ ] Test Galaxy's + and − keys, and everything on a real phone
 - [ ] Move Atlas onto bible-ui's compact header and `setupSheet`
