@@ -46,7 +46,8 @@ body {
 /* ─── HEADER OVERRIDES ───────────────────────────────────── */
 /* #app outranks bible-ui's stylesheet, which loads after this one. */
 #app .bui-header {
-  padding: 10px 24px;
+  /* Each side matches the gap above and below its edge control: the 28px logo on the left, the 36px view toggle on the right */
+  padding: 10px 10px 10px 14px;
   border-bottom: 1px solid var(--border-faint);
   /* Above the canvas chrome (10) and panel (50) so the app switcher menu can open over them. */
   z-index: 60;
