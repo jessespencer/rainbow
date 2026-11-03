@@ -28,7 +28,7 @@ Tap a verse, chapter, or book on the axis to bring its arcs forward while the re
 
 ### See it as a matrix
 
-The heatmap collapses the same links into a 66×66 grid, where each cell's brightness shows how many links join two books. Tap a cell to open the strongest one.
+The heatmap collapses the same links into a 66×66 grid, one cell for each pair of books. It opens on Affinity, which sets book size aside: each pair is compared with the share of links it would get if every book's links were spread across the others in proportion, so parallel histories, sister letters, and Daniel with Revelation stand out. Same-book links are left out of that comparison. Switch the scale to Link count to see raw totals instead. Tap a cell to open the strongest link.
 
 ### See it as a galaxy
 
@@ -50,6 +50,7 @@ Galaxy turns every verse into a star on a two-armed spiral, one arm per Testamen
 | `genre` | `?genre=gospels` | Section filter |
 | `view` | `?view=heatmap`, `?view=galaxy` | Open the heatmap or the galaxy |
 | `shape` | `?view=galaxy&shape=ring` | Galaxy shape: `ring` or `binary` |
+| `scale` | `?view=heatmap&scale=count` | Heatmap shows raw link counts instead of affinity |
 
 On a keyboard, `⌘K` or `Ctrl K` jumps to search, `←` and `→` step to the previous or next verse, chapter, or connection, and `Esc` clears everything.
 

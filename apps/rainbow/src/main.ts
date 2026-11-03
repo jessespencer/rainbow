@@ -11,7 +11,7 @@ import {
   linksInPassage, linkToEnd, linkToStart, linkVotes, type LinkFilter, type LinkStore,
 } from './lib/links';
 import { AXIS_BAND, hitTestLink, renderAxis, renderDivider, renderLink, type ScreenTransform } from './lib/renderer';
-import { buildHeatmapData, heatmapHitTest, renderHeatmap, type HeatmapData } from './lib/heatmap';
+import { buildHeatmapData, heatmapHitTest, renderHeatmap, type HeatmapData, type HeatmapScale } from './lib/heatmap';
 import { hideTooltip, showLinkTooltip, showPassageTooltip } from './lib/tooltip';
 import { setupZoom, zoomTo, type ZoomState } from './lib/zoom';
 import { rememberSection, renderLinkView, renderPassageView, type CompanionTarget, type VerseTexts } from './lib/companion';
@@ -99,7 +99,7 @@ function render() {
   ctx.clearRect(0, 0, width, height);
 
   if (viewMode === 'heatmap') {
-    renderHeatmap(ctx, heatmapData, width, height);
+    renderHeatmap(ctx, heatmapData, width, height, heatmapScale());
   } else if (viewMode === 'arcs') {
     const dimmed = preview !== null || selection !== null || filter.genre !== null;
     arcs.draw({ ...transform(), width, height, dpr, reveal: introProgress(), backgroundAlpha: dimmed ? BACKGROUND_DIM : 1 });
@@ -183,6 +183,8 @@ function updateStats() {
 }
 
 const shapeSelect = () => document.getElementById('galaxy-shape') as HTMLSelectElement;
+const scaleSelect = () => document.getElementById('heatmap-scale') as HTMLSelectElement;
+const heatmapScale = () => scaleSelect().value as HeatmapScale;
 
 function galaxyOptions() {
   return {
@@ -276,6 +278,7 @@ function writeUrl(mode: 'push' | 'replace') {
   if (filter.genre !== null) params.set('genre', GENRES[filter.genre].id);
   if (viewMode !== 'arcs') params.set('view', viewMode);
   if (viewMode === 'galaxy' && shapeSelect().selectedIndex > 0) params.set('shape', shapeSelect().value);
+  if (viewMode === 'heatmap' && scaleSelect().selectedIndex > 0) params.set('scale', scaleSelect().value);
   const query = params.toString().replace(/%3A/g, ':');
   const url = `${window.location.pathname}${query ? `?${query}` : ''}`;
   if (mode === 'push') window.history.pushState(null, '', url);
@@ -345,6 +348,7 @@ function setViewMode(mode: ViewMode) {
   document.getElementById('view-galaxy')!.classList.toggle('active', mode === 'galaxy');
   document.getElementById('arc-canvas')!.classList.toggle('hidden', mode !== 'arcs');
   document.getElementById('app')!.classList.toggle('galaxy-mode', mode === 'galaxy');
+  document.getElementById('app')!.classList.toggle('heatmap-mode', mode === 'heatmap');
   hideTooltip();
   galaxy?.setActive(mode === 'galaxy');
   if (mode === 'galaxy') void openGalaxy();
@@ -426,6 +430,11 @@ function setupGalaxyLayers() {
   });
   shapeSelect().addEventListener('change', () => {
     galaxy?.setOptions(galaxyOptions());
+    writeUrl('replace');
+  });
+  scaleSelect().addEventListener('change', () => {
+    hideTooltip();
+    scheduleRender();
     writeUrl('replace');
   });
 }
@@ -659,7 +668,12 @@ function updateHover(pointer: NonNullable<typeof pendingPointer>) {
     const hit = heatmapHitTest(x, y, width, height);
     const count = hit ? heatmapData.matrix[hit.row * 66 + hit.col] : 0;
     if (hit && count > 0) {
-      showPassageTooltip(`${BOOKS[hit.row].name} &harr; ${BOOKS[hit.col].name}`, count, clientX, clientY);
+      const title = `${BOOKS[hit.row].name} &harr; ${BOOKS[hit.col].name}`;
+      const lift = heatmapData.lift[hit.row * 66 + hit.col];
+      const detail = heatmapScale() !== 'expected' ? undefined
+        : hit.row === hit.col ? 'Same book, not compared'
+        : `Affinity ${lift.toFixed(1)}&times; the expected share`;
+      showPassageTooltip(title, count, clientX, clientY, detail);
     } else {
       hideTooltip();
     }
@@ -804,6 +818,9 @@ function readUrl(): Selection | null {
   const shape = shapeSelect();
   shape.value = params.get('shape') ?? '';
   if (shape.selectedIndex < 0) shape.selectedIndex = 0;
+  const scale = scaleSelect();
+  scale.value = params.get('scale') ?? '';
+  if (scale.selectedIndex < 0) scale.selectedIndex = 0;
   galaxy?.setOptions(galaxyOptions());
   const view = params.get('view');
   setViewMode(view === 'heatmap' || view === 'galaxy' ? view : 'arcs');

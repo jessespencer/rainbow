@@ -32,7 +32,7 @@ The shared package is a local dependency at `../bible-ui`. Rainbow's `src/style.
 - **Galaxy shapes are position sets** — each shape is one `layout*` function returning a position per verse, built on first use. Stars and edges morph between them
 - **One vibrancy** — arcs blend additively with one alpha rule; selections and section filters fade the other arcs to `BACKGROUND_DIM` rather than brightening their own
 - **Colors are genres** — the 8 canon sections in `data/genres.ts`; OpenBible has no theme data, so don't invent categories
-- **URL is state** — `?ref=John.3.16&to=Rom.5.8&votes=10&genre=gospels&view=galaxy&shape=ring`
+- **URL is state** — `?ref=John.3.16&to=Rom.5.8&votes=10&genre=gospels&view=galaxy&shape=ring` (or `view=heatmap&scale=count`)
 - **Canvas overlays** — legend, stats, zoom and credits float over the canvas; `pointer-events: none` on their wrappers keeps pan and tap working underneath
 - **About dialog** — holds the full credits. Keep the OpenBible link visible in `#canvas-credits`
 - **Phone** — below 760px the companion is a bottom sheet; a finger on the book strip scrubs, elsewhere it pans and pinches. Galaxy shifts its view up by `setInset` to stay clear of the sheet

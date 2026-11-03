@@ -3,13 +3,22 @@ import { BOOK_GENRE, GENRES } from '../data/genres';
 import { linkFrom, linkToStart, type LinkStore } from './links';
 import { VERSE_BOOK } from './verses';
 
+export type HeatmapScale = 'count' | 'expected';
+
 export interface HeatmapData {
   // matrix[row * 66 + col] = links between the two books, mirrored across the diagonal
   matrix: Float32Array;
   maxCount: number;
+  // lift[row * 66 + col] = cross-book links over what the two books' link totals predict; 0 on the diagonal
+  lift: Float32Array;
 }
 
 const N = TOTAL_BOOKS;
+// Pseudo-count added to both sides of the ratio, so a pair of short books with two links isn't the brightest cell
+const LIFT_PRIOR = 5;
+// Ratio that reaches full brightness
+const LIFT_FULL = 8;
+const LIFT_COLOR = '#E8B84B';
 
 function cellMetrics(canvasWidth: number, canvasHeight: number) {
   const padding = Math.min(canvasWidth, canvasHeight) < 480 ? 30 : 60;
@@ -30,7 +39,35 @@ export function buildHeatmapData(store: LinkStore, ids: Int32Array): HeatmapData
     matrix[a * N + b]++;
     if (a !== b) matrix[b * N + a]++;
   }
-  return { matrix, maxCount: Math.max(...matrix) };
+  return { matrix, maxCount: Math.max(...matrix), lift: buildLift(matrix) };
+}
+
+// Books cite themselves far more than chance would, so same-book links are left out:
+// each cross-book pair is compared with what it would get if every book's links went to other books at random.
+function buildLift(matrix: Float32Array): Float32Array {
+  const ends = new Float64Array(N);
+  let total = 0;
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      if (r === c) continue;
+      ends[r] += matrix[r * N + c];
+      if (c > r) total += matrix[r * N + c];
+    }
+  }
+  let mass = 0;
+  for (let r = 0; r < N; r++) {
+    for (let c = r + 1; c < N; c++) mass += ends[r] * ends[c];
+  }
+  const lift = new Float32Array(N * N);
+  if (mass === 0) return lift;
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      if (r === c) continue;
+      const expected = total * ends[r] * ends[c] / mass;
+      lift[r * N + c] = (matrix[r * N + c] + LIFT_PRIOR) / (expected + LIFT_PRIOR);
+    }
+  }
+  return lift;
 }
 
 function cellColor(row: number, col: number): string {
@@ -46,6 +83,7 @@ export function renderHeatmap(
   heatmap: HeatmapData,
   canvasWidth: number,
   canvasHeight: number,
+  scale: HeatmapScale,
 ) {
   const { size, cellSize, offsetX, offsetY } = cellMetrics(canvasWidth, canvasHeight);
 
@@ -56,9 +94,17 @@ export function renderHeatmap(
     for (let c = 0; c < N; c++) {
       const count = heatmap.matrix[r * N + c];
       if (count === 0) continue;
-      const intensity = Math.log(count + 1) / Math.log(heatmap.maxCount + 1);
-      ctx.fillStyle = cellColor(r, c);
-      ctx.globalAlpha = 0.15 + intensity * 0.85;
+      if (scale === 'expected') {
+        if (r === c) continue;
+        const lift = heatmap.lift[r * N + c];
+        // Pairs at or below chance stay as a faint grid so the shape of the canon still reads
+        ctx.fillStyle = lift > 1 ? LIFT_COLOR : '#8A8F9C';
+        ctx.globalAlpha = lift > 1 ? 0.06 + 0.94 * Math.min(1, Math.log(lift) / Math.log(LIFT_FULL)) : 0.06;
+      } else {
+        const intensity = Math.log(count + 1) / Math.log(heatmap.maxCount + 1);
+        ctx.fillStyle = cellColor(r, c);
+        ctx.globalAlpha = 0.15 + intensity * 0.85;
+      }
       ctx.fillRect(
         offsetX + c * cellSize,
         offsetY + r * cellSize,

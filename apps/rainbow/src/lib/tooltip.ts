@@ -16,10 +16,11 @@ export function showLinkTooltip(title: string, votes: number, x: number, y: numb
   `, x, y);
 }
 
-export function showPassageTooltip(title: string, count: number, x: number, y: number) {
+export function showPassageTooltip(title: string, count: number, x: number, y: number, detail?: string) {
   place(`
     <div class="tt-books">${title}</div>
     <div class="tt-count">${count.toLocaleString()} connection${count === 1 ? '' : 's'}</div>
+    ${detail ? `<div class="tt-count">${detail}</div>` : ''}
   `, x, y);
 }
 

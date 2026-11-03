@@ -507,7 +507,10 @@ body {
   display: none;
 }
 
-#galaxy-shape { display: none; }
+#galaxy-shape,
+#heatmap-scale { display: none; }
+
+#app.heatmap-mode #heatmap-scale { display: block; }
 
 #app.galaxy-mode #galaxy-layers,
 #app.galaxy-mode #galaxy-shape { display: block; }
