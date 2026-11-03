@@ -16,8 +16,8 @@ Work agreed but not done yet, roughly in order. Tick items off in the commit tha
 - [ ] Light mode: parchment base, accents deepened for paper, arcs that darken as they overlap
 - [x] Header rainbow line in the even section colours
 - [x] Lineage category and era colours tuned for Deep Night (harmonised, not one lightness: twelve categories need lightness to stay apart)
-- [ ] Faint starfield in empty space
-- [ ] Arc exposure that follows the view: calm overview, brighter as you filter or zoom
+- [x] Faint starfield in empty space (Atlas's arcs view)
+- [x] Arc exposure that follows the view: calm overview, brighter as you filter or zoom (arcs already brighten as you zoom; a selection now draws 1.4× brighter over a 10% background)
 - [ ] Custom dropdowns that open below the control (keep native pickers on touch screens)
 - [x] Favicons from the app icons
 

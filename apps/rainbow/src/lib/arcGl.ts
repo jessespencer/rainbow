@@ -39,6 +39,8 @@ const MAX_ALPHA = 0.7;
 // How bright the summed light is before the curve maps it. A little over 1, so the overview keeps
 // its sparkle now that dense areas no longer clip.
 const EXPOSURE = 1.35;
+// How much brighter a selection's arcs draw than the same arcs in the overview.
+const FOCUS_LIFT = 1.4;
 
 // World-span buckets: small arcs need few segments, which keeps a whole-Bible draw light on phones.
 const BUCKETS = [
@@ -102,14 +104,22 @@ in vec2 v_uv;
 uniform sampler2D u_light;
 uniform vec3 u_base;
 uniform float u_exposure;
+uniform float u_dpr;
 out vec4 color;
+// A faint fixed starfield, in screen space, that only shows in empty sky.
+float star(vec2 pixel) {
+  vec2 cell = floor(pixel / (2.0 * u_dpr));
+  float pick = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
+  return pick > 0.9982 ? (pick - 0.9982) / 0.0018 : 0.0;
+}
 void main() {
   vec3 light = texture(u_light, v_uv).rgb * u_exposure;
   float luma = dot(light, vec3(0.2126, 0.7152, 0.0722));
   vec3 mapped = luma > 0.0 ? light * (1.0 - exp(-luma)) / luma : light;
   mapped /= max(1.0, max(mapped.r, max(mapped.g, mapped.b)));
   mapped = mix(mapped, vec3(1.0), smoothstep(1.5, 9.0, luma) * 0.6);
-  color = vec4(min(u_base + mapped, vec3(1.0)), 1.0);
+  vec3 sky = vec3(0.78, 0.84, 1.0) * star(gl_FragCoord.xy) * 0.5 * exp(-luma * 40.0);
+  color = vec4(min(u_base + mapped + sky, vec3(1.0)), 1.0);
 }`;
 
 function compile(gl: WebGL2RenderingContext, type: number, source: string): WebGLShader {
@@ -162,7 +172,7 @@ function link(gl: WebGL2RenderingContext, vertex: string, fragment: string): Web
 }
 
 interface LightBuffer {
-  resize(width: number, height: number): void;
+  resize(width: number, height: number, dpr: number): void;
   begin(): void;
   finish(exposure: number): void;
 }
@@ -173,6 +183,7 @@ function createLightBuffer(gl: WebGL2RenderingContext, base: [number, number, nu
   if (!gl.getExtension('EXT_color_buffer_float')) return null;
   const program = link(gl, COMPOSITE_VERTEX, COMPOSITE_FRAGMENT);
   const exposure = gl.getUniformLocation(program, 'u_exposure');
+  const dprUniform = gl.getUniformLocation(program, 'u_dpr');
   gl.useProgram(program);
   gl.uniform1i(gl.getUniformLocation(program, 'u_light'), 0);
   gl.uniform3f(gl.getUniformLocation(program, 'u_base'), ...base);
@@ -191,7 +202,9 @@ function createLightBuffer(gl: WebGL2RenderingContext, base: [number, number, nu
   let height = 1;
 
   return {
-    resize(w, h) {
+    resize(w, h, dpr) {
+      gl.useProgram(program);
+      gl.uniform1f(dprUniform, dpr);
       width = Math.max(1, w);
       height = Math.max(1, h);
       gl.bindRenderbuffer(gl.RENDERBUFFER, color);
@@ -315,7 +328,7 @@ export function createArcRenderer(canvas: HTMLCanvasElement): ArcRenderer | null
       canvas.width = Math.round(width * dpr);
       canvas.height = Math.round(height * dpr);
       gl.viewport(0, 0, canvas.width, canvas.height);
-      light?.resize(canvas.width, canvas.height);
+      light?.resize(canvas.width, canvas.height, dpr);
     },
 
     draw(view) {
@@ -335,8 +348,8 @@ export function createArcRenderer(canvas: HTMLCanvasElement): ArcRenderer | null
       gl.uniform1f(uniforms.alpha, arcAlpha(backgroundCount, view) * view.backgroundAlpha);
       for (let b = background.length - 1; b >= 0; b--) drawBatch(background[b], view.k);
 
-      // The same rule as the full view, so color doesn't jump when a selection narrows the arcs.
-      gl.uniform1f(uniforms.alpha, arcAlpha(focus.count, view));
+      // The same rule as the full view, lifted a little: the calm overview stays calm, and what you pick glows.
+      gl.uniform1f(uniforms.alpha, Math.min(MAX_ALPHA, arcAlpha(focus.count, view) * FOCUS_LIFT));
       drawBatch(focus, view.k);
       gl.bindVertexArray(null);
       light?.finish(EXPOSURE);
