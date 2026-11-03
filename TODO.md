@@ -19,7 +19,7 @@ Work agreed but not done yet, roughly in order. Tick items off in the commit tha
 - [ ] Faint starfield in empty space
 - [ ] Arc exposure that follows the view: calm overview, brighter as you filter or zoom
 - [ ] Custom dropdowns that open below the control (keep native pickers on touch screens)
-- [ ] Favicons from the app icons
+- [x] Favicons from the app icons
 
 ## Fixes and checks
 - [ ] Check wheel zoom in Firefox (trekhleb's app crashed there)
