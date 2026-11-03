@@ -4,6 +4,32 @@ html:root {
   --accent-rgb:    142, 197, 255;
   --accent-bright: #CFE6FF;
   --accent-fill:   #13305C;
+  --night-accent-rgb: 142, 197, 255;
+}
+
+/* By day, a blue-black ink; and the section colours on one darker line for paper (data/genres.ts `ink`) */
+html[data-theme="light"]:root {
+  --accent-rgb:    36, 82, 150;
+  --accent-bright: #173A6B;
+  --accent-fill:   #D9E1EC;
+
+  --crimson:   #A34945;
+  --ember:     #9F5021;
+  --saffron:   #886200;
+  --moss:      #527621;
+  --fern:      #037D4E;
+  --verdigris: #007E77;
+  --cerulean:  #286CAB;
+  --iris:      #7457A3;
+
+  --crimson-tint:   rgba(163,73,69,0.10);
+  --ember-tint:     rgba(159,80,33,0.10);
+  --saffron-tint:   rgba(136,98,0,0.10);
+  --moss-tint:      rgba(82,118,33,0.10);
+  --fern-tint:      rgba(3,125,78,0.10);
+  --verdigris-tint: rgba(0,126,119,0.10);
+  --cerulean-tint:  rgba(40,108,171,0.10);
+  --iris-tint:      rgba(116,87,163,0.10);
 }
 
 :root {
@@ -495,6 +521,22 @@ body {
 }
 
 #app.heatmap-mode #sky { display: none; }
+
+/* By day the arcs draw their own paper, and Galaxy keeps a night sky: the stage turns dark,
+   and .bui-night (set in main.ts) gives the chips over it Night's tokens. */
+html[data-theme="light"] #app:not(.galaxy-mode) #sky { display: none; }
+html[data-theme="light"] #app.galaxy-mode #canvas-container { background: #020611; }
+
+html[data-theme="light"] .bui-night {
+  --crimson:   #EB827B;
+  --ember:     #E18C5F;
+  --saffron:   #C79E41;
+  --moss:      #8CB460;
+  --fern:      #5ABB88;
+  --verdigris: #4AB9B2;
+  --cerulean:  #67AAED;
+  --iris:      #B191EA;
+}
 
 #main-canvas { touch-action: none; }
 
@@ -1348,7 +1390,7 @@ body {
     border-left: none;
     border-top: 1px solid var(--border-default);
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    box-shadow: 0 -8px 32px rgba(4, 8, 22, 0.5);
+    box-shadow: var(--shadow-sheet);
     transform: translateY(calc(var(--drag, 0px)));
     transition: transform 0.25s ease;
   }

@@ -12,6 +12,7 @@
     "./style.css": "./src/style.css",
     "./guide": "./src/guide.ts",
     "./tokens": "./src/tokens.ts",
+    "./theme": "./src/theme.ts",
     "./translations": "./src/translations.ts",
     "./translation-picker": "./src/translationPicker.ts",
     "./share": "./src/share.ts",

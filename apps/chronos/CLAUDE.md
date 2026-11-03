@@ -8,7 +8,7 @@ Scope: Adam through Jesus's resurrection (~AD 33). No apostolic age yet.
 
 - **Vanilla TypeScript + Vite** — no framework, no React
 - Single page: HTML + CSS + TS
-- Deep Night theme via shared design tokens from `@jessespencer/bible-ui`, with Lineage's Candlelight accent set on `html:root` at the top of `src/style.css`. SVG and canvas colors read them with `cssToken()` from `/tokens`
+- Deep Night theme via shared design tokens from `@jessespencer/bible-ui`, with Lineage's Candlelight accent set on `html:root` at the top of `src/style.css`. SVG and canvas colors read them with `cssToken()` from `/tokens`, or pass `var()` straight to SVG attributes, which follows the theme without a redraw. Day's colours sit in an `html[data-theme="light"]:root` rule beside Night's; eras carry a `wash` for Day
 - Typography: IM Fell Great Primer (titles and headings), EB Garamond (reading and UI text, small caps for labels) and DM Mono (numbers and data)
 - Deployed as a static site at `/rainbow/timeline/`
 

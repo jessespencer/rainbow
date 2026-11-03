@@ -13,7 +13,7 @@ Work agreed but not done yet, roughly in order. Tick items off in the commit tha
 - [x] Install for offline use
 
 ## Look and feel
-- [ ] Light mode: parchment base, accents deepened for paper, arcs that darken as they overlap
+- [x] Light mode: parchment base, accents deepened for paper, arcs that darken as they overlap (Day, in the switcher menu; Galaxy stays a night sky)
 - [x] Header rainbow line in the even section colours
 - [x] Lineage category and era colours tuned for Deep Night (harmonised, not one lightness: twelve categories need lightness to stay apart)
 - [x] Faint starfield in empty space (Atlas's arcs view)
@@ -29,7 +29,7 @@ Work agreed but not done yet, roughly in order. Tick items off in the commit tha
 - [ ] Move Atlas onto bible-ui's compact header and `setupSheet`
 
 ## Shipping
-- [ ] Merge PR 9, then open a PR for `feat/controls-guide`
+- [x] Merge PR 9, then open a PR for `feat/controls-guide` (both landed with PR 10)
 - [ ] Push and open a PR for By Heart's `feat/deep-night`
 - [ ] Decide app addresses (`/bible/atlas/`, a subdomain, or keep `/rainbow/`)
 

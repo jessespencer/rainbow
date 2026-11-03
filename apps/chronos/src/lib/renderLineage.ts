@@ -7,7 +7,6 @@
 
 import { yearToX, getTimelineWidth, formatYear, getPixelsPerYear, END_PADDING_PX } from "./scale.ts";
 import { el } from "./dom.ts";
-import { cssToken } from "@jessespencer/bible-ui/tokens";
 import { formatDates } from "./tooltip.ts";
 import { CHRIST_ID } from "./renderBars.ts";
 import type { LineMode } from "./lineToggle.ts";
@@ -305,7 +304,7 @@ export const initLineageView = (
     const dot = svgEl("circle", {
       r: radius,
       fill: color,
-      stroke: cssToken(isChrist ? "--text-bright" : "--station-ring"),
+      stroke: isChrist ? "var(--text-bright)" : "var(--station-ring)",
       "stroke-width": isChrist ? 2.5 : 1.5,
     }, stationGroup);
 

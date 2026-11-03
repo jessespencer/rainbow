@@ -177,7 +177,9 @@ const eraBandEls: EraBandEl[] = [];
 
 for (const era of ERA_BANDS) {
   const band = el("div", "era-band", timelineView);
-  band.style.background = era.color;
+  // Each theme picks its own: see .era-band and .minimap__era in style.css.
+  band.style.setProperty("--era-night", era.color);
+  band.style.setProperty("--era-day", era.wash);
   eraBandEls.push({ element: band, startYear: era.startYear, endYear: era.endYear });
 }
 

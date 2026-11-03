@@ -1,6 +1,6 @@
 import { cssToken } from '@jessespencer/bible-ui/tokens';
 import { BOOKS, TOTAL_BOOKS } from '../data/books';
-import { BOOK_GENRE, GENRES } from '../data/genres';
+import { BOOK_GENRE, GENRES, sectionColor } from '../data/genres';
 import { linkFrom, linkToStart, type LinkStore } from './links';
 import { VERSE_BOOK } from './verses';
 
@@ -72,8 +72,8 @@ function buildLift(matrix: Float32Array): Float32Array {
 
 function cellColor(row: number, col: number): string {
   const channel = (hex: string, shift: number) => Number.parseInt(hex.slice(1), 16) >> shift & 255;
-  const a = GENRES[BOOK_GENRE[row]].color;
-  const b = GENRES[BOOK_GENRE[col]].color;
+  const a = sectionColor(GENRES[BOOK_GENRE[row]]);
+  const b = sectionColor(GENRES[BOOK_GENRE[col]]);
   const mix = (shift: number) => Math.round((channel(a, shift) + channel(b, shift)) / 2);
   return `rgb(${mix(16)},${mix(8)},${mix(0)})`;
 }

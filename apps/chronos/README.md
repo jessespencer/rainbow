@@ -17,6 +17,7 @@ Lineage is an interactive Bible timeline, from Adam to the resurrection of Jesus
 - **Controls.** A button that explains how to explore each view, with a short tip on your first visit. On a keyboard, `+` and `−` zoom.
 - **Links into Atlas.** Open any passage in [Atlas](../rainbow) to see its cross-references.
 - **Shareable.** Every selection has its own address, such as `?figure=king-david` or `?year=-586`, and the panel's share button sends it. Each passage also links out to the ESV, NIV, NLT and NASB.
+- **Night or Day.** Switch from the app menu beside the title, and Atlas follows.
 - **Offline.** After your first visit, Lineage works without a connection, and your browser can install it as an app.
 - **Phones.** Pinch to zoom, pan with a finger, and read in a bottom sheet.
 

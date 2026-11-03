@@ -1,6 +1,7 @@
 import { cssToken } from '@jessespencer/bible-ui/tokens';
+import { currentTheme } from '@jessespencer/bible-ui/theme';
 import { BOOKS } from '../data/books';
-import { BOOK_GENRE, GENRES } from '../data/genres';
+import { BOOK_GENRE, GENRES, sectionColor } from '../data/genres';
 import { BOOK_SPANS, NT_LEFT, OT_RIGHT, pixelsPerVerse, xOfVerse } from './layout';
 import { linkFrom, linkToStart, type LinkStore } from './links';
 import { VERSE_BOOK, verseIndex, type Passage } from './verses';
@@ -29,7 +30,7 @@ export function renderAxis(
     const left = screenX(span.left);
     const right = screenX(span.right);
     if (right < 0 || left > width) continue;
-    ctx.fillStyle = GENRES[BOOK_GENRE[span.index]].color;
+    ctx.fillStyle = sectionColor(GENRES[BOOK_GENRE[span.index]]);
     ctx.globalAlpha = span.index % 2 === 0 ? 0.95 : 0.6;
     ctx.fillRect(left, ty + 2, Math.max(right - left, 0.5), STRIP_HEIGHT);
   }
@@ -96,7 +97,7 @@ export function renderDivider(
 }
 
 export function genreColorOf(verse: number): string {
-  return GENRES[BOOK_GENRE[VERSE_BOOK[verse]]].color;
+  return sectionColor(GENRES[BOOK_GENRE[VERSE_BOOK[verse]]]);
 }
 
 export function renderLink(
@@ -116,14 +117,22 @@ export function renderLink(
   gradient.addColorStop(0, genreColorOf(low));
   gradient.addColorStop(1, genreColorOf(high));
 
-  // A soft glow in the arc's own light, not a hard-edged band around it.
+  const lineWidth = bold ? 2.5 : 1.75;
   ctx.save();
-  ctx.strokeStyle = gradient;
-  ctx.shadowColor = mixHex(genreColorOf(low), genreColorOf(high));
-  ctx.shadowBlur = bold ? 14 : 9;
   ctx.beginPath();
   ctx.arc((x1 + x2) / 2, ty, (x2 - x1) / 2, Math.PI, 0);
-  ctx.lineWidth = bold ? 2.5 : 1.75;
+  if (currentTheme() === 'light') {
+    // By day a glow would smudge, so a thin edge of paper lifts the arc off the ink beneath.
+    ctx.strokeStyle = cssToken('--bg-base');
+    ctx.lineWidth = lineWidth + 3;
+    ctx.stroke();
+  } else {
+    // A soft glow in the arc's own light, not a hard-edged band around it.
+    ctx.shadowColor = mixHex(genreColorOf(low), genreColorOf(high));
+    ctx.shadowBlur = bold ? 14 : 9;
+  }
+  ctx.strokeStyle = gradient;
+  ctx.lineWidth = lineWidth;
   ctx.stroke();
   ctx.restore();
 }

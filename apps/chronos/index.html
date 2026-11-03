@@ -8,8 +8,9 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <meta name="theme-color" content="#020611" />
     <title>Lineage — Bible Timeline</title>
-    <meta name="color-scheme" content="dark" />
-    <style>html { background: #020611; }</style>
+    <!-- Day or Night before first paint (bible-ui's theme.ts), so Day never flashes dark -->
+    <script>try { if (localStorage.getItem('bui-theme') === 'light') { document.documentElement.dataset.theme = 'light'; document.querySelector('meta[name="theme-color"]').content = '#F3EDE0'; } } catch {}</script>
+    <style>html { background: #020611; color-scheme: dark; } html[data-theme="light"] { background: #F3EDE0; color-scheme: light; }</style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&amp;family=EB+Garamond:ital,wght@0,400..800;1,400..800&amp;family=IM+Fell+Great+Primer:ital@0;1&amp;display=block" />

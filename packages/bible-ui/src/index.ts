@@ -5,6 +5,8 @@
  * rainbow gradient bar, and a controls slot for app-specific buttons.
  */
 
+import { currentTheme, onThemeChange, setTheme, type Theme } from "./theme";
+
 export interface AppEntry {
   /** Stable id, matches `HeaderConfig.appId`. */
   id: string;
@@ -18,6 +20,8 @@ export interface AppEntry {
   icon: string;
   /** The app's accent as an `r, g, b` triple; its stylesheet sets the same value as `--accent-rgb`. */
   accent: string;
+  /** The same accent deepened for Day's paper. */
+  accentLight: string;
 }
 
 /** Every app in the ecosystem. Add an entry here to add it to the switcher. */
@@ -30,8 +34,9 @@ export const APPS: AppEntry[] = [
     devPort: 5173,
     // Lucide "rainbow": three arches, like the arc diagram
     icon: '<path d="M22 17a10 10 0 0 0-20 0"/><path d="M6 17a6 6 0 0 1 12 0"/><path d="M10 17a2 2 0 0 1 4 0"/>',
-    // Starlight
+    // Starlight, and by day a blue-black ink
     accent: "142, 197, 255",
+    accentLight: "36, 82, 150",
   },
   {
     id: "chronos",
@@ -41,8 +46,9 @@ export const APPS: AppEntry[] = [
     devPort: 5174,
     // Lucide "git-branch": a family line branching off the main one
     icon: '<path d="M15 6a9 9 0 0 0-9 9V3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/>',
-    // Candlelight
+    // Candlelight, and by day an iron-gall amber
     accent: "242, 196, 107",
+    accentLight: "146, 94, 18",
   },
 ];
 
@@ -55,7 +61,10 @@ const appIcon = (app: AppEntry | undefined, className: string): SVGElement => {
     `<svg class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ` +
     `stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${app?.icon ?? ""}</svg>`;
   const svg = holder.firstElementChild as SVGElement;
-  if (app) svg.style.setProperty("--app-accent", app.accent);
+  if (app) {
+    svg.style.setProperty("--app-accent-dark", app.accent);
+    svg.style.setProperty("--app-accent-light", app.accentLight);
+  }
   return svg;
 };
 
@@ -88,6 +97,46 @@ export interface HeaderHandle {
   /** Centered slot between the title and the controls. Only in compact headers. */
   center: HTMLElement | null;
 }
+
+const THEME_ICONS: Record<Theme, string> = {
+  // Lucide "moon" and "sun"
+  dark: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  light:
+    '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/>' +
+    '<path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/>' +
+    '<path d="m19.07 4.93-1.41 1.41"/>',
+};
+
+/** Night and Day, at the foot of the switcher menu, so it follows the reader to every app. */
+const createThemeSwitch = (): HTMLElement => {
+  const group = document.createElement("div");
+  group.className = "bui-theme segmented";
+  group.setAttribute("role", "group");
+  group.setAttribute("aria-label", "Appearance");
+  const buttons = (["dark", "light"] as const).map((theme) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.innerHTML =
+      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" ` +
+      `stroke-linejoin="round" aria-hidden="true">${THEME_ICONS[theme]}</svg>${theme === "dark" ? "Night" : "Day"}`;
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      setTheme(theme);
+    });
+    group.append(button);
+    return { theme, button };
+  });
+  const sync = () => {
+    for (const { theme, button } of buttons) {
+      const on = theme === currentTheme();
+      button.classList.toggle("active", on);
+      button.setAttribute("aria-pressed", String(on));
+    }
+  };
+  sync();
+  onThemeChange(sync);
+  return group;
+};
 
 /**
  * Dropdown for moving between apps. Renders left of the title group;
@@ -142,6 +191,8 @@ const createAppSwitcher = (currentId: string): HTMLElement => {
     item.append(appIcon(app, "bui-appswitch__item-icon"), text);
     menu.appendChild(item);
   }
+
+  menu.appendChild(createThemeSwitch());
 
   const setOpen = (open: boolean): void => {
     menu.hidden = !open;
