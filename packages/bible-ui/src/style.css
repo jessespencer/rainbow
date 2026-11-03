@@ -224,7 +224,8 @@
 /* #app outranks this sheet's load order against each app's own CSS. */
 
 #app .bui-header--compact {
-  padding: 10px 24px;
+  /* Each side matches the gap above and below its edge control: the 28px logo on the left, the 36px view toggle on the right */
+  padding: 10px 10px 10px 14px;
   border-bottom: 1px solid var(--border-faint);
   z-index: 60;
 }
