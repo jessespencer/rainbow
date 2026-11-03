@@ -43,6 +43,10 @@ export function setupZoom(
   return state;
 }
 
+export function zoomBy(canvas: HTMLCanvasElement, zoomState: ZoomState, factor: number, point: [number, number]) {
+  select(canvas).transition().duration(250).call(zoomState.behavior.scaleBy, factor, point);
+}
+
 export function zoomTo(
   canvas: HTMLCanvasElement,
   zoomState: ZoomState,

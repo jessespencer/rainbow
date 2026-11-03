@@ -14,7 +14,7 @@ Scope: Adam through Jesus's resurrection (~AD 33). No apostolic age yet.
 
 ## Shared Design System
 
-`@jessespencer/bible-ui` provides the compact header and app switcher, the phone bottom sheet (`/sheet`), book and verse numbering (`/bible`), fonts, and design tokens. Chronos imports the shared CSS first, then layers its own tokens on top.
+`@jessespencer/bible-ui` provides the compact header and app switcher, the phone bottom sheet (`/sheet`), the Controls guide (`/guide`, with each view's wording in `src/lib/guides.ts`), book and verse numbering (`/bible`), fonts, and design tokens. Chronos imports the shared CSS first, then layers its own tokens on top.
 
 ## Architecture
 

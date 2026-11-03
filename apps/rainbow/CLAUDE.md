@@ -17,6 +17,7 @@ Both Rainbow and Chronos use the [`@jessespencer/bible-ui`](../bible-ui) package
 - Design tokens — colors, fills, borders, text hierarchy, radii (CSS custom properties)
 - Typography — Fraunces (serif, UI) + DM Mono (monospace, data)
 - Font loading (`loadFonts()`)
+- The Controls guide (`/guide`). Each view's wording lives in `src/lib/guides.ts`; keep it true when a view's input changes
 
 The shared package is a local dependency at `../bible-ui`. Rainbow's `src/style.css` layers app-specific tokens on top of the shared base. Rainbow puts its toolbar in the header's controls slot and compacts the header with `#app`-scoped CSS. Chronos uses the same layout through bible-ui's `compact` option; move Rainbow onto it, and onto bible-ui's `setupSheet`, in place of its own copies.
 

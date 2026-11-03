@@ -52,7 +52,7 @@ Galaxy turns every verse into a star on a two-armed spiral, one arm per Testamen
 | `shape` | `?view=galaxy&shape=ring` | Galaxy shape: `ring` or `binary` |
 | `scale` | `?view=heatmap&scale=count` | Heatmap shows raw link counts instead of affinity |
 
-On a keyboard, `⌘K` or `Ctrl K` jumps to search, `←` and `→` step to the previous or next verse, chapter, or connection, and `Esc` clears everything.
+Each view has a Controls button that explains how to explore it, and the first visit to each view shows a short tip. On a keyboard, `⌘K` or `Ctrl K` jumps to search, `←` and `→` step to the previous or next verse, chapter, or connection, `+` and `−` zoom, and `Esc` clears everything.
 
 ### Use it on your phone
 

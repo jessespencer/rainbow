@@ -392,3 +392,170 @@ a:focus-visible {
   outline: 1.5px solid var(--accent-text);
   outline-offset: 1px;
 }
+
+/* ─── Controls guide ─────────────────────────────────────── */
+.bui-guide {
+  position: relative;
+  pointer-events: auto;
+}
+
+.bui-guide summary {
+  list-style: none;
+}
+
+.bui-guide summary::-webkit-details-marker { display: none; }
+
+.bui-guide[open] summary {
+  background: var(--fill-selected);
+  color: var(--text-bright);
+}
+
+.bui-guide__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 70;
+  width: 272px;
+  padding: 14px 16px 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  text-align: left;
+}
+
+.bui-guide__title {
+  margin: 0 0 8px;
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+}
+
+.bui-guide__title:not(:first-child) {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-faint);
+}
+
+.bui-guide__steps,
+.bui-guide__keys {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bui-guide__step,
+.bui-guide__key {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.bui-guide__step svg {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  color: var(--accent-text);
+}
+
+.bui-guide__caps {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 3px;
+  min-width: 52px;
+}
+
+.bui-guide__caps kbd {
+  min-width: 20px;
+  padding: 1px 5px;
+  border: 1px solid var(--border-default);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--fill-subtle);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-align: center;
+}
+
+/* The first-visit tip: one line of serif over the bottom of the view, gone once the reader starts. */
+.bui-guide__tip {
+  position: absolute;
+  left: 50%;
+  bottom: 56px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100% - 32px);
+  padding: 9px 18px;
+  transform: translateX(-50%);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-elevated) 88%, transparent);
+  backdrop-filter: blur(8px);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-style: italic;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: bui-guide-in 0.5s var(--bui-ease, ease-out) both 0.6s;
+}
+
+.bui-guide__tip[hidden] { display: none; }
+
+.bui-guide__part {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.bui-guide__part svg {
+  width: 16px;
+  height: 16px;
+  color: var(--accent-text);
+}
+
+.bui-guide__dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.bui-guide__tip--leaving {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+@keyframes bui-guide-in {
+  from { opacity: 0; transform: translate(-50%, 6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bui-guide__tip { animation: none; }
+}
+
+@media (max-width: 759px) {
+  .bui-guide__tip {
+    flex-direction: column;
+    gap: 6px;
+    bottom: auto;
+    top: 64px;
+    border-radius: var(--radius-lg);
+    white-space: normal;
+  }
+
+  .bui-guide__dot { display: none; }
+}

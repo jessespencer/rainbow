@@ -63,6 +63,8 @@ interface FlyMotion {
 export interface ZoomHandle {
   /** Show the whole timeline, and keep showing it through resizes. */
   fit: () => void;
+  /** Zoom on the middle of the view, as the + and − buttons do. */
+  zoomBy: (factor: number) => void;
   /** `onFrame` runs after each step, with progress from 0 to 1. */
   focusRange: (start: number, end: number, onFrame?: (progress: number) => void) => void;
 }
@@ -330,6 +332,7 @@ export const initZoom = (
 
   return {
     fit,
+    zoomBy: zoomButton,
     focusRange: (from, to, onFrame) => {
       const lo = Math.max(MIN_YEAR, from);
       const hi = Math.min(MAX_YEAR, to);

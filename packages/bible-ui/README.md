@@ -19,6 +19,7 @@ Shared design system and UI components for Bible visualization apps — [Rainbow
 - `APPS`, `appHref(app)` — the app registry and a URL to each app that works in dev and production
 - `setupSheet(panel, handle, onClose)` (from `/sheet`) — the two-height phone bottom sheet. Give the panel `.bui-sheet` and the handle `.bui-sheet__handle`
 - `books`, `bookOffsets`, `totalVerses` (from `/bible`) — the 66 books and KJV verse numbering, 31,102 verses
+- `createGuide({ parent, stage, icon })` (from `/guide`) — a Controls button that opens how to explore the current view, with mouse or touch steps and keyboard keys, plus a one-time tip the first time a reader opens each view. Call `show(id, content)` when the view changes; apps pass their own icons
 - `loadFonts()` — injects Google Fonts stylesheet for Fraunces + DM Mono
 
 ## Usage

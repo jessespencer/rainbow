@@ -1,6 +1,8 @@
 import "@jessespencer/bible-ui/style.css";
 import "./style.css";
 import { createHeader, loadFonts } from "@jessespencer/bible-ui";
+import { createGuide } from "@jessespencer/bible-ui/guide";
+import { Compass, createElement } from "lucide";
 import {
   yearToX,
   formatYear,
@@ -26,6 +28,7 @@ import { onViewChange, getView, setView } from "./lib/viewState.ts";
 import { initHeader } from "./lib/header.ts";
 import { allFigures, familyLine, initLineageView } from "./lib/renderLineage.ts";
 import { initLineToggle, parseLineMode } from "./lib/lineToggle.ts";
+import { guideFor } from "./lib/guides.ts";
 import type { LineMode } from "./lib/lineToggle.ts";
 
 // ─── Constants ───────────────────────────────────────────────────
@@ -463,6 +466,19 @@ const syncScroll = () => {
 
 const zoom = initZoom(mainViewport, zoomControls, { onZoom: reposition, onMove: syncScroll });
 
+// ─── Controls guide ──────────────────────────────────────────────
+
+const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
+// Each press of + or − zooms by this much
+const KEY_ZOOM = 1.6;
+const guide = createGuide({ parent: statusRow, stage: canvasArea, icon: () => createElement(Compass) });
+const showGuide = () => guide.show(`chronos-${getView()}`, guideFor(getView(), isMac));
+onViewChange(showGuide);
+mainViewport.setAttribute(
+  "aria-label",
+  "Timeline of lives from Adam to the resurrection. Scroll to move through time, hold Command or Control and scroll to zoom, press plus and minus to zoom, click a life to read about it, and press Escape to clear.",
+);
+
 // ─── Navigation ──────────────────────────────────────────────────
 
 const smoothScroll = (): ScrollBehavior =>
@@ -533,6 +549,10 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") select(null);
   else if (e.key === "ArrowLeft") step(-1);
   else if (e.key === "ArrowRight") step(1);
+  // Plain + and −; with ⌘ or Ctrl they stay the browser's page zoom
+  else if (e.metaKey || e.ctrlKey || e.altKey) return;
+  else if (e.key === "+" || e.key === "=") zoom.zoomBy(KEY_ZOOM);
+  else if (e.key === "-" || e.key === "_") zoom.zoomBy(1 / KEY_ZOOM);
 });
 
 // ─── Scroll Sync ─────────────────────────────────────────────────
@@ -558,6 +578,7 @@ lineToggle.setMode(lineMode);
 if (lineMode !== "all") lineageHandle.setMode(lineMode);
 
 if (initialView === "lineage") setView(initialView);
+showGuide();
 
 if (initialFigure) {
   select({ kind: "figure", figure: initialFigure });

@@ -39,6 +39,7 @@ export interface GalaxyHandle {
   drawCount(): { drawn: number; total: number };
   flyToFocus(): void;
   fit(): void;
+  zoomBy(factor: number): void;
   resize(): void;
   setActive(active: boolean): void;
 }
@@ -67,6 +68,7 @@ const EDGE_OPACITY = 0.1;
 const FOCUS_EDGE_LIGHT = 90;
 const FOCUS_MS = 850;
 const FIT_MS = 900;
+const KEY_ZOOM_MS = 300;
 const MORPH_MS = 1700;
 // The share of the morph spent waiting for the wave to pass from Genesis to Revelation.
 const MORPH_STAGGER = 0.4;
@@ -676,6 +678,14 @@ export function createGalaxy(
     flyTo(center.clone(), position, FIT_MS, true);
   }
 
+  // Keys zoom toward what the camera is looking at, within the same limits as the wheel.
+  function zoomBy(factor: number) {
+    const target = flight?.toTarget ?? controls.target;
+    const offset = (flight?.toPosition ?? camera.position).clone().sub(target);
+    const distance = THREE.MathUtils.clamp(offset.length() / factor, controls.minDistance, controls.maxDistance);
+    flyTo(target.clone(), target.clone().addScaledVector(offset.normalize(), distance), KEY_ZOOM_MS, false);
+  }
+
   let morph: { start: number; from: Float32Array; fromBooks: THREE.Vector3[] } | null = null;
 
   function snapToField() {
@@ -930,6 +940,7 @@ export function createGalaxy(
       : { drawn, total: visible.length },
     flyToFocus,
     fit,
+    zoomBy,
     resize,
     setActive(next) {
       active = next;

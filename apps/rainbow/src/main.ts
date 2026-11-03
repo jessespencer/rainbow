@@ -1,6 +1,7 @@
 import '@jessespencer/bible-ui/style.css';
 import { createHeader, loadFonts } from '@jessespencer/bible-ui';
-import { createElement, Shuffle, Scaling } from 'lucide';
+import { createGuide, type GuideHandle } from '@jessespencer/bible-ui/guide';
+import { createElement, Compass, Shuffle, Scaling } from 'lucide';
 import { GENRES } from './data/genres';
 import { BOOKS } from './data/books';
 import { NT_LEFT, OT_RIGHT, WORLD_WIDTH, pixelsPerVerse, verseAtX, xOfVerse } from './lib/layout';
@@ -13,7 +14,8 @@ import {
 import { AXIS_BAND, hitTestLink, renderAxis, renderDivider, renderLink, type ScreenTransform } from './lib/renderer';
 import { buildHeatmapData, heatmapHitTest, renderHeatmap, type HeatmapData, type HeatmapScale } from './lib/heatmap';
 import { hideTooltip, showLinkTooltip, showPassageTooltip } from './lib/tooltip';
-import { setupZoom, zoomTo, type ZoomState } from './lib/zoom';
+import { setupZoom, zoomBy, zoomTo, type ZoomState } from './lib/zoom';
+import { CANVAS_LABELS, guideFor } from './lib/guides';
 import { rememberSection, renderLinkView, renderPassageView, type CompanionTarget, type VerseTexts } from './lib/companion';
 import { setupSheet, type SheetHandle } from './lib/sheet';
 import {
@@ -57,6 +59,11 @@ let pendingPointer: { x: number; y: number; clientX: number; clientY: number } |
 let clicksIgnoredUntil = 0;
 
 // Canvas
+let guide: GuideHandle | null = null;
+const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
+// Each press of + or − zooms by this much
+const KEY_ZOOM = 1.6;
+
 let canvas: HTMLCanvasElement;
 let ctx: CanvasRenderingContext2D;
 let arcs: ArcRenderer;
@@ -349,6 +356,8 @@ function setViewMode(mode: ViewMode) {
   document.getElementById('arc-canvas')!.classList.toggle('hidden', mode !== 'arcs');
   document.getElementById('app')!.classList.toggle('galaxy-mode', mode === 'galaxy');
   document.getElementById('app')!.classList.toggle('heatmap-mode', mode === 'heatmap');
+  if (mode !== 'galaxy') canvas.setAttribute('aria-label', CANVAS_LABELS[mode]);
+  guide?.show(`rainbow-${mode}`, guideFor(mode, isMac));
   hideTooltip();
   galaxy?.setActive(mode === 'galaxy');
   if (mode === 'galaxy') void openGalaxy();
@@ -441,7 +450,6 @@ function setupGalaxyLayers() {
 
 function setupSearch() {
   const input = document.getElementById('book-search') as HTMLInputElement;
-  const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
   document.getElementById('search-hint')!.textContent = isMac ? '⌘K' : 'Ctrl K';
 
   input.addEventListener('input', () => {
@@ -538,6 +546,13 @@ function setupKeyboard() {
     }
     if (e.key === 'ArrowLeft') navigate(-1);
     if (e.key === 'ArrowRight') navigate(1);
+    // Plain + and −; with ⌘ or Ctrl they stay the browser's page zoom
+    const zoomKey = e.metaKey || e.ctrlKey || e.altKey ? 0
+      : e.key === '+' || e.key === '=' ? KEY_ZOOM
+      : e.key === '-' || e.key === '_' ? 1 / KEY_ZOOM
+      : 0;
+    if (zoomKey && viewMode === 'galaxy') galaxy?.zoomBy(zoomKey);
+    else if (zoomKey && viewMode === 'arcs') zoomBy(canvas, zoomState, zoomKey, [width / 2, zoomState.ty]);
     if (e.key === 'Escape' && (selection !== null || filter.genre !== null)) clearAll();
   });
 }
@@ -892,6 +907,11 @@ async function main() {
   document.getElementById('btn-shuffle')!.prepend(createElement(Shuffle));
   document.getElementById('btn-shuffle-again')!.prepend(createElement(Shuffle));
   document.getElementById('zoom-fit')!.prepend(createElement(Scaling));
+  guide = createGuide({
+    parent: document.getElementById('zoom-controls')!,
+    stage: document.getElementById('canvas-container')!,
+    icon: () => createElement(Compass),
+  });
 
   setupFilters();
   setupZoomPresets();
