@@ -11,6 +11,8 @@
     "./sheet": "./src/sheet.ts",
     "./style.css": "./src/style.css",
     "./guide": "./src/guide.ts",
-    "./tokens": "./src/tokens.ts"
+    "./tokens": "./src/tokens.ts",
+    "./translations": "./src/translations.ts",
+    "./translation-picker": "./src/translationPicker.ts"
   }
 }

@@ -63,6 +63,7 @@ The shared package is a local dependency at `../bible-ui`. Rainbow's `src/style.
 - Sources: OpenBible.info cross-references (CC BY 4.0, keep the footer credit) and the Berean Standard Bible (public domain)
 - `public/data/links.bin` — Int16 rows of `[from, toStart, toEnd, votes]`, strongest first
 - `public/data/bsb.json` — verse text in canonical order, loaded after first paint
+- `public/data/text-<id>.json` — the other translations in the same shape, listed in bible-ui's `/translations`. `pnpm build:translations` maps each eBible VPL file to KJV numbering and drops (never guesses) verses that don't fit. Lineage reads these files too
 - Verses are 0-based indices into KJV numbering (31,102 verses). The BSB leaves 16 verses empty; 3 John 15 folds into 14
 - Pipeline: `pnpm build:data` downloads to `raw-data/` (ignored) and rebuilds both files
 

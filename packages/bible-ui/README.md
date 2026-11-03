@@ -22,6 +22,8 @@ Shared design system and UI components for Bible visualization apps — [Atlas](
 - `books`, `bookOffsets`, `totalVerses` (from `/bible`) — the 66 books and KJV verse numbering, 31,102 verses
 - `createGuide({ parent, stage, icon })` (from `/guide`) — a Controls button that opens how to explore the current view, with mouse or touch steps and keyboard keys, plus a one-time tip the first time a reader opens each view. Call `show(id, content)` when the view changes; apps pass their own icons
 - `loadFonts()` — injects the Google Fonts stylesheet for EB Garamond, IM Fell Great Primer and DM Mono
+- `TRANSLATIONS`, `savedTranslation()`, `saveTranslation()` (from `/translations`) — the Bibles on offer, their files and licences, and the reader's pick shared across apps
+- `createTranslationPicker({ parent, current, onChange })` (from `/translation-picker`) — the chip and grouped menu for picking a translation
 - `cssToken(name)` (from `/tokens`) — reads a design token for canvas, SVG and WebGL code, which can't use `var()`
 
 ## Usage

@@ -9,7 +9,7 @@ Lineage is an interactive Bible timeline, from Adam to the resurrection of Jesus
 ## Features
 
 - **The whole story at once.** 157 lives fit on one screen, and rows grow into named bars as you zoom in.
-- **People.** Select anyone to read about them, with BSB scripture and everyone alive alongside them.
+- **People.** Select anyone to read about them, with their scripture and everyone alive alongside them. Read in the BSB or any of Atlas's other translations, picked from the panel.
 - **Years.** Pick any year to see who was alive. Drag across the lanes with a mouse, or along the date strip with a finger.
 - **Two views.** Timeline shows lifespans and reigns. Family Tree is a subway map of the generations, with the Messianic line running to Jesus.
 - **King and Priest.** Follow the royal line from Judah and the priestly line from Levi, both leading to Jesus, one by descent and the other by God's oath.

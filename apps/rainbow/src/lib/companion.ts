@@ -14,7 +14,12 @@ export interface CompanionTarget {
 const INITIAL_ROWS = 30;
 const MAX_ROW_VERSES = 12;
 const READABLE_VERSES = 180;
-const OMITTED_TEXT = 'The BSB omits this verse, following the earliest manuscripts.';
+// The translation being read, for its omission note and the text's language.
+let reading = { abbr: 'BSB', language: 'en' };
+
+export function setReading(abbr: string, language: string) {
+  reading = { abbr, language };
+}
 const COPY_ICON = createElement(Copy).outerHTML;
 
 function escapeHtml(text: string): string {
@@ -27,7 +32,8 @@ function genreOf(verse: number) {
 
 function verseText(texts: VerseTexts, verse: number): string {
   if (!texts) return '<span class="cp-loading">Loading text…</span>';
-  return texts[verse] ? escapeHtml(texts[verse]) : `<em>${OMITTED_TEXT}</em>`;
+  if (!texts[verse]) return `<em>The ${reading.abbr} omits this verse, following the earliest manuscripts.</em>`;
+  return reading.language === 'en' ? escapeHtml(texts[verse]) : `<span lang="${reading.language}">${escapeHtml(texts[verse])}</span>`;
 }
 
 function passageText(texts: VerseTexts, start: number, end: number): string {

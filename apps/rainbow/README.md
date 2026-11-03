@@ -51,6 +51,7 @@ Galaxy turns every verse into a star on a two-armed spiral, one arm per Testamen
 | `view` | `?view=heatmap`, `?view=galaxy` | Open the heatmap or the galaxy |
 | `shape` | `?view=galaxy&shape=ring` | Galaxy shape: `ring` or `covenants` (old `binary` links still work) |
 | `scale` | `?view=heatmap&scale=count` | Heatmap shows raw link counts instead of affinity |
+| `tr` | `?ref=Ps.23&tr=kjv` | Read in another translation: `kjv`, `web`, `asv`, `blivre`, `lut`, `riv` or `vbl` |
 
 Each view has a Controls button that explains how to explore it, and the first visit to each view shows a short tip. On a keyboard, `⌘K` or `Ctrl K` jumps to search, `←` and `→` step to the previous or next verse, chapter, or connection, `+` and `−` zoom, and `Esc` clears everything.
 
@@ -80,12 +81,15 @@ The panel becomes a bottom sheet you can drag up to read and pull down to close.
 | Dataset | Source | License |
 | --- | --- | --- |
 | Cross-references | [OpenBible.info](https://www.openbible.info/labs/cross-references/), 2026-10-26 snapshot, drawn mainly from the public-domain *Treasury of Scripture Knowledge* | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
-| Bible text | [Berean Standard Bible](https://berean.bible/) | [Public domain](https://berean.bible/terms.htm) |
+| Bible text | [Berean Standard Bible](https://berean.bible/), the default | [Public domain](https://berean.bible/terms.htm) |
+| Other English texts | [King James Version](https://ebible.org/eng-kjv2006/), [World English Bible](https://worldenglish.bible/), [American Standard Version](https://ebible.org/eng-asv/), via eBible.org | Public domain (the KJV is Crown copyright in the UK) |
+| Other languages | [Bíblia Livre](https://github.com/blivre/BibliaLivre) (Portuguese), [Lutherbibel 1912](https://ebible.org/deu1912/) (German), [Riveduta 1927](https://ebible.org/ita1927/) (Italian), [Versión Biblia Libre](https://ebible.org/spavbl/) (Spanish) | CC BY 3.0 BR, public domain, public domain, CC BY-SA 4.0 |
 
 A few notes on how these are handled:
 
 - **Numbering:** verses follow the KJV numbering of 31,102 verses. OpenBible and the BSB split 3 John into 15 verses, so verse 15 folds into verse 14.
 - **Omitted verses:** the BSB leaves out 16 verses, such as Matthew 17:21, that the earliest manuscripts don't have. The links to them still appear, and the app says why the text is missing.
+- **Translations:** pick a text from the chip in the reading panel's header. Each is mapped to the same KJV numbering at build time, so the arcs never change, and a verse a translation numbers differently is left out rather than guessed. The panel names the text and its licence at the bottom, as the openly licensed ones ask.
 - **Ranges:** many links point to a range of verses. The arc lands on the first verse, and the panel shows the whole range.
 
 The build fails if a row can't be parsed or the verse count isn't 31,102, so a bad upstream file can't ship quietly.
@@ -112,6 +116,7 @@ The datasets are committed, so you don't need to download anything to run the ap
 ```bash
 cd apps/rainbow
 pnpm build:data
+pnpm build:translations
 ```
 
 `raw-data/` is ignored by git, and an existing file there isn't downloaded again. Delete it to fetch fresh copies.
@@ -122,10 +127,12 @@ pnpm build:data
 apps/rainbow/
 ├── public/data/
 │   ├── links.bin                # All cross-references, strongest first
-│   └── bsb.json                 # Berean Standard Bible text by verse
+│   ├── bsb.json                 # Berean Standard Bible text by verse
+│   └── text-<id>.json           # The other translations, same shape
 ├── scripts/
 │   ├── bible-metadata.ts        # Books and verse counts, shared with the app
 │   ├── download-data.ts         # Fetch the raw OpenBible and BSB files
+│   ├── build-translations.ts    # Fetch and map the other translations
 │   └── parse-crossrefs.ts       # Validate and build the datasets
 └── src/
     ├── main.ts                  # App state, URL, event wiring

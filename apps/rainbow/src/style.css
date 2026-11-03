@@ -705,6 +705,18 @@ body {
   cursor: default;
 }
 
+#companion-version { flex-shrink: 0; }
+
+/* Names the text and its licence; the openly licensed translations ask for it wherever they're shown. */
+#companion-source {
+  flex-shrink: 0;
+  padding: 8px 20px 10px;
+  border-top: 1px solid var(--border-faint);
+  color: var(--text-muted);
+  font-size: 14px;
+  font-style: italic;
+}
+
 #side-panel-content {
   flex: 1;
   min-height: 0;

@@ -1321,6 +1321,17 @@ body {
   min-width: 0;
 }
 
+.companion__version { flex-shrink: 0; }
+
+.companion__source {
+  flex-shrink: 0;
+  padding: 8px 20px 10px;
+  border-top: 1px solid var(--border-faint);
+  color: var(--text-muted);
+  font-size: 14px;
+  font-style: italic;
+}
+
 .companion__nav {
   display: flex;
   gap: 4px;

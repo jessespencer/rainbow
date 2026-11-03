@@ -16,7 +16,8 @@ import { initScrubber } from "./lib/scrubber.ts";
 import { initTooltip, showTooltip, hideTooltip } from "./lib/tooltip.ts";
 import { initMinimap } from "./lib/minimap.ts";
 import { initZoom } from "./lib/zoom.ts";
-import { initCompanion } from "./lib/companion.ts";
+import { initCompanion, readingTranslation } from "./lib/companion.ts";
+import { DEFAULT_TRANSLATION } from "@jessespencer/bible-ui/translations";
 import { initSearch } from "./lib/search.ts";
 import type { SearchResult } from "./lib/search.ts";
 import { el } from "./lib/dom.ts";
@@ -359,6 +360,7 @@ const syncAddress = () => {
   if (getView() === "lineage" && lineMode !== "all") params.set("line", lineMode);
   if (selection?.kind === "figure") params.set("figure", selection.figure.id);
   if (selection?.kind === "year") params.set("year", String(selection.year));
+  if (readingTranslation().id !== DEFAULT_TRANSLATION.id) params.set("tr", readingTranslation().id);
   const query = params.toString();
   history.replaceState(null, "", query ? `?${query}` : location.pathname);
 };
@@ -432,6 +434,7 @@ const companion = initCompanion(stage, {
   },
   onStep: step,
   onClose: () => select(null),
+  onTranslation: () => syncAddress(),
 });
 
 // ─── Tooltip ─────────────────────────────────────────────────────

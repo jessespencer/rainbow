@@ -1,6 +1,10 @@
 import '@jessespencer/bible-ui/style.css';
 import { createHeader, loadFonts } from '@jessespencer/bible-ui';
 import { createGuide, type GuideHandle } from '@jessespencer/bible-ui/guide';
+import { createTranslationPicker, type TranslationPickerHandle } from '@jessespencer/bible-ui/translation-picker';
+import {
+  DEFAULT_TRANSLATION, saveTranslation, savedTranslation, translationById, type Translation,
+} from '@jessespencer/bible-ui/translations';
 import { createElement, Compass, Grid3x3, Orbit, Rainbow, Shuffle, Scaling } from 'lucide';
 import { GENRES } from './data/genres';
 import { BOOKS } from './data/books';
@@ -16,7 +20,7 @@ import { buildHeatmapData, heatmapHitTest, renderHeatmap, type HeatmapData, type
 import { hideTooltip, showLinkTooltip, showPassageTooltip } from './lib/tooltip';
 import { setupZoom, zoomBy, zoomTo, type ZoomState } from './lib/zoom';
 import { CANVAS_LABELS, guideFor } from './lib/guides';
-import { rememberSection, renderLinkView, renderPassageView, type CompanionTarget, type VerseTexts } from './lib/companion';
+import { rememberSection, renderLinkView, renderPassageView, setReading, type CompanionTarget, type VerseTexts } from './lib/companion';
 import { setupSheet, type SheetHandle } from './lib/sheet';
 import {
   bookPassage, chapterPassage, formatRange, formatVerse, locate, neighborPassage, parseReference, passageFromParam,
@@ -43,6 +47,8 @@ const FIT_SCALE = 0.8;
 let store: LinkStore;
 let visible: Int32Array = new Int32Array(0);
 let texts: VerseTexts = null;
+let translation: Translation = savedTranslation();
+let translationPicker: TranslationPickerHandle | null = null;
 let heatmapData: HeatmapData;
 const filter: LinkFilter = { minVotes: DEFAULT_MIN_VOTES, genre: null };
 let selection: Selection | null = null;
@@ -287,6 +293,7 @@ function writeUrl(mode: 'push' | 'replace') {
   if (viewMode !== 'arcs') params.set('view', viewMode);
   if (viewMode === 'galaxy' && shapeSelect().selectedIndex > 0) params.set('shape', shapeSelect().value);
   if (viewMode === 'heatmap' && scaleSelect().selectedIndex > 0) params.set('scale', scaleSelect().value);
+  if (translation.id !== DEFAULT_TRANSLATION.id) params.set('tr', translation.id);
   const query = params.toString().replace(/%3A/g, ':');
   const url = `${window.location.pathname}${query ? `?${query}` : ''}`;
   if (mode === 'push') window.history.pushState(null, '', url);
@@ -562,8 +569,9 @@ async function copyPassage(button: HTMLElement, start: number, end: number) {
   const passage: Passage = { start, end, label: formatRange(start, end) };
   const lines = [];
   for (let verse = start; verse <= end; verse++) lines.push(texts?.[verse] ?? '');
-  const url = `${window.location.origin}${window.location.pathname}?ref=${passageToParam(passage)}`;
-  const copied = await writeClipboard(`${lines.join(' ')}\n— ${passage.label} (BSB)\n${url}`);
+  const version = translation.id === DEFAULT_TRANSLATION.id ? '' : `&tr=${translation.id}`;
+  const url = `${window.location.origin}${window.location.pathname}?ref=${passageToParam(passage)}${version}`;
+  const copied = await writeClipboard(`${lines.join(' ')}\n— ${passage.label} (${translation.abbr})\n${url}`);
   const state = copied ? 'copied' : 'copy-failed';
   button.classList.add(state);
   setTimeout(() => button.classList.remove(state), COPIED_FEEDBACK_MS);
@@ -831,6 +839,8 @@ function readUrl(): Selection | null {
   filter.minVotes = params.has('votes') && Number.isFinite(votes) ? votes : DEFAULT_MIN_VOTES;
   const genre = GENRES.findIndex(g => g.id === params.get('genre'));
   filter.genre = genre >= 0 ? genre : null;
+  const linked = translationById(params.get('tr'));
+  if (linked && linked.id !== translation.id) chooseTranslation(linked, false);
   const shape = shapeSelect();
   // Covenants was called Binary, and old links still say so
   const shapeParam = params.get('shape');
@@ -863,10 +873,27 @@ function restoreFromUrl() {
 }
 
 async function loadTexts() {
-  const response = await fetch(`${import.meta.env.BASE_URL}data/bsb.json`);
+  const wanted = translation;
+  const response = await fetch(`${import.meta.env.BASE_URL}data/${wanted.file}`);
   if (!response.ok) throw new Error(`Failed to load verse text (${response.status})`);
-  texts = await response.json() as string[];
+  const loaded = await response.json() as string[];
+  // A quicker pick may have landed first; only the current translation's text is shown.
+  if (wanted !== translation) return;
+  texts = loaded;
   renderCompanion();
+}
+
+function chooseTranslation(next: Translation, fromPicker: boolean) {
+  translation = next;
+  setReading(next.abbr, next.language);
+  translationPicker?.set(next);
+  document.getElementById('companion-source')!.textContent = `${next.name} · ${next.license}`;
+  if (!fromPicker) return;
+  saveTranslation(next);
+  texts = null;
+  renderCompanion();
+  writeUrl('replace');
+  void loadTexts().catch(err => console.error(err));
 }
 
 async function main() {
@@ -913,6 +940,12 @@ async function main() {
   document.getElementById('view-arcs')!.prepend(createElement(Rainbow));
   document.getElementById('view-galaxy')!.prepend(createElement(Orbit));
   document.getElementById('view-heatmap')!.prepend(createElement(Grid3x3));
+  translationPicker = createTranslationPicker({
+    parent: document.getElementById('companion-version')!,
+    current: translation,
+    onChange: next => chooseTranslation(next, true),
+  });
+  chooseTranslation(translation, false);
   guide = createGuide({
     parent: document.getElementById('zoom-controls')!,
     stage: document.getElementById('canvas-container')!,
