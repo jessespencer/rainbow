@@ -128,7 +128,7 @@ export const initCompanion = (
     for (const passage of passages) {
       const link = el("a", "cp-context", links);
       link.href = rainbowHref(passage);
-      link.textContent = `${passage.label} in Rainbow ›`;
+      link.textContent = `${passage.label} in Atlas ›`;
     }
   };
 

@@ -1,7 +1,7 @@
-# Rainbow — Bible Cross-Reference Visualization
+# Atlas — Bible Cross-Reference Visualization
 
 ## Project Overview
-Interactive visualization of all 344,799 OpenBible.info cross-references, with BSB verse text. Vanilla TypeScript (no framework), arcs in WebGL2, axis and heatmap on Canvas 2D, a Three.js galaxy, D3 for zoom/pan. Sibling project to [Chronos](https://github.com/jessespencer/chronos).
+Shown to readers as **Atlas**. The folder, package and URL (`/rainbow/`) keep the old name `rainbow`, so links keep working. Interactive visualization of all 344,799 OpenBible.info cross-references, with BSB verse text. Vanilla TypeScript (no framework), arcs in WebGL2, axis and heatmap on Canvas 2D, a Three.js galaxy, D3 for zoom/pan. Sibling project to [Chronos](https://github.com/jessespencer/chronos).
 
 ## Stack
 - TypeScript + Vite (dev & build)
@@ -11,7 +11,7 @@ Interactive visualization of all 344,799 OpenBible.info cross-references, with B
 - Deployed as static site at `/rainbow/` base path
 
 ## Shared Design System
-Both Rainbow and Chronos use the [`@jessespencer/bible-ui`](../bible-ui) package for:
+Both Atlas and Lineage use the [`@jessespencer/bible-ui`](../bible-ui) package for:
 - Site header component (`createHeader()`) — title, subtitle, gradient bar, controls slot, app switcher
 - Book and verse numbering (`@jessespencer/bible-ui/bible`), re-exported by `scripts/bible-metadata.ts`
 - Design tokens — colors, fills, borders, text hierarchy, radii (CSS custom properties)

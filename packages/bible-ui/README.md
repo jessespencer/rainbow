@@ -1,6 +1,6 @@
 # @jessespencer/bible-ui
 
-Shared design system and UI components for Bible visualization apps — [Rainbow Reference](../../apps/rainbow) and [Chronos](../../apps/chronos).
+Shared design system and UI components for Bible visualization apps — [Atlas](../../apps/rainbow) and [Lineage](../../apps/chronos).
 
 ## What's included
 

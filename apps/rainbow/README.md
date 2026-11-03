@@ -1,14 +1,14 @@
-# 🌈 Rainbow Reference
+# 🌈 Atlas
 
 > *344,799 threads woven through 66 books. Every arc a conversation across millennia.*
 
-**▶ [Open Rainbow Reference](https://jessespencer.github.io/rainbow/)**
+**▶ [Open Atlas](https://jessespencer.github.io/rainbow/)**
 
 ## Why this exists
 
 Readers of the Bible have always followed cross-references: the small notes in the margin that send you from one passage to another that echoes, quotes, or fulfills it. On paper you follow them one at a time, so the bigger picture stays hidden.
 
-Rainbow Reference draws all of them at once. Start with the whole Bible as a single rainbow, then read both ends of any arc. It's a picture of how deeply scripture speaks to itself, and a way to actually read those connections.
+Atlas draws all of them at once. Start with the whole Bible as a single rainbow, then read both ends of any arc. It's a picture of how deeply scripture speaks to itself, and a way to actually read those connections.
 
 It's free and open source, and inspired by [Chris Harrison's](https://www.chrisharrison.net/index.php/visualizations/BibleViz) landmark arc diagram.
 
@@ -160,7 +160,7 @@ The site deploys to GitHub Pages from `main` through [`.github/workflows/deploy.
 
 ## Part of a family
 
-Rainbow Reference lives alongside [Chronos](https://jessespencer.github.io/rainbow/timeline/), a horizontal Bible timeline from Adam to the resurrection. Both share the [`@jessespencer/bible-ui`](../../packages/bible-ui) design system: Fraunces and DM Mono type, a navy palette, and the rainbow gradient.
+Atlas lives alongside [Lineage](https://jessespencer.github.io/rainbow/timeline/), a horizontal Bible timeline from Adam to the resurrection. Both share the [`@jessespencer/bible-ui`](../../packages/bible-ui) design system: Fraunces and DM Mono type, a navy palette, and the rainbow gradient.
 
 ## Credits
 

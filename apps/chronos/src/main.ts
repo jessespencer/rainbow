@@ -73,7 +73,7 @@ loadFonts();
 
 // -- Header (shared component) --
 const { element: headerEl, controls: headerControls, center: headerCenter } = createHeader({
-  title: "Chronos",
+  title: "Lineage",
   subtitle: "A Visual History of the Bible",
   appId: "chronos",
   compact: true,

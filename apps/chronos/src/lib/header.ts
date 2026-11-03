@@ -8,7 +8,7 @@ import type { ViewMode } from "./viewState.ts";
 
 const VIEWS: { mode: ViewMode; label: string }[] = [
   { mode: "timeline", label: "Timeline" },
-  { mode: "lineage", label: "Lineage" },
+  { mode: "lineage", label: "Family Tree" },
 ];
 
 export const initHeader = (controlsSlot: HTMLElement): void => {

@@ -871,7 +871,7 @@ async function main() {
   loadFonts();
   const app = document.getElementById('app')!;
   const { element: header, controls } = createHeader({
-    title: 'Rainbow Reference',
+    title: 'Atlas',
     subtitle: 'The world\'s first hyperlinked Text — The Bible',
     background: 'var(--bg-base)',
     appId: 'rainbow',

@@ -1,6 +1,6 @@
-# Chronos — Bible Timeline
+# Lineage — Bible Timeline
 
-Interactive Bible timeline. Sibling to [Rainbow Reference](../rainbow), and shares the [`@jessespencer/bible-ui`](../../packages/bible-ui) design system with it.
+Interactive Bible timeline, shown to readers as **Lineage**. Its Lineage view is shown as **Family Tree**. The folder, package, URL (`/rainbow/timeline/`, `?view=lineage`) and code keep the old names `chronos` and `lineage`, so links keep working. Sibling to [Atlas](../rainbow), and shares the [`@jessespencer/bible-ui`](../../packages/bible-ui) design system with it.
 
 Scope: Adam through Jesus's resurrection (~AD 33). No apostolic age yet.
 

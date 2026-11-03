@@ -20,14 +20,14 @@ export interface AppEntry {
 export const APPS: AppEntry[] = [
   {
     id: "rainbow",
-    label: "Rainbow Reference",
-    tagline: "Cross-reference atlas",
+    label: "Atlas",
+    tagline: "Every cross-reference in the Bible",
     path: "/rainbow/",
     devPort: 5173,
   },
   {
     id: "chronos",
-    label: "Chronos",
+    label: "Lineage",
     tagline: "Visual history of the Bible",
     path: "/rainbow/timeline/",
     devPort: 5174,

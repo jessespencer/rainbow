@@ -27,7 +27,7 @@ export const guideFor = (view: ViewMode, isMac: boolean): GuideContent => {
 
   if (view === "lineage") {
     return {
-      title: "Following the lineage",
+      title: "Following the family tree",
       pointer: [
         { icon: icon(MousePointer2), text: "Hover a name to trace their line", tip: "Hover a name to trace their line" },
         { icon: icon(MousePointerClick), text: "Click a name to read their story", tip: "Click to read" },
