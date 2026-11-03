@@ -116,15 +116,22 @@ export function renderLink(
   gradient.addColorStop(0, genreColorOf(low));
   gradient.addColorStop(1, genreColorOf(high));
 
+  // A soft glow in the arc's own light, not a hard-edged band around it.
+  ctx.save();
   ctx.strokeStyle = gradient;
+  ctx.shadowColor = mixHex(genreColorOf(low), genreColorOf(high));
+  ctx.shadowBlur = bold ? 14 : 9;
   ctx.beginPath();
   ctx.arc((x1 + x2) / 2, ty, (x2 - x1) / 2, Math.PI, 0);
-  ctx.lineWidth = bold ? 7 : 5;
-  ctx.globalAlpha = 0.3;
-  ctx.stroke();
   ctx.lineWidth = bold ? 2.5 : 1.75;
-  ctx.globalAlpha = 1;
   ctx.stroke();
+  ctx.restore();
+}
+
+function mixHex(a: string, b: string): string {
+  const channel = (hex: string, shift: number) => Number.parseInt(hex.slice(1), 16) >> shift & 255;
+  const mix = (shift: number) => Math.round((channel(a, shift) + channel(b, shift)) / 2);
+  return `rgb(${mix(16)}, ${mix(8)}, ${mix(0)})`;
 }
 
 // Nearest arc to a world point; ties go to the stronger link, which has the lower id.

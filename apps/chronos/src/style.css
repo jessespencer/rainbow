@@ -1024,6 +1024,9 @@ body {
 }
 
 .view-toggle__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   height: 28px;
   padding: 0 14px;
   border: none;
@@ -1041,10 +1044,20 @@ body {
   color: var(--text-secondary);
 }
 
+.view-toggle__btn svg {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
 .view-toggle__btn--active {
-  background: var(--fill-selected);
+  background: var(--accent-fill);
   color: var(--text-bright);
   box-shadow: var(--shadow-raised);
+}
+
+.view-toggle__btn--active svg {
+  color: var(--accent-text);
 }
 
 /* ─── Canvas Overlays ─────────────────────────────────────────── */
@@ -1507,15 +1520,17 @@ body {
 
 #about {
   margin: auto;
-  width: min(560px, calc(100vw - 32px));
+  width: min(600px, calc(100vw - 32px));
   max-height: calc(100dvh - 48px);
-  padding: 28px;
+  padding: 32px;
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
   background: var(--bg-elevated);
-  color: var(--text-secondary);
-  font-size: 15px;
-  line-height: 1.55;
+  color: var(--text-primary);
+  font-size: 17px;
+  /* Garamond reads small and thin on the dark, so long copy gets the Controls guide's size and weight */
+  font-weight: 450;
+  line-height: 1.5;
 }
 
 #about::backdrop {
@@ -1527,22 +1542,22 @@ body {
   margin-bottom: 12px;
   color: var(--text-primary);
   font-family: var(--font-display);
-  font-size: 26px;
+  font-size: 30px;
   font-weight: 400;
 }
 
 #about h3 {
-  margin: 18px 0 4px;
-  color: var(--text-muted);
+  margin: 24px 0 6px;
+  color: var(--text-dim);
   font-family: var(--font-ui);
   font-variant-caps: all-small-caps;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   letter-spacing: 0.08em;
 }
 
 #about p + p {
-  margin-top: 8px;
+  margin-top: 10px;
 }
 
 #about a {
@@ -1554,13 +1569,14 @@ body {
 }
 
 #about li + li {
-  margin-top: 2px;
+  margin-top: 6px;
 }
 
 #about-tagline {
   margin-top: -6px;
   margin-bottom: 12px;
   color: var(--text-dim);
+  font-size: 19px;
   font-style: italic;
 }
 
@@ -1619,8 +1635,16 @@ body {
     display: none;
   }
 
+  /* Icons only on a phone, as in Atlas; each button keeps its aria-label */
   .view-toggle__btn {
-    padding: 0 8px;
+    gap: 0;
+    padding: 0 10px;
+    font-size: 0;
+  }
+
+  .view-toggle__btn svg {
+    width: 16px;
+    height: 16px;
   }
 
   .canvas-status {

@@ -7,25 +7,25 @@ html:root {
 }
 
 :root {
-  /* Semantic colors */
-  --crimson:   #C94040;
-  --ember:     #D47240;
-  --saffron:   #E8B84B;
-  --moss:      #96BC5A;
-  --fern:      #50976A;
-  --verdigris: #3D9E92;
-  --cerulean:  #3B6E9E;
-  --iris:      #7B3DAE;
+  /* Section colors, matching data/genres.ts */
+  --crimson:   #EB827B;
+  --ember:     #E18C5F;
+  --saffron:   #C79E41;
+  --moss:      #8CB460;
+  --fern:      #5ABB88;
+  --verdigris: #4AB9B2;
+  --cerulean:  #67AAED;
+  --iris:      #B191EA;
 
   /* Semantic tints */
-  --crimson-tint:   rgba(201,64,64,0.12);
-  --ember-tint:     rgba(212,114,64,0.12);
-  --saffron-tint:   rgba(232,184,75,0.12);
-  --moss-tint:      rgba(150,188,90,0.12);
-  --fern-tint:      rgba(80,151,106,0.12);
-  --verdigris-tint: rgba(61,158,146,0.12);
-  --cerulean-tint:  rgba(59,110,158,0.12);
-  --iris-tint:      rgba(123,61,174,0.12);
+  --crimson-tint:   rgba(235,130,123,0.12);
+  --ember-tint:     rgba(225,140,95,0.12);
+  --saffron-tint:   rgba(199,158,65,0.12);
+  --moss-tint:      rgba(140,180,96,0.12);
+  --fern-tint:      rgba(90,187,136,0.12);
+  --verdigris-tint: rgba(74,185,178,0.12);
+  --cerulean-tint:  rgba(103,170,237,0.12);
+  --iris-tint:      rgba(177,145,234,0.12);
 }
 
 * {
@@ -166,15 +166,17 @@ body {
 /* ─── ABOUT ──────────────────────────────────────────────── */
 #about {
   margin: auto;
-  width: min(560px, calc(100vw - 32px));
+  width: min(600px, calc(100vw - 32px));
   max-height: calc(100dvh - 48px);
-  padding: 28px;
+  padding: 32px;
   background: var(--bg-elevated);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
-  color: var(--text-secondary);
-  font-size: 15px;
-  line-height: 1.55;
+  color: var(--text-primary);
+  font-size: 17px;
+  /* Garamond reads small and thin on the dark, so long copy gets the Controls guide's size and weight */
+  font-weight: 450;
+  line-height: 1.5;
 }
 
 #about::backdrop { background: var(--bg-scrim); }
@@ -184,15 +186,16 @@ body {
   margin-bottom: 12px;
   color: var(--text-primary);
   font-family: var(--font-display);
-  font-size: 26px;
+  font-size: 30px;
   font-weight: 400;
 }
 
 #about h3 {
-  margin: 18px 0 4px;
-  color: var(--text-muted);
-  font-size: 15px;
+  margin: 24px 0 6px;
+  color: var(--text-dim);
+  font-size: 16px;
   font-variant-caps: all-small-caps;
+  font-weight: 500;
   letter-spacing: 0.08em;
 }
 
@@ -202,12 +205,15 @@ body {
   padding-left: 18px;
 }
 
-#about li + li { margin-top: 2px; }
+#about li + li { margin-top: 6px; }
+
+#about p + p { margin-top: 10px; }
 
 #about-tagline {
   margin-top: -6px;
   margin-bottom: 12px;
   color: var(--text-dim);
+  font-size: 19px;
   font-style: italic;
 }
 
@@ -317,6 +323,9 @@ body {
 }
 
 #view-toggle button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   height: 28px;
   padding: 0 14px;
   border-radius: var(--radius-sm);
@@ -330,10 +339,20 @@ body {
   white-space: nowrap;
 }
 
+#view-toggle button svg {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
 #view-toggle button.active {
-  background: var(--fill-selected);
+  background: var(--accent-fill);
   color: var(--text-bright);
   box-shadow: var(--shadow-raised);
+}
+
+#view-toggle button.active svg {
+  color: var(--accent-text);
 }
 
 #view-toggle button:hover:not(.active) {
@@ -1186,7 +1205,17 @@ body {
     flex-shrink: 0;
   }
 
-  #view-toggle button { padding: 0 8px; }
+  /* Icons only on a phone, so search keeps its room; each button keeps its aria-label */
+  #view-toggle button {
+    gap: 0;
+    padding: 0 10px;
+    font-size: 0;
+  }
+
+  #view-toggle button svg {
+    width: 16px;
+    height: 16px;
+  }
 
   #btn-shuffle {
     gap: 0;

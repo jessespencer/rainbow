@@ -32,7 +32,9 @@ The shared package is a local dependency at `../bible-ui`. Rainbow's `src/style.
 - **Galaxy stays lazy** — `main.ts` only `import type`s from `lib/galaxy.ts`, so Arcs' first paint never loads `three`. Keep it that way
 - **Galaxy draws a capped set** — one star per verse (a verse id is a star id), but edges only for the strongest 6,000 visible links and 4,000 of the focus's links, never all of them. The render loop stops while the view or tab is hidden and draws only when something changed
 - **Galaxy shapes are position sets** — each shape is one `layout*` function returning a position per verse, built on first use. Stars and edges morph between them
-- **One vibrancy** — arcs blend additively with one alpha rule; selections and section filters fade the other arcs to `BACKGROUND_DIM` rather than brightening their own
+- **One vibrancy** — arcs blend additively with one alpha rule; selections and section filters fade the other arcs far back, to `BACKGROUND_DIM`, rather than brightening their own. Hovering the book strip dims the same amount
+- **Light, then a curve** — arcs add up in a half-float buffer, and a composite pass maps the total with a colour-keeping curve, so dense areas glow in their own colour instead of clipping to white. `EXPOSURE` in `arcGl.ts` sets the overall brightness. Without float render targets the arcs draw straight to the screen as before
+- **Even section colours** — the eight colours in `data/genres.ts` share one OKLCH lightness and saturation; keep any new one on the same line
 - **Colors are genres** — the 8 canon sections in `data/genres.ts`; OpenBible has no theme data, so don't invent categories
 - **URL is state** — `?ref=John.3.16&to=Rom.5.8&votes=10&genre=gospels&view=galaxy&shape=ring` (or `view=heatmap&scale=count`)
 - **Canvas overlays** — legend, stats, zoom and credits float over the canvas; `pointer-events: none` on their wrappers keeps pan and tap working underneath

@@ -36,6 +36,9 @@ export const MAX_DPR = 2;
 const ARC_COVERAGE = 8;
 const MIN_ALPHA = 0.015;
 const MAX_ALPHA = 0.7;
+// How bright the summed light is before the curve maps it. A little over 1, so the overview keeps
+// its sparkle now that dense areas no longer clip.
+const EXPOSURE = 1.35;
 
 // World-span buckets: small arcs need few segments, which keeps a whole-Bible draw light on phones.
 const BUCKETS = [
@@ -82,6 +85,33 @@ void main() {
   color = vec4(v_color.rgb, v_color.a * u_alpha);
 }`;
 
+// Second pass: arcs add up in a float buffer, then this maps the total to the screen. Faint arcs pass
+// through as they were; dense ones roll off along a soft curve that keeps their colour, instead of every
+// channel clipping to white. Only the very densest cores fade toward white.
+const COMPOSITE_VERTEX = `#version 300 es
+out vec2 v_uv;
+void main() {
+  vec2 corner = vec2(float(gl_VertexID & 1), float(gl_VertexID >> 1)) * 2.0;
+  v_uv = corner;
+  gl_Position = vec4(corner * 2.0 - 1.0, 0.0, 1.0);
+}`;
+
+const COMPOSITE_FRAGMENT = `#version 300 es
+precision highp float;
+in vec2 v_uv;
+uniform sampler2D u_light;
+uniform vec3 u_base;
+uniform float u_exposure;
+out vec4 color;
+void main() {
+  vec3 light = texture(u_light, v_uv).rgb * u_exposure;
+  float luma = dot(light, vec3(0.2126, 0.7152, 0.0722));
+  vec3 mapped = luma > 0.0 ? light * (1.0 - exp(-luma)) / luma : light;
+  mapped /= max(1.0, max(mapped.r, max(mapped.g, mapped.b)));
+  mapped = mix(mapped, vec3(1.0), smoothstep(1.5, 9.0, luma) * 0.6);
+  color = vec4(min(u_base + mapped, vec3(1.0)), 1.0);
+}`;
+
 function compile(gl: WebGL2RenderingContext, type: number, source: string): WebGLShader {
   const shader = gl.createShader(type)!;
   gl.shaderSource(shader, source);
@@ -120,17 +150,86 @@ function writeArc(out: Float32Array, at: number, store: LinkStore, id: number) {
   out[at + 4] = arcWeight(linkVotes(store, id));
 }
 
-export function createArcRenderer(canvas: HTMLCanvasElement): ArcRenderer | null {
-  const gl = canvas.getContext('webgl2', { antialias: true, alpha: false });
-  if (!gl) return null;
-
+function link(gl: WebGL2RenderingContext, vertex: string, fragment: string): WebGLProgram {
   const program = gl.createProgram()!;
-  gl.attachShader(program, compile(gl, gl.VERTEX_SHADER, VERTEX_SHADER));
-  gl.attachShader(program, compile(gl, gl.FRAGMENT_SHADER, FRAGMENT_SHADER));
+  gl.attachShader(program, compile(gl, gl.VERTEX_SHADER, vertex));
+  gl.attachShader(program, compile(gl, gl.FRAGMENT_SHADER, fragment));
   gl.linkProgram(program);
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
     throw new Error(gl.getProgramInfoLog(program) ?? 'Program failed to link');
   }
+  return program;
+}
+
+interface LightBuffer {
+  resize(width: number, height: number): void;
+  begin(): void;
+  finish(exposure: number): void;
+}
+
+// A multisampled half-float target the arcs add into, resolved to a texture and composited.
+// Returns null where float targets aren't renderable, and the arcs draw straight to the screen.
+function createLightBuffer(gl: WebGL2RenderingContext, base: [number, number, number]): LightBuffer | null {
+  if (!gl.getExtension('EXT_color_buffer_float')) return null;
+  const program = link(gl, COMPOSITE_VERTEX, COMPOSITE_FRAGMENT);
+  const exposure = gl.getUniformLocation(program, 'u_exposure');
+  gl.useProgram(program);
+  gl.uniform1i(gl.getUniformLocation(program, 'u_light'), 0);
+  gl.uniform3f(gl.getUniformLocation(program, 'u_base'), ...base);
+
+  const samples = Math.min(4, gl.getParameter(gl.MAX_SAMPLES) as number);
+  const color = gl.createRenderbuffer()!;
+  const drawTarget = gl.createFramebuffer()!;
+  const texture = gl.createTexture()!;
+  const resolveTarget = gl.createFramebuffer()!;
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  let width = 1;
+  let height = 1;
+
+  return {
+    resize(w, h) {
+      width = Math.max(1, w);
+      height = Math.max(1, h);
+      gl.bindRenderbuffer(gl.RENDERBUFFER, color);
+      gl.renderbufferStorageMultisample(gl.RENDERBUFFER, samples, gl.RGBA16F, width, height);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, drawTarget);
+      gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.RENDERBUFFER, color);
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, width, height, 0, gl.RGBA, gl.HALF_FLOAT, null);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, resolveTarget);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    },
+    begin() {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, drawTarget);
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+    },
+    finish(level) {
+      gl.bindFramebuffer(gl.READ_FRAMEBUFFER, drawTarget);
+      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, resolveTarget);
+      gl.blitFramebuffer(0, 0, width, height, 0, 0, width, height, gl.COLOR_BUFFER_BIT, gl.NEAREST);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.disable(gl.BLEND);
+      gl.useProgram(program);
+      gl.uniform1f(exposure, level);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      gl.enable(gl.BLEND);
+    },
+  };
+}
+
+export function createArcRenderer(canvas: HTMLCanvasElement): ArcRenderer | null {
+  const gl = canvas.getContext('webgl2', { antialias: true, alpha: false });
+  if (!gl) return null;
+
+  const program = link(gl, VERTEX_SHADER, FRAGMENT_SHADER);
   gl.useProgram(program);
 
   const uniform = (name: string) => gl.getUniformLocation(program, name);
@@ -152,8 +251,8 @@ export function createArcRenderer(canvas: HTMLCanvasElement): ArcRenderer | null
   gl.enable(gl.BLEND);
   // Additive, so overlapping arcs build into light and the picture keeps its depth.
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
-  const base = Number.parseInt(cssToken('--bg-base').slice(1), 16);
-  gl.clearColor((base >> 16 & 255) / 255, (base >> 8 & 255) / 255, (base & 255) / 255, 1);
+  const base = hexToRgb(cssToken('--bg-base'));
+  const light = createLightBuffer(gl, base);
 
   function createBatch(segments: number): ArcBatch {
     const vao = gl!.createVertexArray()!;
@@ -216,10 +315,18 @@ export function createArcRenderer(canvas: HTMLCanvasElement): ArcRenderer | null
       canvas.width = Math.round(width * dpr);
       canvas.height = Math.round(height * dpr);
       gl.viewport(0, 0, canvas.width, canvas.height);
+      light?.resize(canvas.width, canvas.height);
     },
 
     draw(view) {
-      gl.clear(gl.COLOR_BUFFER_BIT);
+      if (light) {
+        light.begin();
+      } else {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.clearColor(...base, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+      }
+      gl.useProgram(program);
       gl.uniform2f(uniforms.size, view.width, view.height);
       gl.uniform3f(uniforms.view, view.k, view.tx, view.ty);
       gl.uniform1f(uniforms.reveal, view.reveal);
@@ -232,6 +339,7 @@ export function createArcRenderer(canvas: HTMLCanvasElement): ArcRenderer | null
       gl.uniform1f(uniforms.alpha, arcAlpha(focus.count, view));
       drawBatch(focus, view.k);
       gl.bindVertexArray(null);
+      light?.finish(EXPOSURE);
     },
   };
 }

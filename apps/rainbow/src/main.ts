@@ -1,7 +1,7 @@
 import '@jessespencer/bible-ui/style.css';
 import { createHeader, loadFonts } from '@jessespencer/bible-ui';
 import { createGuide, type GuideHandle } from '@jessespencer/bible-ui/guide';
-import { createElement, Compass, Shuffle, Scaling } from 'lucide';
+import { createElement, Compass, Grid3x3, Orbit, Rainbow, Shuffle, Scaling } from 'lucide';
 import { GENRES } from './data/genres';
 import { BOOKS } from './data/books';
 import { NT_LEFT, OT_RIGHT, WORLD_WIDTH, pixelsPerVerse, verseAtX, xOfVerse } from './lib/layout';
@@ -33,7 +33,8 @@ const PHONE_QUERY = '(max-width: 760px)';
 const INTRO_MS = 2800;
 const FIT_PADDING = 20;
 const LABEL_SPACE = 36;
-const BACKGROUND_DIM = 0.25;
+// How far the other arcs fall back behind a selection, a filter or a hover on the book strip.
+const BACKGROUND_DIM = 0.1;
 const COPIED_FEEDBACK_MS = 1600;
 // Leaves breathing room around the rainbow; phones need every pixel of their width.
 const FIT_SCALE = 0.8;
@@ -831,7 +832,9 @@ function readUrl(): Selection | null {
   const genre = GENRES.findIndex(g => g.id === params.get('genre'));
   filter.genre = genre >= 0 ? genre : null;
   const shape = shapeSelect();
-  shape.value = params.get('shape') ?? '';
+  // Covenants was called Binary, and old links still say so
+  const shapeParam = params.get('shape');
+  shape.value = shapeParam === 'binary' ? 'covenants' : shapeParam ?? '';
   if (shape.selectedIndex < 0) shape.selectedIndex = 0;
   const scale = scaleSelect();
   scale.value = params.get('scale') ?? '';
@@ -907,6 +910,9 @@ async function main() {
   document.getElementById('btn-shuffle')!.prepend(createElement(Shuffle));
   document.getElementById('btn-shuffle-again')!.prepend(createElement(Shuffle));
   document.getElementById('zoom-fit')!.prepend(createElement(Scaling));
+  document.getElementById('view-arcs')!.prepend(createElement(Rainbow));
+  document.getElementById('view-galaxy')!.prepend(createElement(Orbit));
+  document.getElementById('view-heatmap')!.prepend(createElement(Grid3x3));
   guide = createGuide({
     parent: document.getElementById('zoom-controls')!,
     stage: document.getElementById('canvas-container')!,

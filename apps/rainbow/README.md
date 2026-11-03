@@ -32,7 +32,7 @@ The heatmap collapses the same links into a 66×66 grid, one cell for each pair 
 
 ### See it as a galaxy
 
-Galaxy turns every verse into a star on a two-armed spiral, one arm per Testament, in reading order from the core out. Switch shapes and the stars fly to their new places: Ring closes the canon so Revelation meets Genesis, and Binary makes the Testaments two galaxies joined where Malachi meets Matthew. It opens with the strongest 6,000 links, because drawing all of them would only be a white blur. Tap a star to open it in the panel and light up everything it connects to. Drag to orbit, scroll or pinch to zoom, and use Layers to change the colors, star sizes, and labels. Filters, search, and sharing work as they do everywhere else.
+Galaxy turns every verse into a star on a two-armed spiral, one arm per Testament, in reading order from the core out. Switch shapes and the stars fly to their new places: Ring closes the canon so Revelation meets Genesis, and Covenants makes the old covenant and the new two galaxies, joined where Malachi meets Matthew. The first time you open it, both arms unwind from the core in reading order before the links fade in. It opens with the strongest 6,000 links, because drawing all of them would only be a white blur. Tap a star to open it in the panel and light up everything it connects to. Drag to orbit, scroll or pinch to zoom, and use Layers to change the colors, star sizes, and labels. Filters, search, and sharing work as they do everywhere else.
 
 ### Find, filter, and share
 
@@ -49,7 +49,7 @@ Galaxy turns every verse into a star on a two-armed spiral, one arm per Testamen
 | `votes` | `?votes=25` | Minimum reader votes |
 | `genre` | `?genre=gospels` | Section filter |
 | `view` | `?view=heatmap`, `?view=galaxy` | Open the heatmap or the galaxy |
-| `shape` | `?view=galaxy&shape=ring` | Galaxy shape: `ring` or `binary` |
+| `shape` | `?view=galaxy&shape=ring` | Galaxy shape: `ring` or `covenants` (old `binary` links still work) |
 | `scale` | `?view=heatmap&scale=count` | Heatmap shows raw link counts instead of affinity |
 
 Each view has a Controls button that explains how to explore it, and the first visit to each view shows a short tip. On a keyboard, `⌘K` or `Ctrl K` jumps to search, `←` and `→` step to the previous or next verse, chapter, or connection, `+` and `−` zoom, and `Esc` clears everything.
