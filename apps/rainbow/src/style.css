@@ -1,24 +1,31 @@
 /* ─── APP-SPECIFIC TOKENS (layered on top of @jessespencer/bible-ui) ─── */
+/* Atlas's star: Starlight. html:root outranks bible-ui's :root, whichever loads last. */
+html:root {
+  --accent-rgb:    142, 197, 255;
+  --accent-bright: #CFE6FF;
+  --accent-fill:   #13305C;
+}
+
 :root {
-  /* Semantic colors */
-  --crimson:   #C94040;
-  --ember:     #D47240;
-  --saffron:   #E8B84B;
-  --moss:      #96BC5A;
-  --fern:      #50976A;
-  --verdigris: #3D9E92;
-  --cerulean:  #3B6E9E;
-  --iris:      #7B3DAE;
+  /* Section colors, matching data/genres.ts */
+  --crimson:   #EB827B;
+  --ember:     #E18C5F;
+  --saffron:   #C79E41;
+  --moss:      #8CB460;
+  --fern:      #5ABB88;
+  --verdigris: #4AB9B2;
+  --cerulean:  #67AAED;
+  --iris:      #B191EA;
 
   /* Semantic tints */
-  --crimson-tint:   rgba(201,64,64,0.12);
-  --ember-tint:     rgba(212,114,64,0.12);
-  --saffron-tint:   rgba(232,184,75,0.12);
-  --moss-tint:      rgba(150,188,90,0.12);
-  --fern-tint:      rgba(80,151,106,0.12);
-  --verdigris-tint: rgba(61,158,146,0.12);
-  --cerulean-tint:  rgba(59,110,158,0.12);
-  --iris-tint:      rgba(123,61,174,0.12);
+  --crimson-tint:   rgba(235,130,123,0.12);
+  --ember-tint:     rgba(225,140,95,0.12);
+  --saffron-tint:   rgba(199,158,65,0.12);
+  --moss-tint:      rgba(140,180,96,0.12);
+  --fern-tint:      rgba(90,187,136,0.12);
+  --verdigris-tint: rgba(74,185,178,0.12);
+  --cerulean-tint:  rgba(103,170,237,0.12);
+  --iris-tint:      rgba(177,145,234,0.12);
 }
 
 * {
@@ -31,7 +38,7 @@ body {
   background: var(--bg-base);
   color: var(--text-secondary);
   font-family: var(--font-ui);
-  font-variation-settings: 'SOFT' 0, 'WONK' 1;
+  font-feature-settings: 'kern', 'liga', 'onum';
   overflow: hidden;
   height: 100dvh;
 }
@@ -46,7 +53,8 @@ body {
 /* ─── HEADER OVERRIDES ───────────────────────────────────── */
 /* #app outranks bible-ui's stylesheet, which loads after this one. */
 #app .bui-header {
-  padding: 10px 24px;
+  /* Each side matches the gap above and below its edge control: the 28px logo on the left, the 36px view toggle on the right */
+  padding: 10px 10px 10px 14px;
   border-bottom: 1px solid var(--border-faint);
   /* Above the canvas chrome (10) and panel (50) so the app switcher menu can open over them. */
   z-index: 60;
@@ -125,7 +133,7 @@ body {
 #status-row {
   gap: 10px;
   color: var(--text-muted);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
 }
 
@@ -136,7 +144,7 @@ body {
   align-items: center;
   gap: 12px;
   color: var(--text-muted);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
 }
 
@@ -158,35 +166,37 @@ body {
 /* ─── ABOUT ──────────────────────────────────────────────── */
 #about {
   margin: auto;
-  width: min(560px, calc(100vw - 32px));
+  width: min(600px, calc(100vw - 32px));
   max-height: calc(100dvh - 48px);
-  padding: 28px;
+  padding: 32px;
   background: var(--bg-elevated);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
-  color: var(--text-secondary);
-  font-size: 15px;
-  line-height: 1.55;
+  color: var(--text-primary);
+  font-size: 17px;
+  /* Garamond reads small and thin on the dark, so long copy gets the Controls guide's size and weight */
+  font-weight: 450;
+  line-height: 1.5;
 }
 
-#about::backdrop { background: rgba(11, 13, 18, 0.75); }
+#about::backdrop { background: var(--bg-scrim); }
 
 #about h2 {
   padding-right: 24px;
   margin-bottom: 12px;
   color: var(--text-primary);
-  font-size: 22px;
-  font-weight: 500;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 400;
 }
 
 #about h3 {
-  margin: 18px 0 4px;
-  color: var(--text-muted);
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
+  margin: 24px 0 6px;
+  color: var(--text-dim);
+  font-size: 16px;
+  font-variant-caps: all-small-caps;
   font-weight: 500;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 #about a { color: var(--accent-text); }
@@ -195,12 +205,15 @@ body {
   padding-left: 18px;
 }
 
-#about li + li { margin-top: 2px; }
+#about li + li { margin-top: 6px; }
+
+#about p + p { margin-top: 10px; }
 
 #about-tagline {
   margin-top: -6px;
   margin-bottom: 12px;
   color: var(--text-dim);
+  font-size: 19px;
   font-style: italic;
 }
 
@@ -227,7 +240,7 @@ body {
   background: var(--fill-subtle);
   border: 1px solid var(--border-faint);
   color: var(--text-secondary);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
@@ -246,7 +259,7 @@ body {
   background: var(--fill-selected);
   border-color: var(--border-strong);
   color: var(--text-bright);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+  box-shadow: inset 0 1px 0 var(--border-faint);
 }
 
 .cat-dot {
@@ -282,7 +295,7 @@ body {
   right: 10px;
   transform: translateY(-50%);
   color: var(--text-muted);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   pointer-events: none;
 }
@@ -294,7 +307,7 @@ body {
   align-items: center;
   gap: 6px;
   color: var(--text-muted);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   white-space: nowrap;
 }
@@ -310,23 +323,36 @@ body {
 }
 
 #view-toggle button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   height: 28px;
   padding: 0 14px;
   border-radius: var(--radius-sm);
   border: none;
   background: transparent;
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
   white-space: nowrap;
 }
 
+#view-toggle button svg {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
 #view-toggle button.active {
-  background: var(--fill-selected);
+  background: var(--accent-fill);
   color: var(--text-bright);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+  box-shadow: var(--shadow-raised);
+}
+
+#view-toggle button.active svg {
+  color: var(--accent-text);
 }
 
 #view-toggle button:hover:not(.active) {
@@ -344,7 +370,7 @@ body {
   border: 1px solid var(--border-faint);
   background: var(--fill-subtle);
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   cursor: pointer;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
@@ -370,7 +396,7 @@ body {
   border: 1px solid var(--border-faint);
   background: var(--fill-subtle);
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   cursor: pointer;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
@@ -388,8 +414,11 @@ body {
   background: var(--fill-selected);
   border-color: var(--border-strong);
   color: var(--text-bright);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+  box-shadow: var(--shadow-raised);
 }
+
+/* The range only means something for the arcs and the galaxy */
+#app.heatmap-mode #range-toggle { display: none; }
 
 /* ─── BOOK SEARCH ────────────────────────────────────────── */
 #book-search {
@@ -399,7 +428,7 @@ body {
   border: 1px solid var(--border-subtle);
   background: var(--fill-subtle);
   color: var(--text-primary);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
   width: 100%;
   padding-right: 48px;
@@ -415,7 +444,7 @@ body {
 #book-search:focus {
   border-color: var(--accent-border);
   background: var(--fill-default);
-  box-shadow: 0 0 0 3px rgba(59,110,220,0.12);
+  box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
 #book-search.invalid {
@@ -452,6 +481,21 @@ body {
 
 #arc-canvas.hidden { display: none; }
 
+/* The starfield (sky.ts) sits under the transparent arc and galaxy canvases. Heatmap paints over it. */
+#sky {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.sky-layer {
+  position: absolute;
+  inset: 0;
+}
+
+#app.heatmap-mode #sky { display: none; }
+
 #main-canvas { touch-action: none; }
 
 /* ─── GALAXY ─────────────────────────────────────────────── */
@@ -480,12 +524,12 @@ body {
   top: 0;
   left: 0;
   color: var(--text-secondary);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   white-space: nowrap;
   padding: 1px 6px;
   border-radius: var(--radius-sm);
-  background: rgba(11, 13, 18, 0.65);
+  background: var(--bg-glass);
 }
 
 .galaxy-label.selected { color: var(--text-bright); }
@@ -496,8 +540,8 @@ body {
   left: 50%;
   transform: translate(-50%, -50%);
   color: var(--text-dim);
-  font-family: 'Fraunces', Georgia, serif;
-  font-size: 16px;
+  font-style: italic;
+  font-size: 18px;
 }
 
 #galaxy-status.hidden { display: none; }
@@ -507,7 +551,10 @@ body {
   display: none;
 }
 
-#galaxy-shape { display: none; }
+#galaxy-shape,
+#heatmap-scale { display: none; }
+
+#app.heatmap-mode #heatmap-scale { display: block; }
 
 #app.galaxy-mode #galaxy-layers,
 #app.galaxy-mode #galaxy-shape { display: block; }
@@ -519,8 +566,9 @@ body {
 #galaxy-layers summary::-webkit-details-marker { display: none; }
 
 #galaxy-layers[open] summary {
-  background: var(--fill-selected);
-  color: var(--text-bright);
+  background: var(--accent-fill);
+  color: var(--accent-bright);
+  box-shadow: var(--shadow-raised);
 }
 
 #galaxy-layers-panel {
@@ -535,7 +583,7 @@ body {
   background: var(--bg-elevated);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  box-shadow: var(--shadow-pop);
 }
 
 #galaxy-layers-panel label {
@@ -543,7 +591,7 @@ body {
   align-items: center;
   gap: 8px;
   color: var(--text-secondary);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
 }
 
@@ -564,22 +612,21 @@ body {
   z-index: 100;
   max-width: 280px;
   backdrop-filter: blur(12px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  box-shadow: var(--shadow-pop);
 }
 
 #tooltip.hidden { display: none; }
 
 .tt-books {
   color: var(--text-primary);
-  font-family: 'Fraunces', Georgia, serif;
-  font-variation-settings: 'SOFT' 0, 'WONK' 1;
-  font-size: 14px;
+  font-family: var(--font-display);
+  font-size: 16px;
 }
 
 .tt-count {
   color: var(--text-dim);
   font-size: 11px;
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono);
 }
 
 /* ─── COMPANION ──────────────────────────────────────────── */
@@ -617,8 +664,10 @@ body {
   align-items: center;
   gap: 6px;
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
+  font-family: var(--font-ui);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+  font-size: 15px;
 }
 
 .cp-eyebrow span {
@@ -630,17 +679,16 @@ body {
 .cp-title {
   margin-top: 2px;
   color: var(--text-primary);
-  font-family: 'Fraunces', Georgia, serif;
-  font-variation-settings: 'SOFT' 0, 'WONK' 1;
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 24px;
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 400;
+  line-height: 26px;
 }
 
 .cp-note {
   margin-top: 2px;
   color: var(--text-muted);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
 }
 
@@ -672,6 +720,49 @@ body {
   cursor: default;
 }
 
+#companion-version { flex-shrink: 0; }
+
+#panel-share {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#panel-share svg {
+  width: 14px;
+  height: 14px;
+}
+
+.cp-elsewhere {
+  margin: 4px 0 14px 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-style: italic;
+}
+
+.cp-verse .cp-elsewhere { margin: 2px 0 0; }
+
+.cp-elsewhere a {
+  color: var(--accent-text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-style: normal;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+}
+
+.cp-elsewhere a:hover { text-decoration: underline; }
+
+/* Names the text and its licence; the openly licensed translations ask for it wherever they're shown. */
+#companion-source {
+  flex-shrink: 0;
+  padding: 8px 20px 10px;
+  border-top: 1px solid var(--border-faint);
+  color: var(--text-muted);
+  font-size: 14px;
+  font-style: italic;
+}
+
 #side-panel-content {
   flex: 1;
   min-height: 0;
@@ -681,15 +772,13 @@ body {
 
 .cp-text {
   color: var(--text-primary);
-  font-family: 'Fraunces', Georgia, serif;
-  font-variation-settings: 'SOFT' 0, 'WONK' 0;
-  font-size: 15px;
-  line-height: 1.55;
+  font-size: 17px;
+  line-height: 1.5;
 }
 
 .cp-text sup {
   color: var(--text-muted);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   margin-right: 2px;
 }
@@ -722,8 +811,9 @@ body {
   background: none;
   border: none;
   color: var(--accent-text);
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-style: italic;
   cursor: pointer;
 }
 
@@ -761,8 +851,10 @@ body {
   padding-right: 28px;
   margin-bottom: 4px;
   color: var(--text-muted);
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
+  font-family: var(--font-ui);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+  font-size: 14px;
 }
 
 .cp-verse-ref {
@@ -770,9 +862,9 @@ body {
   border: none;
   padding: 0;
   color: var(--text-bright);
-  font-family: 'Fraunces', Georgia, serif;
-  font-size: 15px;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 400;
   text-align: left;
   cursor: pointer;
 }
@@ -848,10 +940,10 @@ body {
 
 .band-name {
   color: var(--text-secondary);
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
 }
 
 .band-note {
@@ -859,15 +951,16 @@ body {
   min-width: 0;
   overflow: hidden;
   color: var(--text-muted);
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-style: italic;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .band-count {
   color: var(--text-muted);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
 }
 
@@ -889,7 +982,7 @@ body {
   gap: 8px;
   padding: 3px 0;
   color: var(--text-secondary);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
 }
 
@@ -913,7 +1006,7 @@ body {
   background: none;
   border: none;
   color: var(--text-muted);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   vertical-align: super;
   cursor: pointer;
@@ -934,7 +1027,7 @@ body {
   gap: 8px;
   padding: 10px 20px 2px;
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
 }
 
@@ -972,15 +1065,17 @@ body {
   align-items: baseline;
   gap: 8px;
   color: var(--text-primary);
-  font-family: 'Fraunces', Georgia, serif;
-  font-size: 14px;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 400;
 }
 
 .cp-row-ref span {
   color: var(--text-muted);
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
+  font-family: var(--font-ui);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+  font-size: 13px;
   font-weight: 400;
 }
 
@@ -988,8 +1083,8 @@ body {
   display: block;
   margin-top: 2px;
   color: var(--text-dim);
-  font-family: 'Fraunces', Georgia, serif;
-  font-size: 13px;
+  font-family: var(--font-ui);
+  font-size: 15px;
   line-height: 1.45;
 }
 
@@ -1002,7 +1097,7 @@ body {
   border-radius: var(--radius-sm);
   background: var(--fill-subtle);
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   cursor: pointer;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
@@ -1021,7 +1116,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(11, 13, 18, 0.9);
+  background: color-mix(in srgb, var(--bg-base) 92%, transparent);
   z-index: 80;
   display: flex;
   align-items: center;
@@ -1053,11 +1148,10 @@ body {
 }
 
 .shuffle-ref {
-  font-family: 'Fraunces', Georgia, serif;
-  font-variation-settings: 'SOFT' 0, 'WONK' 1;
-  font-size: 24px;
+  font-family: var(--font-display);
+  font-size: 28px;
   font-weight: 400;
-  line-height: 32px;
+  line-height: 34px;
   color: var(--text-primary);
   text-align: center;
 }
@@ -1072,8 +1166,7 @@ body {
 .shuffle-text {
   margin-top: 12px;
   color: var(--text-secondary);
-  font-family: 'Fraunces', Georgia, serif;
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1.5;
   text-align: center;
 }
@@ -1104,9 +1197,8 @@ body {
 #loading.hidden { display: none; }
 
 #loading-text {
-  font-family: 'Fraunces', Georgia, serif;
-  font-variation-settings: 'SOFT' 0, 'WONK' 1;
-  font-size: 18px;
+  font-style: italic;
+  font-size: 20px;
   color: var(--text-dim);
 }
 
@@ -1174,7 +1266,17 @@ body {
     flex-shrink: 0;
   }
 
-  #view-toggle button { padding: 0 8px; }
+  /* Icons only on a phone, so search keeps its room; each button keeps its aria-label */
+  #view-toggle button {
+    gap: 0;
+    padding: 0 10px;
+    font-size: 0;
+  }
+
+  #view-toggle button svg {
+    width: 16px;
+    height: 16px;
+  }
 
   #btn-shuffle {
     gap: 0;
@@ -1202,9 +1304,7 @@ body {
 
   .label-short { display: inline; }
 
-  #zoom-fit { padding: 0 8px; }
-
-  .preset-btn { padding: 0 10px; }
+  .segmented button { padding: 0 8px; }
 
   #votes-control span { display: none; }
 
@@ -1248,7 +1348,7 @@ body {
     border-left: none;
     border-top: 1px solid var(--border-default);
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    box-shadow: 0 -8px 32px rgba(0,0,0,0.5);
+    box-shadow: 0 -8px 32px rgba(4, 8, 22, 0.5);
     transform: translateY(calc(var(--drag, 0px)));
     transition: transform 0.25s ease;
   }

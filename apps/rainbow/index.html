@@ -3,12 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Rainbow — Bible Cross-Reference Visualization</title>
+  <!-- The app icon in its accent: Atlas's arches, Lineage's branch -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23050C1E'/%3E%3Cg transform='translate%284 4%29' fill='none' stroke='%238EC5FF' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 17a10 10 0 0 0-20 0'/%3E%3Cpath d='M6 17a6 6 0 0 1 12 0'/%3E%3Cpath d='M10 17a2 2 0 0 1 4 0'/%3E%3C/g%3E%3C/svg%3E" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#020611" />
+  <title>Atlas — Bible Cross-Reference Visualization</title>
   <meta name="color-scheme" content="dark" />
-  <style>html { background: #0B0D12; }</style>
+  <style>html { background: #020611; }</style>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&amp;family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,100..900,0..100,0..1&amp;display=block" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&amp;family=EB+Garamond:ital,wght@0,400..800;1,400..800&amp;family=IM+Fell+Great+Primer:ital@0;1&amp;display=block" />
   <link rel="stylesheet" href="/src/style.css" />
 </head>
 <body>
@@ -23,9 +27,9 @@
         <button id="clear-filters" class="canvas-btn">✕ Clear</button>
         <button id="btn-shuffle" class="canvas-btn">Shuffle</button>
         <div id="view-toggle">
-          <button id="view-arcs" class="active">Arcs</button>
+          <button id="view-arcs" class="active" aria-label="Arcs">Arcs</button>
+          <button id="view-galaxy" aria-label="Galaxy">Galaxy</button>
           <button id="view-heatmap" aria-label="Heatmap"><span class="label-long">Heatmap</span><span class="label-short">Map</span></button>
-          <button id="view-galaxy">Galaxy</button>
         </div>
       </div>
     </div>
@@ -54,13 +58,19 @@
             </label>
           </div>
           <div id="zoom-controls">
-            <button id="zoom-fit" class="canvas-btn">Fit</button>
-            <button id="zoom-ot" class="preset-btn"><span class="label-long">Old Testament</span><span class="label-short">OT</span></button>
-            <button id="zoom-nt" class="preset-btn"><span class="label-long">New Testament</span><span class="label-short">NT</span></button>
+            <div id="range-toggle" class="segmented" role="group" aria-label="Range">
+              <button id="zoom-fit" title="Show everything">Fit</button>
+              <button id="zoom-ot" class="preset-btn" title="Old Testament" aria-label="Old Testament">OT</button>
+              <button id="zoom-nt" class="preset-btn" title="New Testament" aria-label="New Testament">NT</button>
+            </div>
+            <select id="heatmap-scale" class="bui-select" aria-label="Heatmap scale">
+              <option value="expected" selected>Affinity</option>
+              <option value="count">Link count</option>
+            </select>
             <select id="galaxy-shape" class="bui-select" aria-label="Galaxy shape">
               <option value="spiral" selected>Spiral</option>
               <option value="ring">Ring</option>
-              <option value="binary">Binary</option>
+              <option value="covenants">Covenants</option>
             </select>
             <details id="galaxy-layers">
               <summary class="canvas-btn">Layers</summary>
@@ -95,18 +105,21 @@
         <div id="companion-handle"><span></span></div>
         <header id="companion-head">
           <div id="companion-heading"></div>
+          <div id="companion-version"></div>
           <nav id="companion-nav" aria-label="Companion">
+            <button id="panel-share" aria-label="Share" title="Share"></button>
             <button id="panel-prev" aria-label="Previous">&lsaquo;</button>
             <button id="panel-next" aria-label="Next">&rsaquo;</button>
             <button id="side-panel-close" aria-label="Close">&times;</button>
           </nav>
         </header>
         <div id="side-panel-content"></div>
+        <p id="companion-source"></p>
       </aside>
     </div>
     <dialog id="about" aria-labelledby="about-title">
       <form method="dialog"><button id="about-close" aria-label="Close">&times;</button></form>
-      <h2 id="about-title">Rainbow Reference</h2>
+      <h2 id="about-title">Atlas</h2>
       <p id="about-tagline">66 books, ~1,500 years, ~40 authors, 1 awesome God.</p>
       <p>Every arc joins two passages of the Bible that readers have long read together. All 344,799 cross-references are here, across all 31,102 verses from Genesis to Revelation, so you can see the whole web at once and then read any thread of it.</p>
       <h3>How to explore</h3>
@@ -115,7 +128,7 @@
         <li>Tap the book strip to read a passage with everything it connects to. Zoom in to go from books to chapters to single verses.</li>
         <li>Open Galaxy to see every verse as a star. Tap one to light up what it connects to; drag to orbit, and pinch or scroll to zoom. Only the strongest links are drawn until you pick a verse.</li>
         <li>Search for a passage like John 3:16, Ps 23, or 1 Cor 13:4-7.</li>
-        <li>Press Shuffle for a random connection. On a keyboard, ⌘K or Ctrl K jumps to search, the arrow keys step through verses, chapters, or links, and Esc clears everything.</li>
+        <li>Press Shuffle for a random connection. On a keyboard, ⌘K or Ctrl K jumps to search, the arrow keys step through verses, chapters, or links, + and − zoom, and Esc clears everything. Controls, at the top right, shows how to explore each view.</li>
         <li>Every view has its own address, so you can share what you're looking at.</li>
       </ul>
       <h3>What the votes mean</h3>
@@ -125,8 +138,9 @@
       <h3>Sources</h3>
       <p>Cross-references come from <a href="https://www.openbible.info/labs/cross-references/" target="_blank" rel="noopener">OpenBible.info</a> (2026-10-26 snapshot), drawn mainly from the public-domain <em>Treasury of Scripture Knowledge</em>. They're used under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a> and re-indexed to KJV verse numbering.</p>
       <p>Scripture text comes from the <a href="https://berean.bible/" target="_blank" rel="noopener">Berean Standard Bible</a>, dedicated to the public domain. It leaves out 16 verses that the earliest manuscripts don't have, and the app says so where they appear.</p>
+      <p>You can also read in the King James Version, World English Bible and American Standard Version (public domain), the Lutherbibel 1912 and Riveduta 1927 (public domain), <a href="https://github.com/blivre/BibliaLivre" target="_blank" rel="noopener">Bíblia Livre</a> (CC BY 3.0 BR) and <a href="https://ebible.org/spavbl/" target="_blank" rel="noopener">Versión Biblia Libre</a> (CC BY-SA 4.0), most from <a href="https://ebible.org/" target="_blank" rel="noopener">eBible.org</a>. Pick one from the chip at the top of the reading panel.</p>
       <h3>Credits</h3>
-      <p>Inspired by <a href="https://www.chrisharrison.net/index.php/visualizations/BibleViz" target="_blank" rel="noopener">Chris Harrison</a>'s arc diagram. Made by <a href="https://www.jessedestroys.com" target="_blank" rel="noopener">jessedestroys.com</a>. See also <a href="https://jessespencer.github.io/rainbow/timeline/" target="_blank" rel="noopener">Chronos</a>, a timeline from Adam to the resurrection, and the <a href="https://github.com/jessespencer/rainbow" target="_blank" rel="noopener">source on GitHub</a>. v2.0.0</p>
+      <p>Inspired by <a href="https://www.chrisharrison.net/index.php/visualizations/BibleViz" target="_blank" rel="noopener">Chris Harrison</a>'s arc diagram. Made by <a href="https://www.jessedestroys.com" target="_blank" rel="noopener">jessedestroys.com</a>. See also <a href="https://jessespencer.github.io/rainbow/timeline/" target="_blank" rel="noopener">Lineage</a>, a timeline from Adam to the resurrection, and the <a href="https://github.com/jessespencer/rainbow" target="_blank" rel="noopener">source on GitHub</a>. v2.0.0</p>
     </dialog>
     <div id="tooltip" class="hidden"></div>
     <div id="shuffle-overlay" class="hidden">

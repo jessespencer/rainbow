@@ -1,6 +1,13 @@
 import '@jessespencer/bible-ui/style.css';
 import { createHeader, loadFonts } from '@jessespencer/bible-ui';
-import { createElement, Shuffle, Scaling } from 'lucide';
+import { createGuide, type GuideHandle } from '@jessespencer/bible-ui/guide';
+import { createTranslationPicker, type TranslationPickerHandle } from '@jessespencer/bible-ui/translation-picker';
+import {
+  DEFAULT_TRANSLATION, saveTranslation, savedTranslation, translationById, type Translation,
+} from '@jessespencer/bible-ui/translations';
+import { initSelectMenus } from '@jessespencer/bible-ui/select-menu';
+import { shareView } from '@jessespencer/bible-ui/share';
+import { Check, createElement, Compass, Grid3x3, Orbit, Rainbow, Share2, Shuffle, Scaling } from 'lucide';
 import { GENRES } from './data/genres';
 import { BOOKS } from './data/books';
 import { NT_LEFT, OT_RIGHT, WORLD_WIDTH, pixelsPerVerse, verseAtX, xOfVerse } from './lib/layout';
@@ -11,11 +18,13 @@ import {
   linksInPassage, linkToEnd, linkToStart, linkVotes, type LinkFilter, type LinkStore,
 } from './lib/links';
 import { AXIS_BAND, hitTestLink, renderAxis, renderDivider, renderLink, type ScreenTransform } from './lib/renderer';
-import { buildHeatmapData, heatmapHitTest, renderHeatmap, type HeatmapData } from './lib/heatmap';
+import { buildHeatmapData, heatmapHitTest, renderHeatmap, type HeatmapData, type HeatmapScale } from './lib/heatmap';
 import { hideTooltip, showLinkTooltip, showPassageTooltip } from './lib/tooltip';
-import { setupZoom, zoomTo, type ZoomState } from './lib/zoom';
-import { rememberSection, renderLinkView, renderPassageView, type CompanionTarget, type VerseTexts } from './lib/companion';
+import { setupZoom, zoomBy, zoomTo, type ZoomState } from './lib/zoom';
+import { CANVAS_LABELS, guideFor } from './lib/guides';
+import { rememberSection, renderLinkView, renderPassageView, setReading, type CompanionTarget, type VerseTexts } from './lib/companion';
 import { setupSheet, type SheetHandle } from './lib/sheet';
+import { createSky } from './lib/sky';
 import {
   bookPassage, chapterPassage, formatRange, formatVerse, locate, neighborPassage, parseReference, passageFromParam,
   passageToParam, VERSE_BOOK, versePassage, type Passage,
@@ -31,7 +40,8 @@ const PHONE_QUERY = '(max-width: 760px)';
 const INTRO_MS = 2800;
 const FIT_PADDING = 20;
 const LABEL_SPACE = 36;
-const BACKGROUND_DIM = 0.25;
+// How far the other arcs fall back behind a selection, a filter or a hover on the book strip.
+const BACKGROUND_DIM = 0.1;
 const COPIED_FEEDBACK_MS = 1600;
 // Leaves breathing room around the rainbow; phones need every pixel of their width.
 const FIT_SCALE = 0.8;
@@ -40,6 +50,8 @@ const FIT_SCALE = 0.8;
 let store: LinkStore;
 let visible: Int32Array = new Int32Array(0);
 let texts: VerseTexts = null;
+let translation: Translation = savedTranslation();
+let translationPicker: TranslationPickerHandle | null = null;
 let heatmapData: HeatmapData;
 const filter: LinkFilter = { minVotes: DEFAULT_MIN_VOTES, genre: null };
 let selection: Selection | null = null;
@@ -57,6 +69,11 @@ let pendingPointer: { x: number; y: number; clientX: number; clientY: number } |
 let clicksIgnoredUntil = 0;
 
 // Canvas
+let guide: GuideHandle | null = null;
+const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
+// Each press of + or − zooms by this much
+const KEY_ZOOM = 1.6;
+
 let canvas: HTMLCanvasElement;
 let ctx: CanvasRenderingContext2D;
 let arcs: ArcRenderer;
@@ -99,7 +116,7 @@ function render() {
   ctx.clearRect(0, 0, width, height);
 
   if (viewMode === 'heatmap') {
-    renderHeatmap(ctx, heatmapData, width, height);
+    renderHeatmap(ctx, heatmapData, width, height, heatmapScale());
   } else if (viewMode === 'arcs') {
     const dimmed = preview !== null || selection !== null || filter.genre !== null;
     arcs.draw({ ...transform(), width, height, dpr, reveal: introProgress(), backgroundAlpha: dimmed ? BACKGROUND_DIM : 1 });
@@ -176,13 +193,15 @@ function updateStats() {
   const stats = document.getElementById('footer-stats')!;
   if (viewMode === 'galaxy' && galaxy) {
     const { drawn, total } = galaxy.drawCount();
-    stats.textContent = `${drawn.toLocaleString()} of ${total.toLocaleString()} links drawn`;
+    stats.textContent = `${drawn.toLocaleString()} of ${total.toLocaleString()} drawn`;
   } else {
-    stats.textContent = `${visible.length.toLocaleString()} of ${store.count.toLocaleString()} links shown`;
+    stats.textContent = `${visible.length.toLocaleString()} of ${store.count.toLocaleString()} links`;
   }
 }
 
 const shapeSelect = () => document.getElementById('galaxy-shape') as HTMLSelectElement;
+const scaleSelect = () => document.getElementById('heatmap-scale') as HTMLSelectElement;
+const heatmapScale = () => scaleSelect().value as HeatmapScale;
 
 function galaxyOptions() {
   return {
@@ -276,6 +295,8 @@ function writeUrl(mode: 'push' | 'replace') {
   if (filter.genre !== null) params.set('genre', GENRES[filter.genre].id);
   if (viewMode !== 'arcs') params.set('view', viewMode);
   if (viewMode === 'galaxy' && shapeSelect().selectedIndex > 0) params.set('shape', shapeSelect().value);
+  if (viewMode === 'heatmap' && scaleSelect().selectedIndex > 0) params.set('scale', scaleSelect().value);
+  if (translation.id !== DEFAULT_TRANSLATION.id) params.set('tr', translation.id);
   const query = params.toString().replace(/%3A/g, ':');
   const url = `${window.location.pathname}${query ? `?${query}` : ''}`;
   if (mode === 'push') window.history.pushState(null, '', url);
@@ -345,6 +366,9 @@ function setViewMode(mode: ViewMode) {
   document.getElementById('view-galaxy')!.classList.toggle('active', mode === 'galaxy');
   document.getElementById('arc-canvas')!.classList.toggle('hidden', mode !== 'arcs');
   document.getElementById('app')!.classList.toggle('galaxy-mode', mode === 'galaxy');
+  document.getElementById('app')!.classList.toggle('heatmap-mode', mode === 'heatmap');
+  if (mode !== 'galaxy') canvas.setAttribute('aria-label', CANVAS_LABELS[mode]);
+  guide?.show(`rainbow-${mode}`, guideFor(mode, isMac));
   hideTooltip();
   galaxy?.setActive(mode === 'galaxy');
   if (mode === 'galaxy') void openGalaxy();
@@ -428,11 +452,15 @@ function setupGalaxyLayers() {
     galaxy?.setOptions(galaxyOptions());
     writeUrl('replace');
   });
+  scaleSelect().addEventListener('change', () => {
+    hideTooltip();
+    scheduleRender();
+    writeUrl('replace');
+  });
 }
 
 function setupSearch() {
   const input = document.getElementById('book-search') as HTMLInputElement;
-  const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
   document.getElementById('search-hint')!.textContent = isMac ? '⌘K' : 'Ctrl K';
 
   input.addEventListener('input', () => {
@@ -529,6 +557,13 @@ function setupKeyboard() {
     }
     if (e.key === 'ArrowLeft') navigate(-1);
     if (e.key === 'ArrowRight') navigate(1);
+    // Plain + and −; with ⌘ or Ctrl they stay the browser's page zoom
+    const zoomKey = e.metaKey || e.ctrlKey || e.altKey ? 0
+      : e.key === '+' || e.key === '=' ? KEY_ZOOM
+      : e.key === '-' || e.key === '_' ? 1 / KEY_ZOOM
+      : 0;
+    if (zoomKey && viewMode === 'galaxy') galaxy?.zoomBy(zoomKey);
+    else if (zoomKey && viewMode === 'arcs') zoomBy(canvas, zoomState, zoomKey, [width / 2, zoomState.ty]);
     if (e.key === 'Escape' && (selection !== null || filter.genre !== null)) clearAll();
   });
 }
@@ -537,8 +572,9 @@ async function copyPassage(button: HTMLElement, start: number, end: number) {
   const passage: Passage = { start, end, label: formatRange(start, end) };
   const lines = [];
   for (let verse = start; verse <= end; verse++) lines.push(texts?.[verse] ?? '');
-  const url = `${window.location.origin}${window.location.pathname}?ref=${passageToParam(passage)}`;
-  const copied = await writeClipboard(`${lines.join(' ')}\n— ${passage.label} (BSB)\n${url}`);
+  const version = translation.id === DEFAULT_TRANSLATION.id ? '' : `&tr=${translation.id}`;
+  const url = `${window.location.origin}${window.location.pathname}?ref=${passageToParam(passage)}${version}`;
+  const copied = await writeClipboard(`${lines.join(' ')}\n— ${passage.label} (${translation.abbr})\n${url}`);
   const state = copied ? 'copied' : 'copy-failed';
   button.classList.add(state);
   setTimeout(() => button.classList.remove(state), COPIED_FEEDBACK_MS);
@@ -569,6 +605,19 @@ function setHoveredLink(id: number | null) {
 
 function setupCompanion() {
   document.getElementById('side-panel-close')!.addEventListener('click', () => applySelection(null));
+  const share = document.getElementById('panel-share')!;
+  share.append(createElement(Share2));
+  share.addEventListener('click', async () => {
+    const title = document.querySelector('#companion-heading .cp-title')?.textContent ?? 'Atlas';
+    const result = await shareView(`${title} · Atlas`);
+    if (result !== 'copied') return;
+    share.replaceChildren(createElement(Check));
+    share.title = 'Link copied';
+    setTimeout(() => {
+      share.replaceChildren(createElement(Share2));
+      share.title = 'Share';
+    }, COPIED_FEEDBACK_MS);
+  });
   document.getElementById('panel-prev')!.addEventListener('click', () => navigate(-1));
   document.getElementById('panel-next')!.addEventListener('click', () => navigate(1));
 
@@ -659,7 +708,12 @@ function updateHover(pointer: NonNullable<typeof pendingPointer>) {
     const hit = heatmapHitTest(x, y, width, height);
     const count = hit ? heatmapData.matrix[hit.row * 66 + hit.col] : 0;
     if (hit && count > 0) {
-      showPassageTooltip(`${BOOKS[hit.row].name} &harr; ${BOOKS[hit.col].name}`, count, clientX, clientY);
+      const title = `${BOOKS[hit.row].name} &harr; ${BOOKS[hit.col].name}`;
+      const lift = heatmapData.lift[hit.row * 66 + hit.col];
+      const detail = heatmapScale() !== 'expected' ? undefined
+        : hit.row === hit.col ? 'Same book, not compared'
+        : `Affinity ${lift.toFixed(1)}&times; the expected share`;
+      showPassageTooltip(title, count, clientX, clientY, detail);
     } else {
       hideTooltip();
     }
@@ -801,9 +855,16 @@ function readUrl(): Selection | null {
   filter.minVotes = params.has('votes') && Number.isFinite(votes) ? votes : DEFAULT_MIN_VOTES;
   const genre = GENRES.findIndex(g => g.id === params.get('genre'));
   filter.genre = genre >= 0 ? genre : null;
+  const linked = translationById(params.get('tr'));
+  if (linked && linked.id !== translation.id) chooseTranslation(linked, false);
   const shape = shapeSelect();
-  shape.value = params.get('shape') ?? '';
+  // Covenants was called Binary, and old links still say so
+  const shapeParam = params.get('shape');
+  shape.value = shapeParam === 'binary' ? 'covenants' : shapeParam ?? '';
   if (shape.selectedIndex < 0) shape.selectedIndex = 0;
+  const scale = scaleSelect();
+  scale.value = params.get('scale') ?? '';
+  if (scale.selectedIndex < 0) scale.selectedIndex = 0;
   galaxy?.setOptions(galaxyOptions());
   const view = params.get('view');
   setViewMode(view === 'heatmap' || view === 'galaxy' ? view : 'arcs');
@@ -828,10 +889,27 @@ function restoreFromUrl() {
 }
 
 async function loadTexts() {
-  const response = await fetch(`${import.meta.env.BASE_URL}data/bsb.json`);
+  const wanted = translation;
+  const response = await fetch(`${import.meta.env.BASE_URL}data/${wanted.file}`);
   if (!response.ok) throw new Error(`Failed to load verse text (${response.status})`);
-  texts = await response.json() as string[];
+  const loaded = await response.json() as string[];
+  // A quicker pick may have landed first; only the current translation's text is shown.
+  if (wanted !== translation) return;
+  texts = loaded;
   renderCompanion();
+}
+
+function chooseTranslation(next: Translation, fromPicker: boolean) {
+  translation = next;
+  setReading(next.abbr, next.language);
+  translationPicker?.set(next);
+  document.getElementById('companion-source')!.textContent = `${next.name} · ${next.license}`;
+  if (!fromPicker) return;
+  saveTranslation(next);
+  texts = null;
+  renderCompanion();
+  writeUrl('replace');
+  void loadTexts().catch(err => console.error(err));
 }
 
 async function main() {
@@ -839,7 +917,7 @@ async function main() {
   loadFonts();
   const app = document.getElementById('app')!;
   const { element: header, controls } = createHeader({
-    title: 'Rainbow Reference',
+    title: 'Atlas',
     subtitle: 'The world\'s first hyperlinked Text — The Bible',
     background: 'var(--bg-base)',
     appId: 'rainbow',
@@ -875,6 +953,22 @@ async function main() {
   document.getElementById('btn-shuffle')!.prepend(createElement(Shuffle));
   document.getElementById('btn-shuffle-again')!.prepend(createElement(Shuffle));
   document.getElementById('zoom-fit')!.prepend(createElement(Scaling));
+  document.getElementById('view-arcs')!.prepend(createElement(Rainbow));
+  document.getElementById('view-galaxy')!.prepend(createElement(Orbit));
+  document.getElementById('view-heatmap')!.prepend(createElement(Grid3x3));
+  initSelectMenus();
+  createSky(document.getElementById('canvas-container')!);
+  translationPicker = createTranslationPicker({
+    parent: document.getElementById('companion-version')!,
+    current: translation,
+    onChange: next => chooseTranslation(next, true),
+  });
+  chooseTranslation(translation, false);
+  guide = createGuide({
+    parent: document.getElementById('zoom-controls')!,
+    stage: document.getElementById('canvas-container')!,
+    icon: () => createElement(Compass),
+  });
 
   setupFilters();
   setupZoomPresets();
@@ -892,6 +986,11 @@ async function main() {
   app.addEventListener('wheel', (e) => {
     if (e.ctrlKey) e.preventDefault();
   }, { passive: false });
+
+  // Works offline once visited, and the browser can install it (public/sw.js). Production only.
+  if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(err => console.warn('Offline copy unavailable', err));
+  }
 
   setProgress(30);
   const response = await fetch(`${import.meta.env.BASE_URL}data/links.bin`);

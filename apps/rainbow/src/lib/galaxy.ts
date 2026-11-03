@@ -8,7 +8,7 @@ import { OT_VERSES, TOTAL_VERSES, VERSE_BOOK } from './verses';
 
 export type ColorMode = 'genre' | 'testament' | 'heat' | 'book';
 export type SizeMode = 'uniform' | 'connections';
-export type ShapeMode = 'spiral' | 'ring' | 'binary';
+export type ShapeMode = 'spiral' | 'ring' | 'covenants';
 
 export interface GalaxyOptions {
   links: boolean;
@@ -39,6 +39,7 @@ export interface GalaxyHandle {
   drawCount(): { drawn: number; total: number };
   flyToFocus(): void;
   fit(): void;
+  zoomBy(factor: number): void;
   resize(): void;
   setActive(active: boolean): void;
 }
@@ -67,10 +68,16 @@ const EDGE_OPACITY = 0.1;
 const FOCUS_EDGE_LIGHT = 90;
 const FOCUS_MS = 850;
 const FIT_MS = 900;
+const KEY_ZOOM_MS = 300;
 const MORPH_MS = 1700;
 // The share of the morph spent waiting for the wave to pass from Genesis to Revelation.
 const MORPH_STAGGER = 0.4;
-const INTRO_MS = 1800;
+const INTRO_MS = 2600;
+// How far apart along an arm stars start their reveal, and how far they swing in, in radians.
+const REVEAL_SPREAD = 1.2;
+const REVEAL_SWIRL = 1.6;
+// Links and labels wait until the arms are mostly drawn.
+const REVEAL_LINKS_FROM = 0.62;
 const SHIFT_EASE = 0.18;
 const AUTO_ROTATE_SPEED = -0.4;
 const SELECTED_LABEL_OFFSETS = [0, -28, 28, -56, 56];
@@ -91,26 +98,26 @@ const RING_THICKNESS = 4;
 
 // One thread through two galaxies, sized by verse count: Genesis at one core,
 // out to the neck where Malachi meets Matthew, then in to Revelation at the other.
-const BINARY_OT_X = -72;
-const BINARY_NT_X = 104;
-const BINARY_OT_RIM = 96;
-const BINARY_NT_RIM = 56;
-const BINARY_CORE = 5;
-const BINARY_WRAPS = 1.6;
-const BINARY_TILT = 0.3;
-const BINARY_ARM_WIDTH = 8;
+const COVENANT_OT_X = -72;
+const COVENANT_NT_X = 104;
+const COVENANT_OT_RIM = 96;
+const COVENANT_NT_RIM = 56;
+const COVENANT_CORE = 5;
+const COVENANT_WRAPS = 1.6;
+const COVENANT_TILT = 0.3;
+const COVENANT_ARM_WIDTH = 8;
 
 // How much of each shape's radius the resting view shows across and down.
 const SHAPE_FIT: Record<ShapeMode, { width: number; height: number }> = {
   spiral: { width: 1.08, height: 0.72 },
   ring: { width: 1.3, height: 0.86 },
-  binary: { width: 1.08, height: 0.72 },
+  covenants: { width: 1.08, height: 0.72 },
 };
 
 const SHAPE_LABELS: Record<ShapeMode, string> = {
   spiral: 'Every verse of the Bible as a star in a two-armed spiral',
   ring: 'Every verse of the Bible as a star in a closed ring, Revelation meeting Genesis',
-  binary: 'Every verse of the Bible as a star in two galaxies joined where Malachi meets Matthew',
+  covenants: 'Every verse of the Bible as a star in two galaxies, the old covenant and the new, joined where Malachi meets Matthew',
 };
 
 const WHITE = new THREE.Color(0xffffff);
@@ -129,20 +136,36 @@ const HEAT_STOPS: [number, [number, number, number]][] = [
   [1, [224, 168, 87]],
 ];
 
+// On first load each arm unwinds from the core in reading order: a star appears as the wave reaches
+// its place on the arm, swinging in along the spiral and swelling briefly as it lands.
 const VERTEX_SHADER = `
   uniform float uPixelRatio;
   uniform float uK;
   uniform float uMaxScale;
+  uniform float uReveal;
+  uniform vec3 uCenter;
   attribute vec3 aColor;
   attribute float size;
   attribute float aAlpha;
+  attribute float aOrder;
   varying vec3 vColor;
   varying float vAlpha;
+  const float SPREAD = ${REVEAL_SPREAD.toFixed(2)};
+  const float SWIRL = ${REVEAL_SWIRL.toFixed(2)};
   void main() {
+    float local = clamp(uReveal * (1.0 + SPREAD) - SPREAD * aOrder, 0.0, 1.0);
+    local = local * local * (3.0 - 2.0 * local);
+    vec3 p = position;
+    if (local < 1.0) {
+      float angle = (1.0 - local) * SWIRL;
+      vec2 offset = (p.xz - uCenter.xz) * mix(0.55, 1.0, local);
+      p.xz = uCenter.xz + mat2(cos(angle), -sin(angle), sin(angle), cos(angle)) * offset;
+    }
     vColor = aColor;
-    vAlpha = aAlpha;
-    vec4 mv = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = size * uPixelRatio * min(uK / -mv.z, uMaxScale);
+    vAlpha = aAlpha * local;
+    vec4 mv = modelViewMatrix * vec4(p, 1.0);
+    float swell = 1.0 + 1.6 * local * (1.0 - local);
+    gl_PointSize = size * swell * uPixelRatio * min(uK / -mv.z, uMaxScale);
     gl_Position = projectionMatrix * mv;
   }
 `;
@@ -224,7 +247,7 @@ function layoutRing(): Float32Array {
   return pos;
 }
 
-function layoutBinary(): Float32Array {
+function layoutCovenants(): Float32Array {
   const pos = new Float32Array(TOTAL_VERSES * 3);
 
   for (let verse = 0; verse < TOTAL_VERSES; verse++) {
@@ -233,24 +256,24 @@ function layoutBinary(): Float32Array {
     const p = (nt ? verse - OT_VERSES : verse) / (armLength - 1);
     // 0 at a galaxy's core, 1 at the rim facing the other galaxy.
     const out = nt ? 1 - p : p;
-    const rim = nt ? BINARY_NT_RIM : BINARY_OT_RIM;
-    const r = BINARY_CORE + (rim - BINARY_CORE) * Math.sqrt(out);
-    const theta = (nt ? Math.PI : 0) + BINARY_WRAPS * 2 * Math.PI * (1 - out);
+    const rim = nt ? COVENANT_NT_RIM : COVENANT_OT_RIM;
+    const r = COVENANT_CORE + (rim - COVENANT_CORE) * Math.sqrt(out);
+    const theta = (nt ? Math.PI : 0) + COVENANT_WRAPS * 2 * Math.PI * (1 - out);
     const cos = Math.cos(theta);
     const sin = Math.sin(theta);
 
     const rnd = verseRandom(verse);
     const scale = rim / R_RIM;
     const puff = 1 + BULGE * Math.exp(-out / BULGE_FALLOFF);
-    const radial = r + gauss(rnd) * BINARY_ARM_WIDTH * scale * puff;
-    const tangent = gauss(rnd) * BINARY_ARM_WIDTH * scale * puff * 0.5;
+    const radial = r + gauss(rnd) * COVENANT_ARM_WIDTH * scale * puff;
+    const tangent = gauss(rnd) * COVENANT_ARM_WIDTH * scale * puff * 0.5;
     const x = cos * radial - sin * tangent;
     const y = gauss(rnd) * DISK_THICKNESS * scale * puff;
     const z = sin * radial + cos * tangent;
 
     // Tilting about the line between the galaxies leaves the neck where it is.
-    const tilt = nt ? -BINARY_TILT : BINARY_TILT;
-    pos[verse * 3] = x + (nt ? BINARY_NT_X : BINARY_OT_X);
+    const tilt = nt ? -COVENANT_TILT : COVENANT_TILT;
+    pos[verse * 3] = x + (nt ? COVENANT_NT_X : COVENANT_OT_X);
     pos[verse * 3 + 1] = y * Math.cos(tilt) - z * Math.sin(tilt);
     pos[verse * 3 + 2] = y * Math.sin(tilt) + z * Math.cos(tilt);
   }
@@ -340,7 +363,7 @@ export function createGalaxy(
     let found = fields.get(shape);
     if (!found) {
       found = measureField(
-        shape === 'ring' ? layoutRing() : shape === 'binary' ? layoutBinary() : layoutSpiral());
+        shape === 'ring' ? layoutRing() : shape === 'covenants' ? layoutCovenants() : layoutSpiral());
       fields.set(shape, found);
     }
     return found;
@@ -380,10 +403,11 @@ export function createGalaxy(
     return height * (near - far) / 4;
   };
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  // Transparent, so the shared starfield behind it (sky.ts) shows between the verses.
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_DPR));
-  renderer.setClearColor(getComputedStyle(document.body).backgroundColor, 1);
+  renderer.setClearColor(0x000000, 0);
   const canvas = renderer.domElement;
   canvas.style.display = 'block';
   canvas.setAttribute('role', 'img');
@@ -420,6 +444,12 @@ export function createGalaxy(
   geometry.setAttribute('aColor', colorAttr);
   geometry.setAttribute('size', sizeAttr);
   geometry.setAttribute('aAlpha', alphaAttr);
+  // Each star's place along its Testament's arm, 0 at the core to 1 at the rim.
+  const order = new Float32Array(TOTAL_VERSES);
+  for (let verse = 0; verse < TOTAL_VERSES; verse++) {
+    order[verse] = verse < OT_VERSES ? verse / OT_VERSES : (verse - OT_VERSES) / (TOTAL_VERSES - OT_VERSES);
+  }
+  geometry.setAttribute('aOrder', new THREE.BufferAttribute(order, 1));
   const uniformK = 2 * wideFitDistance;
   const stars = new THREE.Points(geometry, new THREE.ShaderMaterial({
     vertexShader: VERTEX_SHADER,
@@ -431,6 +461,8 @@ export function createGalaxy(
       uPixelRatio: { value: renderer.getPixelRatio() },
       uK: { value: uniformK },
       uMaxScale: { value: MAX_STAR_SCALE },
+      uReveal: { value: reducedMotion ? 1 : 0 },
+      uCenter: { value: center },
     },
   }));
   stars.frustumCulled = false;
@@ -676,6 +708,14 @@ export function createGalaxy(
     flyTo(center.clone(), position, FIT_MS, true);
   }
 
+  // Keys zoom toward what the camera is looking at, within the same limits as the wheel.
+  function zoomBy(factor: number) {
+    const target = flight?.toTarget ?? controls.target;
+    const offset = (flight?.toPosition ?? camera.position).clone().sub(target);
+    const distance = THREE.MathUtils.clamp(offset.length() / factor, controls.minDistance, controls.maxDistance);
+    flyTo(target.clone(), target.clone().addScaledVector(offset.normalize(), distance), KEY_ZOOM_MS, false);
+  }
+
   let morph: { start: number; from: Float32Array; fromBooks: THREE.Vector3[] } | null = null;
 
   function snapToField() {
@@ -846,8 +886,18 @@ export function createGalaxy(
     }
   }
 
+  // The intro's reveal, from 0 (nothing drawn) to 1 (everything at rest).
+  function showRevealed(progress: number) {
+    (stars.material as THREE.ShaderMaterial).uniforms.uReveal.value = progress;
+    const after = THREE.MathUtils.smoothstep(progress, REVEAL_LINKS_FROM, 1);
+    strongest.material.opacity = EDGE_OPACITY * after;
+    labelLayer.style.opacity = after < 1 ? String(after) : '';
+    needsRender = true;
+  }
+
   // Render loop: runs only while the view shows, and draws only when something changed.
   let introStart = reducedMotion ? null : performance.now();
+  if (introStart !== null) showRevealed(0);
   let raf = 0;
   let active = false;
 
@@ -878,7 +928,9 @@ export function createGalaxy(
       const elapsed = (now - introStart) / INTRO_MS;
       if (elapsed >= 1 || leftRest || focus) {
         introStart = null;
+        showRevealed(1);
       } else {
+        showRevealed(elapsed);
         const rest = fitDistance();
         const eased = 1 - Math.pow(1 - elapsed, 3);
         const direction = camera.position.clone().sub(controls.target).normalize();
@@ -907,7 +959,10 @@ export function createGalaxy(
 
   motionPreference.addEventListener('change', () => {
     reducedMotion = motionPreference.matches;
-    if (reducedMotion) introStart = null;
+    if (reducedMotion && introStart !== null) {
+      introStart = null;
+      showRevealed(1);
+    }
   });
   document.addEventListener('visibilitychange', syncLoop);
 
@@ -930,6 +985,7 @@ export function createGalaxy(
       : { drawn, total: visible.length },
     flyToFocus,
     fit,
+    zoomBy,
     resize,
     setActive(next) {
       active = next;

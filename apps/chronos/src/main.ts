@@ -1,8 +1,12 @@
 import "@jessespencer/bible-ui/style.css";
 import "./style.css";
 import { createHeader, loadFonts } from "@jessespencer/bible-ui";
+import { createGuide } from "@jessespencer/bible-ui/guide";
+import { initSelectMenus } from "@jessespencer/bible-ui/select-menu";
+import { Compass, createElement } from "lucide";
 import {
   yearToX,
+  xToYear,
   formatYear,
   getTimelineWidth,
   MIN_YEAR,
@@ -14,18 +18,20 @@ import { initScrubber } from "./lib/scrubber.ts";
 import { initTooltip, showTooltip, hideTooltip } from "./lib/tooltip.ts";
 import { initMinimap } from "./lib/minimap.ts";
 import { initZoom } from "./lib/zoom.ts";
-import { initCompanion } from "./lib/companion.ts";
+import { initCompanion, readingTranslation } from "./lib/companion.ts";
+import { DEFAULT_TRANSLATION } from "@jessespencer/bible-ui/translations";
 import { initSearch } from "./lib/search.ts";
 import type { SearchResult } from "./lib/search.ts";
 import { el } from "./lib/dom.ts";
 import { CATEGORY_DESCRIPTIONS, CATEGORY_NAMES, CATEGORY_ORDER } from "./lib/categories.ts";
-import { ERA_BANDS } from "./lib/eras.ts";
+import { ERA_BANDS, type EraBand } from "./lib/eras.ts";
 import { figures } from "./data/timeline.ts";
 import type { Category, TimelineFigure } from "./data/timeline.ts";
 import { onViewChange, getView, setView } from "./lib/viewState.ts";
 import { initHeader } from "./lib/header.ts";
 import { allFigures, familyLine, initLineageView } from "./lib/renderLineage.ts";
 import { initLineToggle, parseLineMode } from "./lib/lineToggle.ts";
+import { guideFor } from "./lib/guides.ts";
 import type { LineMode } from "./lib/lineToggle.ts";
 
 // ─── Constants ───────────────────────────────────────────────────
@@ -38,6 +44,8 @@ const MIN_TICK_LABEL_GAP = 60;
 const YEAR_STEP = 10;
 const MIN_FOCUS_YEARS = 60;
 const FOCUS_PADDING_RATIO = 0.15;
+// Space kept above an era's first bar when its lives don't all fit on screen
+const ERA_TOP_MARGIN = 24;
 
 interface EraMarker {
   year: number;
@@ -67,10 +75,16 @@ const app = document.querySelector<HTMLDivElement>("#app")!;
 
 // -- Load shared fonts --
 loadFonts();
+initSelectMenus();
+
+// Works offline once visited, and the browser can install it (public/sw.js). Production only.
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch((err) => console.warn("Offline copy unavailable", err));
+}
 
 // -- Header (shared component) --
 const { element: headerEl, controls: headerControls, center: headerCenter } = createHeader({
-  title: "Chronos",
+  title: "Lineage",
   subtitle: "A Visual History of the Bible",
   appId: "chronos",
   compact: true,
@@ -356,6 +370,7 @@ const syncAddress = () => {
   if (getView() === "lineage" && lineMode !== "all") params.set("line", lineMode);
   if (selection?.kind === "figure") params.set("figure", selection.figure.id);
   if (selection?.kind === "year") params.set("year", String(selection.year));
+  if (readingTranslation().id !== DEFAULT_TRANSLATION.id) params.set("tr", readingTranslation().id);
   const query = params.toString();
   history.replaceState(null, "", query ? `?${query}` : location.pathname);
 };
@@ -429,6 +444,7 @@ const companion = initCompanion(stage, {
   },
   onStep: step,
   onClose: () => select(null),
+  onTranslation: () => syncAddress(),
 });
 
 // ─── Tooltip ─────────────────────────────────────────────────────
@@ -463,6 +479,19 @@ const syncScroll = () => {
 
 const zoom = initZoom(mainViewport, zoomControls, { onZoom: reposition, onMove: syncScroll });
 
+// ─── Controls guide ──────────────────────────────────────────────
+
+const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
+// Each press of + or − zooms by this much
+const KEY_ZOOM = 1.6;
+const guide = createGuide({ parent: statusRow, stage: canvasArea, icon: () => createElement(Compass) });
+const showGuide = () => guide.show(`chronos-${getView()}`, guideFor(getView(), isMac));
+onViewChange(showGuide);
+mainViewport.setAttribute(
+  "aria-label",
+  "Timeline of lives from Adam to the resurrection. Scroll to move through time, hold Command or Control and scroll to zoom, press plus and minus to zoom, click a life to read about it, and press Escape to clear.",
+);
+
 // ─── Navigation ──────────────────────────────────────────────────
 
 const smoothScroll = (): ScrollBehavior =>
@@ -493,10 +522,52 @@ const focusFigure = (figure: TimelineFigure) => {
   });
 };
 
+/** Where to scroll so the era's lives are on screen: all of them centred, or the first at the top. */
+const eraTop = (era: EraBand): number => {
+  if (getView() !== "timeline") return mainViewport.scrollTop;
+  const origin = mainInner.getBoundingClientRect().top;
+  let top = Infinity;
+  let bottom = -Infinity;
+  for (const figure of figures) {
+    if (figure.death < era.startYear || figure.birth > era.endYear) continue;
+    const rect = barMap.get(figure.id)?.getBoundingClientRect();
+    if (!rect) continue;
+    top = Math.min(top, rect.top - origin);
+    bottom = Math.max(bottom, rect.bottom - origin);
+  }
+  if (top === Infinity) return mainViewport.scrollTop;
+  const room = mainViewport.clientHeight;
+  return bottom - top <= room - ERA_TOP_MARGIN * 2
+    ? (top + bottom) / 2 - room / 2
+    : top - ERA_TOP_MARGIN;
+};
+
+// The era a jump landed on, shown in the menu until the view leaves it.
+let shownEra: EraBand | null = null;
+
+const focusEra = (era: EraBand) => {
+  shownEra = era;
+  eraSelect.value = String(ERA_BANDS.indexOf(era));
+  const startTop = mainViewport.scrollTop;
+  // Measured each frame, since rows grow as the zoom does.
+  zoom.focusRange(era.startYear, era.endYear, (progress) => {
+    mainViewport.scrollTop = startTop + (eraTop(era) - startTop) * progress;
+    syncScroll();
+  });
+};
+
 eraSelect.addEventListener("change", () => {
   const era = ERA_BANDS[Number(eraSelect.value)];
-  if (eraSelect.value && era) zoom.focusRange(era.startYear, era.endYear);
-  eraSelect.value = "";
+  if (eraSelect.value && era) focusEra(era);
+});
+
+mainViewport.addEventListener("scroll", () => {
+  if (!shownEra || document.body.classList.contains("zooming")) return;
+  const center = xToYear(mainViewport.scrollLeft + mainViewport.clientWidth / 2);
+  if (center < shownEra.startYear || center > shownEra.endYear) {
+    shownEra = null;
+    eraSelect.value = "";
+  }
 });
 
 initSearch(headerCenter!, (result: SearchResult) => {
@@ -512,7 +583,7 @@ initSearch(headerCenter!, (result: SearchResult) => {
       behavior: smoothScroll(),
     });
   } else {
-    zoom.focusRange(result.era.startYear, result.era.endYear);
+    focusEra(result.era);
   }
 });
 
@@ -533,6 +604,10 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") select(null);
   else if (e.key === "ArrowLeft") step(-1);
   else if (e.key === "ArrowRight") step(1);
+  // Plain + and −; with ⌘ or Ctrl they stay the browser's page zoom
+  else if (e.metaKey || e.ctrlKey || e.altKey) return;
+  else if (e.key === "+" || e.key === "=") zoom.zoomBy(KEY_ZOOM);
+  else if (e.key === "-" || e.key === "_") zoom.zoomBy(1 / KEY_ZOOM);
 });
 
 // ─── Scroll Sync ─────────────────────────────────────────────────
@@ -558,6 +633,7 @@ lineToggle.setMode(lineMode);
 if (lineMode !== "all") lineageHandle.setMode(lineMode);
 
 if (initialView === "lineage") setView(initialView);
+showGuide();
 
 if (initialFigure) {
   select({ kind: "figure", figure: initialFigure });

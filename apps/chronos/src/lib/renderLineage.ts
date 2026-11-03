@@ -7,6 +7,7 @@
 
 import { yearToX, getTimelineWidth, formatYear, getPixelsPerYear, END_PADDING_PX } from "./scale.ts";
 import { el } from "./dom.ts";
+import { cssToken } from "@jessespencer/bible-ui/tokens";
 import { formatDates } from "./tooltip.ts";
 import { CHRIST_ID } from "./renderBars.ts";
 import type { LineMode } from "./lineToggle.ts";
@@ -168,6 +169,33 @@ const curve = (x1: number, y1: number, x2: number, y2: number): string => {
 
 // ─── Stored references ───────────────────────────────────────────
 
+// Label widths come from the fonts the labels are actually set in, not a per-character guess.
+// Fonts are read once per element and widths once per font and text; a webfont arriving resets both.
+const measure = document.createElement("canvas").getContext("2d")!;
+const fontOf = new WeakMap<Element, string>();
+const widthOf = new Map<string, number>();
+document.fonts?.addEventListener("loadingdone", () => widthOf.clear());
+
+const textWidth = (element: Element | null, text: string, fallbackCharPx: number): number => {
+  if (!element) return text.length * fallbackCharPx;
+  let font = fontOf.get(element);
+  if (!font) {
+    font = getComputedStyle(element).font;
+    fontOf.set(element, font);
+  }
+  const key = `${font}|${text}`;
+  let width = widthOf.get(key);
+  if (width === undefined) {
+    measure.font = font;
+    // A little over the measure, for letter spacing and small caps the canvas doesn't apply.
+    width = measure.measureText(text).width * 1.06;
+    widthOf.set(key, width);
+  }
+  return width;
+};
+
+const nameOf = (label: HTMLElement) => label.querySelector(".lineage-label__name");
+
 interface Station {
   figure: TimelineFigure;
   lineage: Lineage;
@@ -253,6 +281,7 @@ export const initLineageView = (
   const stationGroup = svgEl("g", {}, svg);
 
   const stations: Station[] = [];
+  const labelById = new Map<string, HTMLElement>();
   const branches: Branch[] = [];
   const stems: TribeStem[] = [];
   const gutterNames = new Map<Lineage, HTMLElement>();
@@ -276,7 +305,7 @@ export const initLineageView = (
     const dot = svgEl("circle", {
       r: radius,
       fill: color,
-      stroke: isChrist ? "#fff" : "rgba(255,255,255,0.75)",
+      stroke: cssToken(isChrist ? "--text-bright" : "--station-ring"),
       "stroke-width": isChrist ? 2.5 : 1.5,
     }, stationGroup);
 
@@ -296,6 +325,7 @@ export const initLineageView = (
       node.dataset.lineage = lineage;
     }
     stations.push({ figure, lineage, dot, hit, label, dates, blurb, row });
+    labelById.set(figure.id, label);
   };
 
   const addFade = (id: string, color: string) => {
@@ -494,7 +524,7 @@ export const initLineageView = (
       const dated = getPixelsPerYear() >= TRIBE_NAME_PPY || isSelected;
       const x = yearToX(figure.birth) + 8;
       const y = tribeTop + row * tribeRow;
-      const width = figure.name.length * TRIBE_CHAR_PX + (dated ? TRIBE_DATES_PX : 0);
+      const width = textWidth(nameOf(label), figure.name, TRIBE_CHAR_PX) + (dated ? TRIBE_DATES_PX : 0);
       label.classList.toggle("lineage-label--hidden", !named);
       label.classList.toggle("lineage-label--dated", dated);
       label.style.transform = `translate(${x}px, ${y}px) translateY(-50%)`;
@@ -530,9 +560,11 @@ export const initLineageView = (
       const charPx = isChrist
         ? CHRIST_CHAR_PX
         : lineage === "messianic" ? TRUNK_CHAR_PX : BRANCH_CHAR_PX;
-      const titleW = isChrist ? CHRIST_TITLES[mode].length * CHRIST_TITLE_CHAR_PX : 0;
+      const titleW = isChrist
+        ? textWidth(label.querySelector(".lineage-label__title"), CHRIST_TITLES[mode], CHRIST_TITLE_CHAR_PX)
+        : 0;
       const nameH = isChrist ? CHRIST_NAME_H + (titleW ? CHRIST_TITLE_H : 0) : NAME_H;
-      const width = Math.max(figure.name.length * charPx + LABEL_GAP_PX, titleW);
+      const width = Math.max(textWidth(nameOf(label), figure.name, charPx) + LABEL_GAP_PX, titleW);
       const stationX = yearToX(figure.birth);
       const christW = Math.max(width, DATES_W);
       const flips = isChrist && stationX + christW > getTimelineWidth() + END_PADDING_PX;
@@ -564,7 +596,8 @@ export const initLineageView = (
         ? CHRIST_NAME_H + (CHRIST_TITLES[mode] ? CHRIST_TITLE_H : 0)
         : NAME_H;
       const maxLines = lineage === "messianic" ? 3 : 2;
-      const lines = Math.min(maxLines, Math.ceil((figure.blurb.length * BLURB_CHAR_PX) / MAX_BLURB_W));
+      const blurbText = textWidth(label.querySelector(".lineage-label__blurb"), figure.blurb, BLURB_CHAR_PX);
+      const lines = Math.min(maxLines, Math.ceil(blurbText / MAX_BLURB_W));
       const blurbH = nameH + DATES_H + lines * BLURB_LINE_PX;
       const blurbW = Math.max(MAX_BLURB_W, nameW);
       const datedW = Math.max(DATES_W, nameW);
@@ -600,7 +633,7 @@ export const initLineageView = (
   const placeEnding = (lineage: Lineage, endX: number, y: number) => {
     const ending = endings.get(lineage);
     if (!ending) return;
-    const width = (ending.label.textContent?.length ?? 0) * ENDING_CHAR_PX;
+    const width = textWidth(ending.label, ending.label.textContent ?? "", ENDING_CHAR_PX);
     const rightEdge = getTimelineWidth() + END_PADDING_PX - ENDING_GAP_PX;
     // No room beside the line on a narrow screen: drop below its end instead.
     const fits = endX + ENDING_GAP_PX + width <= rightEdge;
@@ -719,7 +752,8 @@ export const initLineageView = (
       const named = tribeRow >= MIN_NAMED_TRIBE_ROW_PX;
       const dated = getPixelsPerYear() >= TRIBE_NAME_PPY;
       const labelW = named
-        ? stem.figure.name.length * TRIBE_CHAR_PX + LABEL_GAP_PX + (dated ? TRIBE_DATES_PX : 0)
+        ? textWidth(labelById.get(stem.figure.id) ? nameOf(labelById.get(stem.figure.id)!) : null, stem.figure.name, TRIBE_CHAR_PX)
+          + LABEL_GAP_PX + (dated ? TRIBE_DATES_PX : 0)
         : 0;
       const lineStart = x + labelW + 8;
       const lineEnd = yearToX(stem.figure.death);

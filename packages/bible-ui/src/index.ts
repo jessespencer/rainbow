@@ -14,27 +14,50 @@ export interface AppEntry {
   path: string;
   /** Port the app's dev server is pinned to (see its vite.config.ts). */
   devPort: number;
+  /** The inside of a 24×24 Lucide icon, so this package needs no icon dependency. */
+  icon: string;
+  /** The app's accent as an `r, g, b` triple; its stylesheet sets the same value as `--accent-rgb`. */
+  accent: string;
 }
 
 /** Every app in the ecosystem. Add an entry here to add it to the switcher. */
 export const APPS: AppEntry[] = [
   {
     id: "rainbow",
-    label: "Rainbow Reference",
-    tagline: "Cross-reference atlas",
+    label: "Atlas",
+    tagline: "Every cross-reference in the Bible",
     path: "/rainbow/",
     devPort: 5173,
+    // Lucide "rainbow": three arches, like the arc diagram
+    icon: '<path d="M22 17a10 10 0 0 0-20 0"/><path d="M6 17a6 6 0 0 1 12 0"/><path d="M10 17a2 2 0 0 1 4 0"/>',
+    // Starlight
+    accent: "142, 197, 255",
   },
   {
     id: "chronos",
-    label: "Chronos",
+    label: "Lineage",
     tagline: "Visual history of the Bible",
     path: "/rainbow/timeline/",
     devPort: 5174,
+    // Lucide "git-branch": a family line branching off the main one
+    icon: '<path d="M15 6a9 9 0 0 0-9 9V3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/>',
+    // Candlelight
+    accent: "242, 196, 107",
   },
 ];
 
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1"]);
+
+// Each app's icon glows in its own accent, here and in the menu.
+const appIcon = (app: AppEntry | undefined, className: string): SVGElement => {
+  const holder = document.createElement("span");
+  holder.innerHTML =
+    `<svg class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ` +
+    `stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${app?.icon ?? ""}</svg>`;
+  const svg = holder.firstElementChild as SVGElement;
+  if (app) svg.style.setProperty("--app-accent", app.accent);
+  return svg;
+};
 
 /**
  * Resolves the URL for an app. In production every app lives on one origin,
@@ -83,9 +106,7 @@ const createAppSwitcher = (currentId: string): HTMLElement => {
   trigger.setAttribute("aria-expanded", "false");
   trigger.setAttribute("aria-label", "Switch app");
 
-  const mark = document.createElement("span");
-  mark.className = "bui-appswitch__mark";
-  trigger.appendChild(mark);
+  trigger.appendChild(appIcon(current, "bui-appswitch__mark"));
 
   const chevron = document.createElement("span");
   chevron.className = "bui-appswitch__chevron";
@@ -114,7 +135,11 @@ const createAppSwitcher = (currentId: string): HTMLElement => {
     tagline.className = "bui-appswitch__item-tagline";
     tagline.textContent = app.tagline;
 
-    item.append(label, tagline);
+    const text = document.createElement("span");
+    text.className = "bui-appswitch__item-text";
+    text.append(label, tagline);
+
+    item.append(appIcon(app, "bui-appswitch__item-icon"), text);
     menu.appendChild(item);
   }
 
@@ -197,9 +222,9 @@ export const createHeader = (config: HeaderConfig): HeaderHandle => {
   return { element: header, controls, center };
 };
 
-/** Google Fonts URL for Fraunces + DM Mono. */
+/** Google Fonts URL for EB Garamond, IM Fell Great Primer and DM Mono. */
 export const FONT_URL =
-  "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,100..900,0..100,0..1&display=block";
+  "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=IM+Fell+Great+Primer:ital@0;1&display=block";
 
 /**
  * Injects the Google Fonts stylesheet link if not already present.

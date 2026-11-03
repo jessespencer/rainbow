@@ -2,9 +2,9 @@
 
 Tools for seeing the Bible whole, sharing one design system.
 
-**▶ [Open Rainbow Reference](https://jessespencer.github.io/rainbow/)** · **[Open Chronos](https://jessespencer.github.io/rainbow/timeline/)**
+**▶ [Open Atlas](https://jessespencer.github.io/rainbow/)** · **[Open Lineage](https://jessespencer.github.io/rainbow/timeline/)**
 
-Read the [Rainbow Reference](apps/rainbow/README.md) and [Chronos](apps/chronos/README.md) READMEs for what each one does, how the data works, and how to run it.
+Read the [Atlas](apps/rainbow/README.md) and [Lineage](apps/chronos/README.md) READMEs for what each one does, how the data works, and how to run it.
 
 > **Note:** the GitHub repo is currently named `rainbow` for historical reasons. It will likely be renamed once a permanent parent name lands. The internal package name is `bible-viz` as a placeholder.
 
@@ -12,8 +12,8 @@ Read the [Rainbow Reference](apps/rainbow/README.md) and [Chronos](apps/chronos/
 
 | Path | Package | Description |
 |---|---|---|
-| `apps/rainbow` | `rainbow` | Rainbow Reference — interactive arc visualization of all 344,799 Bible cross-references, with verse text. |
-| `apps/chronos` | `chronos` | Chronos — timeline of 157 biblical lives from Adam to the resurrection, with verse text. |
+| `apps/rainbow` | `rainbow` | Atlas — interactive arc visualization of all 344,799 Bible cross-references, with verse text. |
+| `apps/chronos` | `chronos` | Lineage — timeline of 157 biblical lives from Adam to the resurrection, with verse text. |
 | `packages/bible-ui` | `@jessespencer/bible-ui` | Shared header, app switcher, bottom sheet, verse numbering, fonts, and design tokens. |
 
 ## Stack
@@ -33,10 +33,10 @@ pnpm build            # builds both apps
 
 Both apps are deployed together to GitHub Pages via `.github/workflows/deploy.yml`:
 
-- Rainbow Reference → `https://jessespencer.github.io/rainbow/`
-- Chronos → `https://jessespencer.github.io/rainbow/timeline/`
+- Atlas → `https://jessespencer.github.io/rainbow/`
+- Lineage → `https://jessespencer.github.io/rainbow/timeline/`
 
-The workflow builds each app and assembles a combined `dist/` with chronos nested under `timeline/`. Chronos has no data of its own to ship: it reads Rainbow's `data/bsb.json` from one level up.
+The workflow builds each app and assembles a combined `dist/` with chronos nested under `timeline/`. Lineage has no data of its own to ship: it reads Atlas's `data/bsb.json` from one level up.
 
 ## History
 

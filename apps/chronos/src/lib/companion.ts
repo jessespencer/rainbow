@@ -5,6 +5,13 @@
 
 import { APPS, appHref } from "@jessespencer/bible-ui";
 import { setupSheet } from "@jessespencer/bible-ui/sheet";
+import { shareView } from "@jessespencer/bible-ui/share";
+import { createTranslationPicker } from "@jessespencer/bible-ui/translation-picker";
+import { Check, createElement, Share2 } from "lucide";
+import {
+  DEFAULT_TRANSLATION, LINKED_TRANSLATIONS, readElsewhereHref, saveTranslation, savedTranslation, translationById,
+  type Translation,
+} from "@jessespencer/bible-ui/translations";
 import { formatYear } from "./scale.ts";
 import { describeLife, formatDates, formatReign } from "./tooltip.ts";
 import { el } from "./dom.ts";
@@ -16,6 +23,7 @@ import { allFigures, childrenOf } from "./renderLineage.ts";
 import type { Category, TimelineFigure } from "../data/timeline.ts";
 
 const PREVIEW_VERSES = 6;
+const COPIED_MS = 1600;
 
 export interface CompanionHandle {
   showFigure: (figure: TimelineFigure, alongside: TimelineFigure[]) => void;
@@ -27,13 +35,21 @@ interface CompanionEvents {
   onFigure: (id: string) => void;
   onStep: (step: -1 | 1) => void;
   onClose: () => void;
+  /** The reader picked another translation. */
+  onTranslation: () => void;
 }
 
 const eraAt = (year: number): string =>
   ERA_BANDS.find((era) => year >= era.startYear && year < era.endYear)?.name ?? "";
 
+// The translation being read: a ?tr= link wins, then the reader's last pick, shared with Atlas.
+let translation: Translation =
+  translationById(new URLSearchParams(location.search).get("tr")) ?? savedTranslation();
+
+export const readingTranslation = (): Translation => translation;
+
 const rainbowHref = (passage: Passage): string =>
-  `${appHref(APPS[0]!)}?ref=${passage.param}`;
+  `${appHref(APPS[0]!)}?ref=${passage.param}${translation.id === DEFAULT_TRANSLATION.id ? "" : `&tr=${translation.id}`}`;
 
 const heading = (parent: HTMLElement, eyebrow: string, title: string, note: string, color?: string) => {
   parent.replaceChildren();
@@ -63,7 +79,7 @@ const figureRow = (parent: HTMLElement, figure: TimelineFigure, onFigure: (id: s
 
 export const initCompanion = (
   stage: HTMLElement,
-  { onFigure, onStep, onClose }: CompanionEvents,
+  { onFigure, onStep, onClose, onTranslation }: CompanionEvents,
 ): CompanionHandle => {
   const panel = el("aside", "bui-sheet companion hidden", stage);
   panel.setAttribute("aria-label", "Details");
@@ -74,6 +90,7 @@ export const initCompanion = (
 
   const head = el("header", "companion__head", panel);
   const headingEl = el("div", "companion__heading", head);
+  const version = el("div", "companion__version", head);
   const nav = el("nav", "companion__nav", head);
   const button = (label: string, text: string, onClick: () => void) => {
     const btn = el("button", undefined, nav);
@@ -81,12 +98,43 @@ export const initCompanion = (
     btn.textContent = text;
     btn.addEventListener("click", onClick);
   };
+  const share = el("button", "companion__share", nav);
+  share.setAttribute("aria-label", "Share");
+  share.title = "Share";
+  share.append(createElement(Share2));
+  share.addEventListener("click", async () => {
+    const title = headingEl.querySelector(".cp-title")?.textContent ?? "Lineage";
+    if ((await shareView(`${title} · Lineage`)) !== "copied") return;
+    share.replaceChildren(createElement(Check));
+    share.title = "Link copied";
+    setTimeout(() => {
+      share.replaceChildren(createElement(Share2));
+      share.title = "Share";
+    }, COPIED_MS);
+  });
   button("Previous", "‹", () => onStep(-1));
   button("Next", "›", () => onStep(1));
   button("Close", "×", onClose);
 
   const body = el("div", "companion__body", panel);
+  // Names the text and its licence; the openly licensed translations ask for it wherever they're shown.
+  const source = el("p", "companion__source", panel);
   const sheet = setupSheet(panel, handle, onClose);
+
+  let shown: { figure: TimelineFigure; alongside: TimelineFigure[] } | null = null;
+  const showSource = () => { source.textContent = `${translation.name} · ${translation.license}`; };
+  showSource();
+  createTranslationPicker({
+    parent: version,
+    current: translation,
+    onChange: (next) => {
+      translation = next;
+      saveTranslation(next);
+      showSource();
+      if (shown) handle_.showFigure(shown.figure, shown.alongside);
+      onTranslation();
+    },
+  });
 
   const open = () => {
     if (panel.classList.contains("hidden")) sheet.reset();
@@ -107,7 +155,8 @@ export const initCompanion = (
     const text = el("p", "cp-text cp-loading", root);
     text.textContent = "Loading…";
 
-    loadBible().then(
+    text.lang = translation.language;
+    loadBible(translation.file).then(
       (verses) => {
         if (id !== renderId) return;
         text.classList.remove("cp-loading");
@@ -128,12 +177,25 @@ export const initCompanion = (
     for (const passage of passages) {
       const link = el("a", "cp-context", links);
       link.href = rainbowHref(passage);
-      link.textContent = `${passage.label} in Rainbow ›`;
+      link.textContent = `${passage.label} in Atlas ›`;
     }
+    // Copyrighted translations can't be bundled, so the passage links out to them instead.
+    const elsewhere = el("p", "cp-elsewhere", root);
+    elsewhere.append("Also in ");
+    LINKED_TRANSLATIONS.forEach((version, i) => {
+      if (i > 0) elsewhere.append(" · ");
+      const link = el("a", undefined, elsewhere);
+      // The chapter Atlas opens, like "1Sam 16"; a label such as "1 Samuel – 1 Kings" is no search.
+      link.href = readElsewhereHref(first.param.replace(".", " "), version);
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = version;
+    });
   };
 
-  return {
+  const handle_: CompanionHandle = {
     showFigure: (figure, alongside) => {
+      shown = { figure, alongside };
       open();
       const reign =
         figure.reignStart != null && figure.reignEnd != null
@@ -162,6 +224,7 @@ export const initCompanion = (
     },
 
     showYear: (year, alive) => {
+      shown = null;
       open();
       renderId++;
       const count = alive.length === 1 ? "1 person" : `${alive.length} people`;
@@ -190,7 +253,9 @@ export const initCompanion = (
 
     hide: () => {
       renderId++;
+      shown = null;
       panel.classList.add("hidden");
     },
   };
+  return handle_;
 };

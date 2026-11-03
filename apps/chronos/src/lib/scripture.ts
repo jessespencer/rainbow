@@ -138,18 +138,20 @@ export const parseScripture = (ref: string): Passage[] => {
   return passages;
 };
 
-let bible: Promise<string[]> | null = null;
+const bibles = new Map<string, Promise<string[]>>();
 
-/** The BSB as one string per verse. Rainbow's file, fetched on first use. */
-export const loadBible = (): Promise<string[]> => {
+/** A translation as one string per verse. Atlas's file, fetched on first use. */
+export const loadBible = (file: string): Promise<string[]> => {
+  let bible = bibles.get(file);
   if (!bible) {
     const base = import.meta.env.BASE_URL;
-    const url = `${base}${import.meta.env.DEV ? "" : "../"}data/bsb.json`;
+    const url = `${base}${import.meta.env.DEV ? "" : "../"}data/${file}`;
     bible = fetch(url).then((res) => {
       if (!res.ok) throw new Error(`Could not load ${url}`);
       return res.json() as Promise<string[]>;
     });
-    bible.catch(() => { bible = null; });
+    bibles.set(file, bible);
+    bible.catch(() => bibles.delete(file));
   }
   return bible;
 };

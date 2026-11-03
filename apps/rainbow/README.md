@@ -1,14 +1,14 @@
-# 🌈 Rainbow Reference
+# 🌈 Atlas
 
 > *344,799 threads woven through 66 books. Every arc a conversation across millennia.*
 
-**▶ [Open Rainbow Reference](https://jessespencer.github.io/rainbow/)**
+**▶ [Open Atlas](https://jessespencer.github.io/rainbow/)**
 
 ## Why this exists
 
 Readers of the Bible have always followed cross-references: the small notes in the margin that send you from one passage to another that echoes, quotes, or fulfills it. On paper you follow them one at a time, so the bigger picture stays hidden.
 
-Rainbow Reference draws all of them at once. Start with the whole Bible as a single rainbow, then read both ends of any arc. It's a picture of how deeply scripture speaks to itself, and a way to actually read those connections.
+Atlas draws all of them at once. Start with the whole Bible as a single rainbow, then read both ends of any arc. It's a picture of how deeply scripture speaks to itself, and a way to actually read those connections.
 
 It's free and open source, and inspired by [Chris Harrison's](https://www.chrisharrison.net/index.php/visualizations/BibleViz) landmark arc diagram.
 
@@ -28,11 +28,11 @@ Tap a verse, chapter, or book on the axis to bring its arcs forward while the re
 
 ### See it as a matrix
 
-The heatmap collapses the same links into a 66×66 grid, where each cell's brightness shows how many links join two books. Tap a cell to open the strongest one.
+The heatmap collapses the same links into a 66×66 grid, one cell for each pair of books. It opens on Affinity, which sets book size aside: each pair is compared with the share of links it would get if every book's links were spread across the others in proportion, so parallel histories, sister letters, and Daniel with Revelation stand out. Same-book links are left out of that comparison. Switch the scale to Link count to see raw totals instead. Tap a cell to open the strongest link.
 
 ### See it as a galaxy
 
-Galaxy turns every verse into a star on a two-armed spiral, one arm per Testament, in reading order from the core out. Switch shapes and the stars fly to their new places: Ring closes the canon so Revelation meets Genesis, and Binary makes the Testaments two galaxies joined where Malachi meets Matthew. It opens with the strongest 6,000 links, because drawing all of them would only be a white blur. Tap a star to open it in the panel and light up everything it connects to. Drag to orbit, scroll or pinch to zoom, and use Layers to change the colors, star sizes, and labels. Filters, search, and sharing work as they do everywhere else.
+Galaxy turns every verse into a star on a two-armed spiral, one arm per Testament, in reading order from the core out. Switch shapes and the stars fly to their new places: Ring closes the canon so Revelation meets Genesis, and Covenants makes the old covenant and the new two galaxies, joined where Malachi meets Matthew. The first time you open it, both arms unwind from the core in reading order before the links fade in. It opens with the strongest 6,000 links, because drawing all of them would only be a white blur. Tap a star to open it in the panel and light up everything it connects to. Drag to orbit, scroll or pinch to zoom, and use Layers to change the colors, star sizes, and labels. Filters, search, and sharing work as they do everywhere else.
 
 ### Find, filter, and share
 
@@ -40,7 +40,8 @@ Galaxy turns every verse into a star on a two-armed spiral, one arm per Testamen
 - **Filter by votes** from 100 down to every link.
 - **Filter by section** to bring forward Law, History, Poetry & Wisdom, Prophets, Gospels, Acts, Epistles, or Revelation while the rest fade back.
 - **Shuffle** to land on a random connection with both verses in front of you.
-- **Share** any view. Everything you've selected lives in the address:
+- **Offline.** After your first visit, Atlas works without a connection, and your browser can install it as an app. Translations and Galaxy are saved once you've opened them.
+- **Share** any view with the share button in the reading panel, or copy the address. Everything you've selected lives in it:
 
 | Parameter | Example | Meaning |
 | --- | --- | --- |
@@ -49,9 +50,11 @@ Galaxy turns every verse into a star on a two-armed spiral, one arm per Testamen
 | `votes` | `?votes=25` | Minimum reader votes |
 | `genre` | `?genre=gospels` | Section filter |
 | `view` | `?view=heatmap`, `?view=galaxy` | Open the heatmap or the galaxy |
-| `shape` | `?view=galaxy&shape=ring` | Galaxy shape: `ring` or `binary` |
+| `shape` | `?view=galaxy&shape=ring` | Galaxy shape: `ring` or `covenants` (old `binary` links still work) |
+| `scale` | `?view=heatmap&scale=count` | Heatmap shows raw link counts instead of affinity |
+| `tr` | `?ref=Ps.23&tr=kjv` | Read in another translation: `kjv`, `web`, `asv`, `blivre`, `lut`, `riv` or `vbl` |
 
-On a keyboard, `⌘K` or `Ctrl K` jumps to search, `←` and `→` step to the previous or next verse, chapter, or connection, and `Esc` clears everything.
+Each view has a Controls button that explains how to explore it, and the first visit to each view shows a short tip. On a keyboard, `⌘K` or `Ctrl K` jumps to search, `←` and `→` step to the previous or next verse, chapter, or connection, `+` and `−` zoom, and `Esc` clears everything.
 
 ### Use it on your phone
 
@@ -79,12 +82,16 @@ The panel becomes a bottom sheet you can drag up to read and pull down to close.
 | Dataset | Source | License |
 | --- | --- | --- |
 | Cross-references | [OpenBible.info](https://www.openbible.info/labs/cross-references/), 2026-10-26 snapshot, drawn mainly from the public-domain *Treasury of Scripture Knowledge* | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
-| Bible text | [Berean Standard Bible](https://berean.bible/) | [Public domain](https://berean.bible/terms.htm) |
+| Bible text | [Berean Standard Bible](https://berean.bible/), the default | [Public domain](https://berean.bible/terms.htm) |
+| Other English texts | [King James Version](https://ebible.org/eng-kjv2006/), [World English Bible](https://worldenglish.bible/), [American Standard Version](https://ebible.org/eng-asv/), via eBible.org | Public domain (the KJV is Crown copyright in the UK) |
+| Other languages | [Bíblia Livre](https://github.com/blivre/BibliaLivre) (Portuguese), [Lutherbibel 1912](https://ebible.org/deu1912/) (German), [Riveduta 1927](https://ebible.org/ita1927/) (Italian), [Versión Biblia Libre](https://ebible.org/spavbl/) (Spanish) | CC BY 3.0 BR, public domain, public domain, CC BY-SA 4.0 |
 
 A few notes on how these are handled:
 
 - **Numbering:** verses follow the KJV numbering of 31,102 verses. OpenBible and the BSB split 3 John into 15 verses, so verse 15 folds into verse 14.
 - **Omitted verses:** the BSB leaves out 16 verses, such as Matthew 17:21, that the earliest manuscripts don't have. The links to them still appear, and the app says why the text is missing.
+- **Copyrighted translations:** the ESV, NIV, NLT and NASB can't be bundled, so each passage links out to them on Bible Gateway.
+- **Translations:** pick a text from the chip in the reading panel's header. Each is mapped to the same KJV numbering at build time, so the arcs never change, and a verse a translation numbers differently is left out rather than guessed. The panel names the text and its licence at the bottom, as the openly licensed ones ask.
 - **Ranges:** many links point to a range of verses. The arc lands on the first verse, and the panel shows the whole range.
 
 The build fails if a row can't be parsed or the verse count isn't 31,102, so a bad upstream file can't ship quietly.
@@ -111,6 +118,7 @@ The datasets are committed, so you don't need to download anything to run the ap
 ```bash
 cd apps/rainbow
 pnpm build:data
+pnpm build:translations
 ```
 
 `raw-data/` is ignored by git, and an existing file there isn't downloaded again. Delete it to fetch fresh copies.
@@ -121,14 +129,16 @@ pnpm build:data
 apps/rainbow/
 ├── public/data/
 │   ├── links.bin                # All cross-references, strongest first
-│   └── bsb.json                 # Berean Standard Bible text by verse
+│   ├── bsb.json                 # Berean Standard Bible text by verse
+│   └── text-<id>.json           # The other translations, same shape
 ├── scripts/
 │   ├── bible-metadata.ts        # Books and verse counts, shared with the app
 │   ├── download-data.ts         # Fetch the raw OpenBible and BSB files
+│   ├── build-translations.ts    # Fetch and map the other translations
 │   └── parse-crossrefs.ts       # Validate and build the datasets
 └── src/
     ├── main.ts                  # App state, URL, event wiring
-    ├── style.css                # Dark theme and phone layout
+    ├── style.css                # Navy theme and phone layout
     ├── data/
     │   ├── books.ts             # The 66 canonical books
     │   └── genres.ts            # The 8 sections and their colors
@@ -159,7 +169,7 @@ The site deploys to GitHub Pages from `main` through [`.github/workflows/deploy.
 
 ## Part of a family
 
-Rainbow Reference lives alongside [Chronos](https://jessespencer.github.io/rainbow/timeline/), a horizontal Bible timeline from Adam to the resurrection. Both share the [`@jessespencer/bible-ui`](../../packages/bible-ui) design system: Fraunces and DM Mono type, a navy palette, and the rainbow gradient.
+Atlas lives alongside [Lineage](https://jessespencer.github.io/rainbow/timeline/), a horizontal Bible timeline from Adam to the resurrection. Both share the [`@jessespencer/bible-ui`](../../packages/bible-ui) design system: IM Fell Great Primer, EB Garamond and DM Mono type, a navy and parchment palette shared with By Heart, and the rainbow gradient.
 
 ## Credits
 

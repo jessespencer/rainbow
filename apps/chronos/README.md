@@ -1,21 +1,23 @@
-# Chronos
+# Lineage
 
 > *4,150 years on one screen. Every bar a life, every overlap a shared moment in history.*
 
-**▶ [Open Chronos](https://jessespencer.github.io/rainbow/timeline/)**
+**▶ [Open Lineage](https://jessespencer.github.io/rainbow/timeline/)**
 
-Chronos is an interactive Bible timeline, from Adam to the resurrection of Jesus (~AD 33). It opens on the whole story, then lets you zoom into any reign, read the scripture behind a person, and see who was alive at the same moment. It works on phones as well as desktops.
+Lineage is an interactive Bible timeline, from Adam to the resurrection of Jesus (~AD 33). It opens on the whole story, then lets you zoom into any reign, read the scripture behind a person, and see who was alive at the same moment. It works on phones as well as desktops.
 
 ## Features
 
 - **The whole story at once.** 157 lives fit on one screen, and rows grow into named bars as you zoom in.
-- **People.** Select anyone to read about them, with BSB scripture and everyone alive alongside them.
+- **People.** Select anyone to read about them, with their scripture and everyone alive alongside them. Read in the BSB or any of Atlas's other translations, picked from the panel.
 - **Years.** Pick any year to see who was alive. Drag across the lanes with a mouse, or along the date strip with a finger.
-- **Two views.** Timeline shows lifespans and reigns. Lineage is a subway map of the generations, with the Messianic line running to Jesus.
+- **Two views.** Timeline shows lifespans and reigns. Family Tree is a subway map of the generations, with the Messianic line running to Jesus.
 - **King and Priest.** Follow the royal line from Judah and the priestly line from Levi, both leading to Jesus, one by descent and the other by God's oath.
 - **Search.** Find a person, a year like 586 BC, or an era. Press ⌘K or Ctrl K from anywhere.
-- **Links into Rainbow.** Open any passage in [Rainbow Reference](../rainbow) to see its cross-references.
-- **Shareable.** Every selection has its own address, such as `?figure=king-david` or `?year=-586`.
+- **Controls.** A button that explains how to explore each view, with a short tip on your first visit. On a keyboard, `+` and `−` zoom.
+- **Links into Atlas.** Open any passage in [Atlas](../rainbow) to see its cross-references.
+- **Shareable.** Every selection has its own address, such as `?figure=king-david` or `?year=-586`, and the panel's share button sends it. Each passage also links out to the ESV, NIV, NLT and NASB.
+- **Offline.** After your first visit, Lineage works without a connection, and your browser can install it as an app.
 - **Phones.** Pinch to zoom, pan with a finger, and read in a bottom sheet.
 
 ## Run it
@@ -28,7 +30,7 @@ pnpm dev:chronos      # http://localhost:5174/rainbow/timeline/
 pnpm build:chronos    # type-check and build for production
 ```
 
-Run `pnpm dev:rainbow` too if you want the links into Rainbow to work locally.
+Run `pnpm dev:rainbow` too if you want the links into Atlas to work locally.
 
 ## Data
 

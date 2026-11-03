@@ -5,36 +5,49 @@
 /* ─── Design Tokens ───────────────────────────────────────────── */
 
 :root {
+  /* Deep Night: one dark sky for every app, shared with By Heart. Depth comes from light, not shadow. */
+
   /* Surface */
-  --bg-base:      #0B0D12;
-  --bg-surface:   #13161E;
-  --bg-elevated:  #1A1D27;
+  --bg-edge:      #010308;
+  --bg-base:      #020611;
+  --bg-surface:   #050C1E;
+  --bg-elevated:  #08122A;
+  --bg-scrim:     rgba(2, 6, 17, 0.82);
+  --bg-glass:     rgba(2, 6, 17, 0.70);
 
   /* Fills */
-  --fill-subtle:  #1C2030;
-  --fill-default: #232840;
-  --fill-hover:   #2A3050;
-  --fill-active:  #313860;
-  --fill-selected:#363D5A;
+  --fill-subtle:  #061024;
+  --fill-default: #0A1630;
+  --fill-hover:   #0D1A3A;
+  --fill-active:  #112044;
+  --fill-selected:#15254E;
 
-  /* Borders */
-  --border-faint:   rgba(255, 255, 255, 0.05);
-  --border-subtle:  rgba(255, 255, 255, 0.09);
-  --border-default: rgba(255, 255, 255, 0.13);
-  --border-strong:  rgba(255, 255, 255, 0.22);
+  /* Borders: hairlines in starlight blue, never grey */
+  --border-faint:   rgba(214, 226, 255, 0.06);
+  --border-subtle:  rgba(214, 226, 255, 0.10);
+  --border-default: rgba(214, 226, 255, 0.15);
+  --border-strong:  rgba(214, 226, 255, 0.24);
 
-  /* Text */
-  --text-disabled:  #3A4060;
-  --text-muted:     #5A6480;
-  --text-dim:       #8090A8;
-  --text-secondary: #A0AEC0;
-  --text-primary:   #D8E4F0;
-  --text-bright:    #EDF2F8;
+  /* Text: parchment to read, moonlit and dusk for the quieter steps */
+  --text-disabled:  #464E68;
+  --text-muted:     #7A84A3;
+  --text-dim:       #A3A9BD;
+  --text-secondary: #CFC9BC;
+  --text-primary:   #E9E2D2;
+  --text-bright:    #F6F1E6;
 
-  /* Accent */
-  --accent-fill:   #3B4E7A;
-  --accent-border: rgba(100, 140, 220, 0.35);
-  --accent-text:   #90B4F0;
+  /* Accent: each app sets its own star with these three (html:root in its CSS); the rest derive from them */
+  --accent-rgb:    207, 224, 255;
+  --accent-bright: #EEF4FF;
+  --accent-fill:   #15254E;
+  --accent-text:   rgb(var(--accent-rgb));
+  --accent-border: rgba(var(--accent-rgb), 0.45);
+  --accent-glow:   rgba(var(--accent-rgb), 0.16);
+  --accent-halo:   rgba(var(--accent-rgb), 0.35);
+
+  /* Depth: what is selected or live glows in the app's accent */
+  --shadow-pop:    0 12px 32px rgba(0, 0, 0, 0.6);
+  --shadow-raised: 0 0 0 1px var(--accent-border), 0 0 18px var(--accent-halo);
 
   /* Radii */
   --radius-sm: 4px;
@@ -42,8 +55,9 @@
   --radius-lg: 8px;
 
   /* Typography */
-  --font-ui:   "Fraunces", Georgia, serif;
-  --font-mono: "DM Mono", ui-monospace, monospace;
+  --font-display: "IM Fell Great Primer", "EB Garamond", Georgia, serif;
+  --font-ui:      "EB Garamond", Georgia, serif;
+  --font-mono:    "DM Mono", ui-monospace, monospace;
 }
 
 /* ─── Site Header ─────────────────────────────────────────────── */
@@ -99,16 +113,10 @@
 }
 
 .bui-appswitch__mark {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  background: linear-gradient(
-    135deg,
-    rgb(154, 61, 55) 0%,
-    rgb(182, 148, 74) 33%,
-    rgb(74, 118, 88) 66%,
-    rgb(93, 56, 135) 100%
-  );
+  width: 18px;
+  height: 18px;
+  color: rgb(var(--app-accent));
+  filter: drop-shadow(0 0 6px rgba(var(--app-accent), 0.55));
 }
 
 .bui-appswitch__chevron {
@@ -124,7 +132,7 @@
   z-index: 50;
   display: flex;
   flex-direction: column;
-  min-width: 220px;
+  min-width: 264px;
   padding: 6px;
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
@@ -138,12 +146,32 @@
 
 .bui-appswitch__item {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
+  align-items: flex-start;
+  gap: 10px;
   padding: 8px 10px;
   border-radius: var(--radius-sm);
   text-decoration: none;
   transition: background 120ms ease;
+}
+
+.bui-appswitch__item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.bui-appswitch__item-icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  color: rgba(var(--app-accent), 0.6);
+}
+
+.bui-appswitch__item:hover .bui-appswitch__item-icon,
+.bui-appswitch__item--current .bui-appswitch__item-icon {
+  color: rgb(var(--app-accent));
+  filter: drop-shadow(0 0 6px rgba(var(--app-accent), 0.5));
 }
 
 .bui-appswitch__item:hover {
@@ -155,16 +183,17 @@
 }
 
 .bui-appswitch__item-label {
-  font-family: var(--font-ui);
-  font-size: 14px;
+  font-family: var(--font-display);
+  font-size: 17px;
   color: var(--text-primary);
 }
 
 .bui-appswitch__item-tagline {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
   color: var(--text-muted);
 }
 
@@ -176,12 +205,11 @@
 }
 
 .bui-header__title {
-  font-family: var(--font-ui);
+  font-family: var(--font-display);
   font-size: 32px;
   font-weight: 400;
   line-height: 40px;
   color: var(--text-primary);
-  font-variation-settings: "SOFT" 0, "WONK" 1;
 }
 
 .bui-header__subtitle {
@@ -207,24 +235,27 @@
 .bui-header__gradient {
   height: 4px;
   width: 100%;
+  /* The eight section colours, Law to Revelation, at one lightness (Atlas's data/genres.ts) */
   background: linear-gradient(
     90deg,
-    rgb(154, 61, 55) 0%,
-    rgb(163, 95, 59) 14.423%,
-    rgb(182, 148, 74) 27.404%,
-    rgb(126, 148, 82) 39.423%,
-    rgb(74, 118, 88) 52.404%,
-    rgb(53, 88, 124) 68.75%,
-    rgb(53, 88, 124) 85.096%,
-    rgb(93, 56, 135) 100%
+    #EB827B 0%,
+    #E18C5F 14.3%,
+    #C79E41 28.6%,
+    #8CB460 42.9%,
+    #5ABB88 57.1%,
+    #4AB9B2 71.4%,
+    #67AAED 85.7%,
+    #B191EA 100%
   );
+  opacity: 0.85;
 }
 
 /* ─── Compact Header ──────────────────────────────────────────── */
 /* #app outranks this sheet's load order against each app's own CSS. */
 
 #app .bui-header--compact {
-  padding: 10px 24px;
+  /* Each side matches the gap above and below its edge control: the 28px logo on the left, the 36px view toggle on the right */
+  padding: 10px 10px 10px 14px;
   border-bottom: 1px solid var(--border-faint);
   z-index: 60;
 }
@@ -391,4 +422,397 @@ summary:focus-visible,
 a:focus-visible {
   outline: 1.5px solid var(--accent-text);
   outline-offset: 1px;
+}
+
+/* ─── Segmented control: a few related buttons in one pill, like Fit · OT · NT ─── */
+.segmented {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 28px;
+  box-sizing: border-box;
+  padding: 2px;
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-md);
+  background: var(--fill-subtle);
+}
+
+.segmented button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+
+.segmented button:hover {
+  background: var(--fill-hover);
+  color: var(--text-secondary);
+}
+
+.segmented button.active {
+  background: var(--accent-fill);
+  color: var(--text-bright);
+  box-shadow: var(--shadow-raised);
+}
+
+.segmented svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* ─── Select menus: our own, opening below the control (selectMenu.ts) ─── */
+.bui-select[data-menu-open] {
+  background-color: var(--accent-fill);
+  color: var(--accent-bright);
+  box-shadow: var(--shadow-raised);
+}
+
+.bui-menu {
+  position: fixed;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  max-height: min(60dvh, 420px);
+  overflow-y: auto;
+  padding: 4px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-pop);
+}
+
+.bui-menu__option {
+  padding: 6px 12px 6px 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.bui-menu__option:hover,
+.bui-menu__option:focus-visible {
+  background: var(--fill-hover);
+  color: var(--text-bright);
+  outline: none;
+}
+
+.bui-menu__option[aria-selected="true"] {
+  background: var(--accent-fill);
+  color: var(--accent-bright);
+  box-shadow: inset 0 0 0 1px var(--accent-border);
+}
+
+.bui-menu__option:disabled {
+  color: var(--text-disabled);
+  cursor: default;
+}
+
+/* ─── Translation picker ─────────────────────────────────── */
+.bui-version {
+  position: relative;
+}
+
+.bui-version__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 8px 0 10px;
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-md);
+  background: var(--fill-subtle);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.bui-version__button svg {
+  width: 12px;
+  height: 12px;
+}
+
+.bui-version__button:hover {
+  background: var(--fill-hover);
+  color: var(--text-bright);
+}
+
+.bui-version--open .bui-version__button {
+  background: var(--accent-fill);
+  color: var(--accent-bright);
+  box-shadow: var(--shadow-raised);
+}
+
+.bui-version__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  width: 268px;
+  max-height: min(70dvh, 520px);
+  overflow-y: auto;
+  padding: 10px 8px 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-pop);
+}
+
+.bui-version__panel[hidden] { display: none; }
+
+.bui-version__language {
+  margin: 8px 10px 4px;
+  color: var(--text-dim);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 500;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+}
+
+.bui-version__language:first-child { margin-top: 2px; }
+
+.bui-version__option {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 17px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.bui-version__option:hover,
+.bui-version__option:focus-visible {
+  background: var(--fill-hover);
+  outline: none;
+}
+
+.bui-version__option[aria-pressed="true"] {
+  background: var(--accent-fill);
+  color: var(--accent-bright);
+  box-shadow: inset 0 0 0 1px var(--accent-border), 0 0 16px var(--accent-glow);
+}
+
+.bui-version__abbr {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+.bui-version__option[aria-pressed="true"] .bui-version__abbr { color: var(--accent-text); }
+
+.bui-version__license {
+  margin: 10px 10px 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-faint);
+  color: var(--text-dim);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-style: italic;
+  line-height: 1.35;
+}
+
+.bui-version__license a { color: var(--accent-text); }
+
+/* ─── Controls guide ─────────────────────────────────────── */
+.bui-guide {
+  position: relative;
+  pointer-events: auto;
+}
+
+.bui-guide summary {
+  list-style: none;
+}
+
+.bui-guide summary.bui-guide__button {
+  padding: 0 7px;
+}
+
+.bui-guide summary::-webkit-details-marker { display: none; }
+
+.bui-guide[open] summary {
+  background: var(--accent-fill);
+  color: var(--accent-bright);
+  box-shadow: var(--shadow-raised);
+}
+
+.bui-guide__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 70;
+  width: 316px;
+  padding: 16px 18px 18px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-pop);
+  text-align: left;
+}
+
+.bui-guide__title {
+  margin: 0 0 10px;
+  color: var(--text-dim);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+}
+
+.bui-guide__title:not(:first-child) {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-faint);
+}
+
+.bui-guide__steps,
+.bui-guide__keys {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bui-guide__step,
+.bui-guide__key {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  /* Garamond's small x-height needs more size and a touch more weight than a sans to read on the dark */
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.32;
+}
+
+.bui-guide__step svg {
+  flex-shrink: 0;
+  width: 17px;
+  height: 17px;
+  margin-top: 2px;
+  color: var(--accent-text);
+}
+
+.bui-guide__caps {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 3px;
+  min-width: 52px;
+}
+
+.bui-guide__caps kbd {
+  min-width: 20px;
+  padding: 1px 5px;
+  border: 1px solid var(--border-default);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--fill-subtle);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-align: center;
+}
+
+/* The first-visit tip: one line of serif over the bottom of the view, gone once the reader starts. */
+.bui-guide__tip {
+  position: absolute;
+  left: 50%;
+  bottom: 56px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100% - 32px);
+  padding: 9px 18px;
+  transform: translateX(-50%);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-elevated) 88%, transparent);
+  backdrop-filter: blur(8px);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 500;
+  font-style: italic;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: bui-guide-in 0.5s var(--bui-ease, ease-out) both 0.6s;
+}
+
+.bui-guide__tip[hidden] { display: none; }
+
+.bui-guide__part {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.bui-guide__part svg {
+  width: 16px;
+  height: 16px;
+  color: var(--accent-text);
+}
+
+.bui-guide__dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.bui-guide__tip--leaving {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+@keyframes bui-guide-in {
+  from { opacity: 0; transform: translate(-50%, 6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bui-guide__tip { animation: none; }
+}
+
+@media (max-width: 759px) {
+  .bui-guide__tip {
+    flex-direction: column;
+    gap: 6px;
+    bottom: auto;
+    top: 64px;
+    border-radius: var(--radius-lg);
+    white-space: normal;
+  }
+
+  .bui-guide__dot { display: none; }
 }

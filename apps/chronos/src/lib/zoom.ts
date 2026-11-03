@@ -63,6 +63,8 @@ interface FlyMotion {
 export interface ZoomHandle {
   /** Show the whole timeline, and keep showing it through resizes. */
   fit: () => void;
+  /** Zoom on the middle of the view, as the + and − buttons do. */
+  zoomBy: (factor: number) => void;
   /** `onFrame` runs after each step, with progress from 0 to 1. */
   focusRange: (start: number, end: number, onFrame?: (progress: number) => void) => void;
 }
@@ -284,14 +286,18 @@ export const initZoom = (
 
   // ─── Zoom UI buttons ────────────────────────────────────────
 
-  const btnFit = el("button", "canvas-btn zoom-fit", controlsEl);
+  const group = el("div", "segmented", controlsEl);
+  group.setAttribute("role", "group");
+  group.setAttribute("aria-label", "Zoom");
+
+  const btnFit = el("button", "zoom-fit", group);
   btnFit.innerHTML = `${FIT_ICON}Fit`;
 
-  const btnMinus = el("button", "preset-btn", controlsEl);
+  const btnMinus = el("button", "", group);
   btnMinus.textContent = "−";
   btnMinus.setAttribute("aria-label", "Zoom out");
 
-  const btnPlus = el("button", "preset-btn", controlsEl);
+  const btnPlus = el("button", "", group);
   btnPlus.textContent = "+";
   btnPlus.setAttribute("aria-label", "Zoom in");
 
@@ -330,6 +336,7 @@ export const initZoom = (
 
   return {
     fit,
+    zoomBy: zoomButton,
     focusRange: (from, to, onFrame) => {
       const lo = Math.max(MIN_YEAR, from);
       const hi = Math.min(MAX_YEAR, to);

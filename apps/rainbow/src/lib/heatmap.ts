@@ -1,15 +1,24 @@
+import { cssToken } from '@jessespencer/bible-ui/tokens';
 import { BOOKS, TOTAL_BOOKS } from '../data/books';
 import { BOOK_GENRE, GENRES } from '../data/genres';
 import { linkFrom, linkToStart, type LinkStore } from './links';
 import { VERSE_BOOK } from './verses';
 
+export type HeatmapScale = 'count' | 'expected';
+
 export interface HeatmapData {
   // matrix[row * 66 + col] = links between the two books, mirrored across the diagonal
   matrix: Float32Array;
   maxCount: number;
+  // lift[row * 66 + col] = cross-book links over what the two books' link totals predict; 0 on the diagonal
+  lift: Float32Array;
 }
 
 const N = TOTAL_BOOKS;
+// Pseudo-count added to both sides of the ratio, so a pair of short books with two links isn't the brightest cell
+const LIFT_PRIOR = 5;
+// Ratio that reaches full brightness
+const LIFT_FULL = 8;
 
 function cellMetrics(canvasWidth: number, canvasHeight: number) {
   const padding = Math.min(canvasWidth, canvasHeight) < 480 ? 30 : 60;
@@ -30,7 +39,35 @@ export function buildHeatmapData(store: LinkStore, ids: Int32Array): HeatmapData
     matrix[a * N + b]++;
     if (a !== b) matrix[b * N + a]++;
   }
-  return { matrix, maxCount: Math.max(...matrix) };
+  return { matrix, maxCount: Math.max(...matrix), lift: buildLift(matrix) };
+}
+
+// Books cite themselves far more than chance would, so same-book links are left out:
+// each cross-book pair is compared with what it would get if every book's links went to other books at random.
+function buildLift(matrix: Float32Array): Float32Array {
+  const ends = new Float64Array(N);
+  let total = 0;
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      if (r === c) continue;
+      ends[r] += matrix[r * N + c];
+      if (c > r) total += matrix[r * N + c];
+    }
+  }
+  let mass = 0;
+  for (let r = 0; r < N; r++) {
+    for (let c = r + 1; c < N; c++) mass += ends[r] * ends[c];
+  }
+  const lift = new Float32Array(N * N);
+  if (mass === 0) return lift;
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      if (r === c) continue;
+      const expected = total * ends[r] * ends[c] / mass;
+      lift[r * N + c] = (matrix[r * N + c] + LIFT_PRIOR) / (expected + LIFT_PRIOR);
+    }
+  }
+  return lift;
 }
 
 function cellColor(row: number, col: number): string {
@@ -46,19 +83,28 @@ export function renderHeatmap(
   heatmap: HeatmapData,
   canvasWidth: number,
   canvasHeight: number,
+  scale: HeatmapScale,
 ) {
   const { size, cellSize, offsetX, offsetY } = cellMetrics(canvasWidth, canvasHeight);
 
-  ctx.fillStyle = '#0B0D12';
+  ctx.fillStyle = cssToken('--bg-base');
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
   for (let r = 0; r < N; r++) {
     for (let c = 0; c < N; c++) {
       const count = heatmap.matrix[r * N + c];
       if (count === 0) continue;
-      const intensity = Math.log(count + 1) / Math.log(heatmap.maxCount + 1);
-      ctx.fillStyle = cellColor(r, c);
-      ctx.globalAlpha = 0.15 + intensity * 0.85;
+      if (scale === 'expected') {
+        // The diagonal isn't scored, so it gets the faint grid fill and a rule drawn below, never black
+        const lift = r === c ? 0 : heatmap.lift[r * N + c];
+        // Pairs at or below chance stay as a faint grid so the shape of the canon still reads
+        ctx.fillStyle = lift > 1 ? cssToken('--accent-text') : cssToken('--text-muted');
+        ctx.globalAlpha = lift > 1 ? 0.06 + 0.94 * Math.min(1, Math.log(lift) / Math.log(LIFT_FULL)) : 0.06;
+      } else {
+        const intensity = Math.log(count + 1) / Math.log(heatmap.maxCount + 1);
+        ctx.fillStyle = cellColor(r, c);
+        ctx.globalAlpha = 0.15 + intensity * 0.85;
+      }
       ctx.fillRect(
         offsetX + c * cellSize,
         offsetY + r * cellSize,
@@ -71,7 +117,7 @@ export function renderHeatmap(
 
   ctx.font = `${Math.min(9, Math.max(4, cellSize * 0.7))}px "DM Mono", monospace`;
   ctx.textBaseline = 'middle';
-  ctx.fillStyle = 'rgba(180,180,190,0.6)';
+  ctx.fillStyle = cssToken('--text-dim');
 
   ctx.textAlign = 'right';
   for (let i = 0; i < N; i++) {
@@ -88,7 +134,7 @@ export function renderHeatmap(
   }
 
   const otEnd = 39;
-  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.strokeStyle = cssToken('--border-strong');
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(offsetX + otEnd * cellSize, offsetY);
@@ -96,6 +142,19 @@ export function renderHeatmap(
   ctx.moveTo(offsetX, offsetY + otEnd * cellSize);
   ctx.lineTo(offsetX + size, offsetY + otEnd * cellSize);
   ctx.stroke();
+
+  if (scale === 'expected') {
+    ctx.beginPath();
+    ctx.moveTo(offsetX, offsetY);
+    ctx.lineTo(offsetX + size, offsetY + size);
+    ctx.stroke();
+
+    ctx.font = '10px "DM Mono", monospace';
+    ctx.fillStyle = cssToken('--text-dim');
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText('Diagonal: a book with itself, not scored', offsetX, offsetY + size + 8);
+  }
 }
 
 export function heatmapHitTest(

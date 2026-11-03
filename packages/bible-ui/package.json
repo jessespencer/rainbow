@@ -9,6 +9,12 @@
     ".": "./src/index.ts",
     "./bible": "./src/bible.ts",
     "./sheet": "./src/sheet.ts",
-    "./style.css": "./src/style.css"
+    "./style.css": "./src/style.css",
+    "./guide": "./src/guide.ts",
+    "./tokens": "./src/tokens.ts",
+    "./translations": "./src/translations.ts",
+    "./translation-picker": "./src/translationPicker.ts",
+    "./share": "./src/share.ts",
+    "./select-menu": "./src/selectMenu.ts"
   }
 }

@@ -1,0 +1,18 @@
+{
+  "name": "Lineage \u2014 Bible Timeline",
+  "short_name": "Lineage",
+  "description": "A visual history of the Bible, from Adam to the resurrection.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#020611",
+  "theme_color": "#020611",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

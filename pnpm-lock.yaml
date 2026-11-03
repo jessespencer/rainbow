@@ -13,6 +13,9 @@ importers:
       '@jessespencer/bible-ui':
         specifier: workspace:*
         version: link:../../packages/bible-ui
+      lucide:
+        specifier: ^0.577.0
+        version: 0.577.0
     devDependencies:
       typescript:
         specifier: ~5.7.0
