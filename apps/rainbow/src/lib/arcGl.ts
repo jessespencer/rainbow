@@ -102,24 +102,18 @@ const COMPOSITE_FRAGMENT = `#version 300 es
 precision highp float;
 in vec2 v_uv;
 uniform sampler2D u_light;
-uniform vec3 u_base;
 uniform float u_exposure;
-uniform float u_dpr;
 out vec4 color;
-// A faint fixed starfield, in screen space, that only shows in empty sky.
-float star(vec2 pixel) {
-  vec2 cell = floor(pixel / (2.0 * u_dpr));
-  float pick = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
-  return pick > 0.9982 ? (pick - 0.9982) / 0.0018 : 0.0;
-}
 void main() {
   vec3 light = texture(u_light, v_uv).rgb * u_exposure;
   float luma = dot(light, vec3(0.2126, 0.7152, 0.0722));
   vec3 mapped = luma > 0.0 ? light * (1.0 - exp(-luma)) / luma : light;
   mapped /= max(1.0, max(mapped.r, max(mapped.g, mapped.b)));
   mapped = mix(mapped, vec3(1.0), smoothstep(1.5, 9.0, luma) * 0.6);
-  vec3 sky = vec3(0.78, 0.84, 1.0) * star(gl_FragCoord.xy) * 0.5 * exp(-luma * 40.0);
-  color = vec4(min(u_base + mapped + sky, vec3(1.0)), 1.0);
+  // Premultiplied and transparent where there's no light, so the sky (sky.ts) shows through
+  // empty space and fades behind the arcs as they brighten.
+  mapped = min(mapped, vec3(1.0));
+  color = vec4(mapped, max(mapped.r, max(mapped.g, mapped.b)));
 }`;
 
 function compile(gl: WebGL2RenderingContext, type: number, source: string): WebGLShader {
@@ -172,21 +166,19 @@ function link(gl: WebGL2RenderingContext, vertex: string, fragment: string): Web
 }
 
 interface LightBuffer {
-  resize(width: number, height: number, dpr: number): void;
+  resize(width: number, height: number): void;
   begin(): void;
   finish(exposure: number): void;
 }
 
 // A multisampled half-float target the arcs add into, resolved to a texture and composited.
 // Returns null where float targets aren't renderable, and the arcs draw straight to the screen.
-function createLightBuffer(gl: WebGL2RenderingContext, base: [number, number, number]): LightBuffer | null {
+function createLightBuffer(gl: WebGL2RenderingContext): LightBuffer | null {
   if (!gl.getExtension('EXT_color_buffer_float')) return null;
   const program = link(gl, COMPOSITE_VERTEX, COMPOSITE_FRAGMENT);
   const exposure = gl.getUniformLocation(program, 'u_exposure');
-  const dprUniform = gl.getUniformLocation(program, 'u_dpr');
   gl.useProgram(program);
   gl.uniform1i(gl.getUniformLocation(program, 'u_light'), 0);
-  gl.uniform3f(gl.getUniformLocation(program, 'u_base'), ...base);
 
   const samples = Math.min(4, gl.getParameter(gl.MAX_SAMPLES) as number);
   const color = gl.createRenderbuffer()!;
@@ -202,9 +194,7 @@ function createLightBuffer(gl: WebGL2RenderingContext, base: [number, number, nu
   let height = 1;
 
   return {
-    resize(w, h, dpr) {
-      gl.useProgram(program);
-      gl.uniform1f(dprUniform, dpr);
+    resize(w, h) {
       width = Math.max(1, w);
       height = Math.max(1, h);
       gl.bindRenderbuffer(gl.RENDERBUFFER, color);
@@ -239,7 +229,7 @@ function createLightBuffer(gl: WebGL2RenderingContext, base: [number, number, nu
 }
 
 export function createArcRenderer(canvas: HTMLCanvasElement): ArcRenderer | null {
-  const gl = canvas.getContext('webgl2', { antialias: true, alpha: false });
+  const gl = canvas.getContext('webgl2', { antialias: true });
   if (!gl) return null;
 
   const program = link(gl, VERTEX_SHADER, FRAGMENT_SHADER);
@@ -265,7 +255,7 @@ export function createArcRenderer(canvas: HTMLCanvasElement): ArcRenderer | null
   // Additive, so overlapping arcs build into light and the picture keeps its depth.
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
   const base = hexToRgb(cssToken('--bg-base'));
-  const light = createLightBuffer(gl, base);
+  const light = createLightBuffer(gl);
 
   function createBatch(segments: number): ArcBatch {
     const vao = gl!.createVertexArray()!;
@@ -328,7 +318,7 @@ export function createArcRenderer(canvas: HTMLCanvasElement): ArcRenderer | null
       canvas.width = Math.round(width * dpr);
       canvas.height = Math.round(height * dpr);
       gl.viewport(0, 0, canvas.width, canvas.height);
-      light?.resize(canvas.width, canvas.height, dpr);
+      light?.resize(canvas.width, canvas.height);
     },
 
     draw(view) {

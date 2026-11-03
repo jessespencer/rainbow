@@ -24,6 +24,7 @@ import { setupZoom, zoomBy, zoomTo, type ZoomState } from './lib/zoom';
 import { CANVAS_LABELS, guideFor } from './lib/guides';
 import { rememberSection, renderLinkView, renderPassageView, setReading, type CompanionTarget, type VerseTexts } from './lib/companion';
 import { setupSheet, type SheetHandle } from './lib/sheet';
+import { createSky } from './lib/sky';
 import {
   bookPassage, chapterPassage, formatRange, formatVerse, locate, neighborPassage, parseReference, passageFromParam,
   passageToParam, VERSE_BOOK, versePassage, type Passage,
@@ -956,6 +957,7 @@ async function main() {
   document.getElementById('view-galaxy')!.prepend(createElement(Orbit));
   document.getElementById('view-heatmap')!.prepend(createElement(Grid3x3));
   initSelectMenus();
+  createSky(document.getElementById('canvas-container')!);
   translationPicker = createTranslationPicker({
     parent: document.getElementById('companion-version')!,
     current: translation,

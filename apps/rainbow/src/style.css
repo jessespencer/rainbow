@@ -481,6 +481,21 @@ body {
 
 #arc-canvas.hidden { display: none; }
 
+/* The starfield (sky.ts) sits under the transparent arc and galaxy canvases. Heatmap paints over it. */
+#sky {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.sky-layer {
+  position: absolute;
+  inset: 0;
+}
+
+#app.heatmap-mode #sky { display: none; }
+
 #main-canvas { touch-action: none; }
 
 /* ─── GALAXY ─────────────────────────────────────────────── */

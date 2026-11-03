@@ -403,10 +403,11 @@ export function createGalaxy(
     return height * (near - far) / 4;
   };
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  // Transparent, so the shared starfield behind it (sky.ts) shows between the verses.
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_DPR));
-  renderer.setClearColor(getComputedStyle(document.body).backgroundColor, 1);
+  renderer.setClearColor(0x000000, 0);
   const canvas = renderer.domElement;
   canvas.style.display = 'block';
   canvas.setAttribute('role', 'img');
