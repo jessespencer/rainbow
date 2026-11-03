@@ -13,6 +13,7 @@
     "./guide": "./src/guide.ts",
     "./tokens": "./src/tokens.ts",
     "./translations": "./src/translations.ts",
-    "./translation-picker": "./src/translationPicker.ts"
+    "./translation-picker": "./src/translationPicker.ts",
+    "./share": "./src/share.ts"
   }
 }

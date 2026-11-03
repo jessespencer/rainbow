@@ -94,3 +94,10 @@ export const saveTranslation = (translation: Translation): void => {
     // Private windows can refuse storage; the pick then lasts for this visit only.
   }
 };
+
+/** Copyrighted translations: never bundled, only linked to, each on Bible Gateway. */
+export const LINKED_TRANSLATIONS = ["ESV", "NIV", "NLT", "NASB"] as const;
+
+/** Bible Gateway's page for a passage, such as "John 3:16" or "1 Corinthians 13:4–7". */
+export const readElsewhereHref = (reference: string, version: string): string =>
+  `https://www.biblegateway.com/passage/?search=${encodeURIComponent(reference.replace(/[–—]/g, "-"))}&version=${version}`;

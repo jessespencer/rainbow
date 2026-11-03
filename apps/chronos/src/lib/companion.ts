@@ -5,9 +5,12 @@
 
 import { APPS, appHref } from "@jessespencer/bible-ui";
 import { setupSheet } from "@jessespencer/bible-ui/sheet";
+import { shareView } from "@jessespencer/bible-ui/share";
 import { createTranslationPicker } from "@jessespencer/bible-ui/translation-picker";
+import { Check, createElement, Share2 } from "lucide";
 import {
-  DEFAULT_TRANSLATION, saveTranslation, savedTranslation, translationById, type Translation,
+  DEFAULT_TRANSLATION, LINKED_TRANSLATIONS, readElsewhereHref, saveTranslation, savedTranslation, translationById,
+  type Translation,
 } from "@jessespencer/bible-ui/translations";
 import { formatYear } from "./scale.ts";
 import { describeLife, formatDates, formatReign } from "./tooltip.ts";
@@ -20,6 +23,7 @@ import { allFigures, childrenOf } from "./renderLineage.ts";
 import type { Category, TimelineFigure } from "../data/timeline.ts";
 
 const PREVIEW_VERSES = 6;
+const COPIED_MS = 1600;
 
 export interface CompanionHandle {
   showFigure: (figure: TimelineFigure, alongside: TimelineFigure[]) => void;
@@ -94,6 +98,20 @@ export const initCompanion = (
     btn.textContent = text;
     btn.addEventListener("click", onClick);
   };
+  const share = el("button", "companion__share", nav);
+  share.setAttribute("aria-label", "Share");
+  share.title = "Share";
+  share.append(createElement(Share2));
+  share.addEventListener("click", async () => {
+    const title = headingEl.querySelector(".cp-title")?.textContent ?? "Lineage";
+    if ((await shareView(`${title} · Lineage`)) !== "copied") return;
+    share.replaceChildren(createElement(Check));
+    share.title = "Link copied";
+    setTimeout(() => {
+      share.replaceChildren(createElement(Share2));
+      share.title = "Share";
+    }, COPIED_MS);
+  });
   button("Previous", "‹", () => onStep(-1));
   button("Next", "›", () => onStep(1));
   button("Close", "×", onClose);
@@ -161,6 +179,18 @@ export const initCompanion = (
       link.href = rainbowHref(passage);
       link.textContent = `${passage.label} in Atlas ›`;
     }
+    // Copyrighted translations can't be bundled, so the passage links out to them instead.
+    const elsewhere = el("p", "cp-elsewhere", root);
+    elsewhere.append("Also in ");
+    LINKED_TRANSLATIONS.forEach((version, i) => {
+      if (i > 0) elsewhere.append(" · ");
+      const link = el("a", undefined, elsewhere);
+      // The chapter Atlas opens, like "1Sam 16"; a label such as "1 Samuel – 1 Kings" is no search.
+      link.href = readElsewhereHref(first.param.replace(".", " "), version);
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = version;
+    });
   };
 
   const handle_: CompanionHandle = {

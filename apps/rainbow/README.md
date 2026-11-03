@@ -40,7 +40,7 @@ Galaxy turns every verse into a star on a two-armed spiral, one arm per Testamen
 - **Filter by votes** from 100 down to every link.
 - **Filter by section** to bring forward Law, History, Poetry & Wisdom, Prophets, Gospels, Acts, Epistles, or Revelation while the rest fade back.
 - **Shuffle** to land on a random connection with both verses in front of you.
-- **Share** any view. Everything you've selected lives in the address:
+- **Share** any view with the share button in the reading panel, or copy the address. Everything you've selected lives in it:
 
 | Parameter | Example | Meaning |
 | --- | --- | --- |
@@ -89,6 +89,7 @@ A few notes on how these are handled:
 
 - **Numbering:** verses follow the KJV numbering of 31,102 verses. OpenBible and the BSB split 3 John into 15 verses, so verse 15 folds into verse 14.
 - **Omitted verses:** the BSB leaves out 16 verses, such as Matthew 17:21, that the earliest manuscripts don't have. The links to them still appear, and the app says why the text is missing.
+- **Copyrighted translations:** the ESV, NIV, NLT and NASB can't be bundled, so each passage links out to them on Bible Gateway.
 - **Translations:** pick a text from the chip in the reading panel's header. Each is mapped to the same KJV numbering at build time, so the arcs never change, and a verse a translation numbers differently is left out rather than guessed. The panel names the text and its licence at the bottom, as the openly licensed ones ask.
 - **Ranges:** many links point to a range of verses. The arc lands on the first verse, and the panel shows the whole range.
 

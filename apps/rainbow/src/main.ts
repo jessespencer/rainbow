@@ -5,7 +5,8 @@ import { createTranslationPicker, type TranslationPickerHandle } from '@jessespe
 import {
   DEFAULT_TRANSLATION, saveTranslation, savedTranslation, translationById, type Translation,
 } from '@jessespencer/bible-ui/translations';
-import { createElement, Compass, Grid3x3, Orbit, Rainbow, Shuffle, Scaling } from 'lucide';
+import { shareView } from '@jessespencer/bible-ui/share';
+import { Check, createElement, Compass, Grid3x3, Orbit, Rainbow, Share2, Shuffle, Scaling } from 'lucide';
 import { GENRES } from './data/genres';
 import { BOOKS } from './data/books';
 import { NT_LEFT, OT_RIGHT, WORLD_WIDTH, pixelsPerVerse, verseAtX, xOfVerse } from './lib/layout';
@@ -602,6 +603,19 @@ function setHoveredLink(id: number | null) {
 
 function setupCompanion() {
   document.getElementById('side-panel-close')!.addEventListener('click', () => applySelection(null));
+  const share = document.getElementById('panel-share')!;
+  share.append(createElement(Share2));
+  share.addEventListener('click', async () => {
+    const title = document.querySelector('#companion-heading .cp-title')?.textContent ?? 'Atlas';
+    const result = await shareView(`${title} · Atlas`);
+    if (result !== 'copied') return;
+    share.replaceChildren(createElement(Check));
+    share.title = 'Link copied';
+    setTimeout(() => {
+      share.replaceChildren(createElement(Share2));
+      share.title = 'Share';
+    }, COPIED_FEEDBACK_MS);
+  });
   document.getElementById('panel-prev')!.addEventListener('click', () => navigate(-1));
   document.getElementById('panel-next')!.addEventListener('click', () => navigate(1));
 

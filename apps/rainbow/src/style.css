@@ -707,6 +707,37 @@ body {
 
 #companion-version { flex-shrink: 0; }
 
+#panel-share {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#panel-share svg {
+  width: 14px;
+  height: 14px;
+}
+
+.cp-elsewhere {
+  margin: 4px 0 14px 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-style: italic;
+}
+
+.cp-verse .cp-elsewhere { margin: 2px 0 0; }
+
+.cp-elsewhere a {
+  color: var(--accent-text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-style: normal;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+}
+
+.cp-elsewhere a:hover { text-decoration: underline; }
+
 /* Names the text and its licence; the openly licensed translations ask for it wherever they're shown. */
 #companion-source {
   flex-shrink: 0;

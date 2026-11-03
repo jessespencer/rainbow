@@ -1,4 +1,5 @@
 import { createElement, Copy } from 'lucide';
+import { LINKED_TRANSLATIONS, readElsewhereHref } from '@jessespencer/bible-ui/translations';
 import { BOOKS } from '../data/books';
 import { BOOK_GENRE, GENRES } from '../data/genres';
 import { linkFrom, linkToEnd, linkToStart, linkVotes, type LinkStore } from './links';
@@ -45,6 +46,14 @@ function passageText(texts: VerseTexts, start: number, end: number): string {
   }
   const more = end - last;
   return more > 0 ? `${html}<span class="cp-more">and ${more} more verse${more === 1 ? '' : 's'}</span>` : html;
+}
+
+// Copyrighted translations can't be bundled, so the passage links out to them instead.
+function elsewhere(start: number, end: number): string {
+  const reference = formatRange(start, end);
+  const links = LINKED_TRANSLATIONS.map(version =>
+    `<a href="${readElsewhereHref(reference, version)}" target="_blank" rel="noopener">${version}</a>`).join(' · ');
+  return `<p class="cp-elsewhere">Also in ${links}</p>`;
 }
 
 function copyButton(start: number, end: number): string {
@@ -172,6 +181,7 @@ function pairVerse(texts: VerseTexts, start: number, end: number): string {
       </div>
       <p class="cp-text">${passageText(texts, start, end)}</p>
       <button class="cp-context" data-context="${start}">Read in context</button>
+      ${elsewhere(start, end)}
     </article>
   `;
 }
@@ -245,9 +255,10 @@ export function renderPassageView(
         ${copyButton(start, end)}
       </div>
       <button class="cp-context" data-context="${start}">Read in context</button>
+      ${elsewhere(start, end)}
     `;
   } else if (verseCount <= READABLE_VERSES) {
-    text = band({ id: 'verses', title: 'Verses', note: 'read the passage', count: verseCount, body: chapterVerses(texts, passage, highlight) });
+    text = band({ id: 'verses', title: 'Verses', note: 'read the passage', count: verseCount, body: chapterVerses(texts, passage, highlight) + elsewhere(start, end) });
   }
 
   content.innerHTML = `

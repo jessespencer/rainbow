@@ -8,8 +8,8 @@ Work agreed but not done yet, roughly in order. Tick items off in the commit tha
 - [x] Other languages' public-domain Bibles (Portuguese, German, Italian, Spanish), mapped to KJV verse numbering
 - [x] A translation picker that fits our design (not a copy of trekhleb's), shared by Atlas and Lineage and kept in the URL
 - [ ] App language: translate the interface wording to match the Bibles offered
-- [ ] "Read in…" links for copyrighted translations (ESV, NIV, NLT, NASB)
-- [ ] Share button on a passage: copy link, copy text, system share sheet
+- [x] "Read in…" links for copyrighted translations (ESV, NIV, NLT, NASB)
+- [x] Share button on a passage: copy link, copy text, system share sheet
 - [ ] Install for offline use
 
 ## Look and feel

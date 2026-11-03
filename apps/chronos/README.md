@@ -16,7 +16,7 @@ Lineage is an interactive Bible timeline, from Adam to the resurrection of Jesus
 - **Search.** Find a person, a year like 586 BC, or an era. Press ⌘K or Ctrl K from anywhere.
 - **Controls.** A button that explains how to explore each view, with a short tip on your first visit. On a keyboard, `+` and `−` zoom.
 - **Links into Atlas.** Open any passage in [Atlas](../rainbow) to see its cross-references.
-- **Shareable.** Every selection has its own address, such as `?figure=king-david` or `?year=-586`.
+- **Shareable.** Every selection has its own address, such as `?figure=king-david` or `?year=-586`, and the panel's share button sends it. Each passage also links out to the ESV, NIV, NLT and NASB.
 - **Phones.** Pinch to zoom, pan with a finger, and read in a bottom sheet.
 
 ## Run it
