@@ -417,6 +417,9 @@ body {
   box-shadow: var(--shadow-raised);
 }
 
+/* The range only means something for the arcs and the galaxy */
+#app.heatmap-mode #range-toggle { display: none; }
+
 /* ─── BOOK SEARCH ────────────────────────────────────────── */
 #book-search {
   height: 28px;
@@ -1243,9 +1246,7 @@ body {
 
   .label-short { display: inline; }
 
-  #zoom-fit { padding: 0 8px; }
-
-  .preset-btn { padding: 0 10px; }
+  .segmented button { padding: 0 8px; }
 
   #votes-control span { display: none; }
 

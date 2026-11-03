@@ -75,7 +75,10 @@ const stepRow = (step: GuideStep, parent: HTMLElement) => {
 export const createGuide = ({ parent, stage, icon }: GuideConfig): GuideHandle => {
   const details = node("details", "bui-guide", parent);
   const summary = node("summary", "canvas-btn bui-guide__button", details);
-  summary.append(icon(), "Controls");
+  // Icon only, so the canvas controls stay short; the name is still there for screen readers and on hover
+  summary.append(icon());
+  summary.setAttribute("aria-label", "Controls");
+  summary.title = "Controls";
   const panel = node("div", "bui-guide__panel", details);
 
   const tip = node("div", "bui-guide__tip", stage);

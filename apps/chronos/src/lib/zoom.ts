@@ -286,14 +286,18 @@ export const initZoom = (
 
   // ─── Zoom UI buttons ────────────────────────────────────────
 
-  const btnFit = el("button", "canvas-btn zoom-fit", controlsEl);
+  const group = el("div", "segmented", controlsEl);
+  group.setAttribute("role", "group");
+  group.setAttribute("aria-label", "Zoom");
+
+  const btnFit = el("button", "zoom-fit", group);
   btnFit.innerHTML = `${FIT_ICON}Fit`;
 
-  const btnMinus = el("button", "preset-btn", controlsEl);
+  const btnMinus = el("button", "", group);
   btnMinus.textContent = "−";
   btnMinus.setAttribute("aria-label", "Zoom out");
 
-  const btnPlus = el("button", "preset-btn", controlsEl);
+  const btnPlus = el("button", "", group);
   btnPlus.textContent = "+";
   btnPlus.setAttribute("aria-label", "Zoom in");
 

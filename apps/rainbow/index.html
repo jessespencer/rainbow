@@ -54,9 +54,11 @@
             </label>
           </div>
           <div id="zoom-controls">
-            <button id="zoom-fit" class="canvas-btn">Fit</button>
-            <button id="zoom-ot" class="preset-btn"><span class="label-long">Old Testament</span><span class="label-short">OT</span></button>
-            <button id="zoom-nt" class="preset-btn"><span class="label-long">New Testament</span><span class="label-short">NT</span></button>
+            <div id="range-toggle" class="segmented" role="group" aria-label="Range">
+              <button id="zoom-fit" title="Show everything">Fit</button>
+              <button id="zoom-ot" class="preset-btn" title="Old Testament" aria-label="Old Testament">OT</button>
+              <button id="zoom-nt" class="preset-btn" title="New Testament" aria-label="New Testament">NT</button>
+            </div>
             <select id="heatmap-scale" class="bui-select" aria-label="Heatmap scale">
               <option value="expected" selected>Affinity</option>
               <option value="count">Link count</option>

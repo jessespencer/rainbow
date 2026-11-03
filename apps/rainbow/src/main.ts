@@ -184,9 +184,9 @@ function updateStats() {
   const stats = document.getElementById('footer-stats')!;
   if (viewMode === 'galaxy' && galaxy) {
     const { drawn, total } = galaxy.drawCount();
-    stats.textContent = `${drawn.toLocaleString()} of ${total.toLocaleString()} links drawn`;
+    stats.textContent = `${drawn.toLocaleString()} of ${total.toLocaleString()} drawn`;
   } else {
-    stats.textContent = `${visible.length.toLocaleString()} of ${store.count.toLocaleString()} links shown`;
+    stats.textContent = `${visible.length.toLocaleString()} of ${store.count.toLocaleString()} links`;
   }
 }
 
