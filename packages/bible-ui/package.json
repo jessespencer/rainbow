@@ -10,6 +10,7 @@
     "./bible": "./src/bible.ts",
     "./sheet": "./src/sheet.ts",
     "./style.css": "./src/style.css",
-    "./guide": "./src/guide.ts"
+    "./guide": "./src/guide.ts",
+    "./tokens": "./src/tokens.ts"
   }
 }

@@ -5,36 +5,49 @@
 /* ─── Design Tokens ───────────────────────────────────────────── */
 
 :root {
+  /* Deep Night: one dark sky for every app, shared with By Heart. Depth comes from light, not shadow. */
+
   /* Surface */
-  --bg-base:      #0B0D12;
-  --bg-surface:   #13161E;
-  --bg-elevated:  #1A1D27;
+  --bg-edge:      #010308;
+  --bg-base:      #020611;
+  --bg-surface:   #050C1E;
+  --bg-elevated:  #08122A;
+  --bg-scrim:     rgba(2, 6, 17, 0.82);
+  --bg-glass:     rgba(2, 6, 17, 0.70);
 
   /* Fills */
-  --fill-subtle:  #1C2030;
-  --fill-default: #232840;
-  --fill-hover:   #2A3050;
-  --fill-active:  #313860;
-  --fill-selected:#363D5A;
+  --fill-subtle:  #061024;
+  --fill-default: #0A1630;
+  --fill-hover:   #0D1A3A;
+  --fill-active:  #112044;
+  --fill-selected:#15254E;
 
-  /* Borders */
-  --border-faint:   rgba(255, 255, 255, 0.05);
-  --border-subtle:  rgba(255, 255, 255, 0.09);
-  --border-default: rgba(255, 255, 255, 0.13);
-  --border-strong:  rgba(255, 255, 255, 0.22);
+  /* Borders: hairlines in starlight blue, never grey */
+  --border-faint:   rgba(214, 226, 255, 0.06);
+  --border-subtle:  rgba(214, 226, 255, 0.10);
+  --border-default: rgba(214, 226, 255, 0.15);
+  --border-strong:  rgba(214, 226, 255, 0.24);
 
-  /* Text */
-  --text-disabled:  #3A4060;
-  --text-muted:     #5A6480;
-  --text-dim:       #8090A8;
-  --text-secondary: #A0AEC0;
-  --text-primary:   #D8E4F0;
-  --text-bright:    #EDF2F8;
+  /* Text: parchment to read, moonlit and dusk for the quieter steps */
+  --text-disabled:  #464E68;
+  --text-muted:     #7A84A3;
+  --text-dim:       #A3A9BD;
+  --text-secondary: #CFC9BC;
+  --text-primary:   #E9E2D2;
+  --text-bright:    #F6F1E6;
 
-  /* Accent */
-  --accent-fill:   #3B4E7A;
-  --accent-border: rgba(100, 140, 220, 0.35);
-  --accent-text:   #90B4F0;
+  /* Accent: each app sets its own star with these three (html:root in its CSS); the rest derive from them */
+  --accent-rgb:    207, 224, 255;
+  --accent-bright: #EEF4FF;
+  --accent-fill:   #15254E;
+  --accent-text:   rgb(var(--accent-rgb));
+  --accent-border: rgba(var(--accent-rgb), 0.45);
+  --accent-glow:   rgba(var(--accent-rgb), 0.16);
+  --accent-halo:   rgba(var(--accent-rgb), 0.35);
+
+  /* Depth: what is selected or live glows in the app's accent */
+  --shadow-pop:    0 12px 32px rgba(0, 0, 0, 0.6);
+  --shadow-raised: 0 0 0 1px var(--accent-border), 0 0 18px var(--accent-halo);
 
   /* Radii */
   --radius-sm: 4px;
@@ -42,8 +55,9 @@
   --radius-lg: 8px;
 
   /* Typography */
-  --font-ui:   "Fraunces", Georgia, serif;
-  --font-mono: "DM Mono", ui-monospace, monospace;
+  --font-display: "IM Fell Great Primer", "EB Garamond", Georgia, serif;
+  --font-ui:      "EB Garamond", Georgia, serif;
+  --font-mono:    "DM Mono", ui-monospace, monospace;
 }
 
 /* ─── Site Header ─────────────────────────────────────────────── */
@@ -99,16 +113,10 @@
 }
 
 .bui-appswitch__mark {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  background: linear-gradient(
-    135deg,
-    rgb(154, 61, 55) 0%,
-    rgb(182, 148, 74) 33%,
-    rgb(74, 118, 88) 66%,
-    rgb(93, 56, 135) 100%
-  );
+  width: 18px;
+  height: 18px;
+  color: rgb(var(--app-accent));
+  filter: drop-shadow(0 0 6px rgba(var(--app-accent), 0.55));
 }
 
 .bui-appswitch__chevron {
@@ -124,7 +132,7 @@
   z-index: 50;
   display: flex;
   flex-direction: column;
-  min-width: 220px;
+  min-width: 264px;
   padding: 6px;
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
@@ -138,12 +146,32 @@
 
 .bui-appswitch__item {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
+  align-items: flex-start;
+  gap: 10px;
   padding: 8px 10px;
   border-radius: var(--radius-sm);
   text-decoration: none;
   transition: background 120ms ease;
+}
+
+.bui-appswitch__item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.bui-appswitch__item-icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  color: rgba(var(--app-accent), 0.6);
+}
+
+.bui-appswitch__item:hover .bui-appswitch__item-icon,
+.bui-appswitch__item--current .bui-appswitch__item-icon {
+  color: rgb(var(--app-accent));
+  filter: drop-shadow(0 0 6px rgba(var(--app-accent), 0.5));
 }
 
 .bui-appswitch__item:hover {
@@ -155,16 +183,17 @@
 }
 
 .bui-appswitch__item-label {
-  font-family: var(--font-ui);
-  font-size: 14px;
+  font-family: var(--font-display);
+  font-size: 17px;
   color: var(--text-primary);
 }
 
 .bui-appswitch__item-tagline {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
   color: var(--text-muted);
 }
 
@@ -176,12 +205,11 @@
 }
 
 .bui-header__title {
-  font-family: var(--font-ui);
+  font-family: var(--font-display);
   font-size: 32px;
   font-weight: 400;
   line-height: 40px;
   color: var(--text-primary);
-  font-variation-settings: "SOFT" 0, "WONK" 1;
 }
 
 .bui-header__subtitle {
@@ -407,8 +435,9 @@ a:focus-visible {
 .bui-guide summary::-webkit-details-marker { display: none; }
 
 .bui-guide[open] summary {
-  background: var(--fill-selected);
-  color: var(--text-bright);
+  background: var(--accent-fill);
+  color: var(--accent-bright);
+  box-shadow: var(--shadow-raised);
 }
 
 .bui-guide__panel {
@@ -421,7 +450,7 @@ a:focus-visible {
   background: var(--bg-elevated);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  box-shadow: var(--shadow-pop);
   text-align: left;
 }
 

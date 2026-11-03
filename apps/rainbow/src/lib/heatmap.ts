@@ -1,3 +1,4 @@
+import { cssToken } from '@jessespencer/bible-ui/tokens';
 import { BOOKS, TOTAL_BOOKS } from '../data/books';
 import { BOOK_GENRE, GENRES } from '../data/genres';
 import { linkFrom, linkToStart, type LinkStore } from './links';
@@ -18,7 +19,6 @@ const N = TOTAL_BOOKS;
 const LIFT_PRIOR = 5;
 // Ratio that reaches full brightness
 const LIFT_FULL = 8;
-const LIFT_COLOR = '#E8B84B';
 
 function cellMetrics(canvasWidth: number, canvasHeight: number) {
   const padding = Math.min(canvasWidth, canvasHeight) < 480 ? 30 : 60;
@@ -87,7 +87,7 @@ export function renderHeatmap(
 ) {
   const { size, cellSize, offsetX, offsetY } = cellMetrics(canvasWidth, canvasHeight);
 
-  ctx.fillStyle = '#0B0D12';
+  ctx.fillStyle = cssToken('--bg-base');
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
   for (let r = 0; r < N; r++) {
@@ -98,7 +98,7 @@ export function renderHeatmap(
         // The diagonal isn't scored, so it gets the faint grid fill and a rule drawn below, never black
         const lift = r === c ? 0 : heatmap.lift[r * N + c];
         // Pairs at or below chance stay as a faint grid so the shape of the canon still reads
-        ctx.fillStyle = lift > 1 ? LIFT_COLOR : '#8A8F9C';
+        ctx.fillStyle = lift > 1 ? cssToken('--accent-text') : cssToken('--text-muted');
         ctx.globalAlpha = lift > 1 ? 0.06 + 0.94 * Math.min(1, Math.log(lift) / Math.log(LIFT_FULL)) : 0.06;
       } else {
         const intensity = Math.log(count + 1) / Math.log(heatmap.maxCount + 1);
@@ -117,7 +117,7 @@ export function renderHeatmap(
 
   ctx.font = `${Math.min(9, Math.max(4, cellSize * 0.7))}px "DM Mono", monospace`;
   ctx.textBaseline = 'middle';
-  ctx.fillStyle = 'rgba(180,180,190,0.6)';
+  ctx.fillStyle = cssToken('--text-dim');
 
   ctx.textAlign = 'right';
   for (let i = 0; i < N; i++) {
@@ -134,7 +134,7 @@ export function renderHeatmap(
   }
 
   const otEnd = 39;
-  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.strokeStyle = cssToken('--border-strong');
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(offsetX + otEnd * cellSize, offsetY);
@@ -150,7 +150,7 @@ export function renderHeatmap(
     ctx.stroke();
 
     ctx.font = '10px "DM Mono", monospace';
-    ctx.fillStyle = 'rgba(180,180,190,0.6)';
+    ctx.fillStyle = cssToken('--text-dim');
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.fillText('Diagonal: a book with itself, not scored', offsetX, offsetY + size + 8);

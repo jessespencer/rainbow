@@ -129,7 +129,7 @@ apps/rainbow/
 │   └── parse-crossrefs.ts       # Validate and build the datasets
 └── src/
     ├── main.ts                  # App state, URL, event wiring
-    ├── style.css                # Dark theme and phone layout
+    ├── style.css                # Navy theme and phone layout
     ├── data/
     │   ├── books.ts             # The 66 canonical books
     │   └── genres.ts            # The 8 sections and their colors
@@ -160,7 +160,7 @@ The site deploys to GitHub Pages from `main` through [`.github/workflows/deploy.
 
 ## Part of a family
 
-Atlas lives alongside [Lineage](https://jessespencer.github.io/rainbow/timeline/), a horizontal Bible timeline from Adam to the resurrection. Both share the [`@jessespencer/bible-ui`](../../packages/bible-ui) design system: Fraunces and DM Mono type, a navy palette, and the rainbow gradient.
+Atlas lives alongside [Lineage](https://jessespencer.github.io/rainbow/timeline/), a horizontal Bible timeline from Adam to the resurrection. Both share the [`@jessespencer/bible-ui`](../../packages/bible-ui) design system: IM Fell Great Primer, EB Garamond and DM Mono type, a navy and parchment palette shared with By Heart, and the rainbow gradient.
 
 ## Credits
 

@@ -1,3 +1,4 @@
+import { cssToken } from '@jessespencer/bible-ui/tokens';
 import { GENRES, BOOK_GENRE } from '../data/genres';
 import { linkFrom, linkToStart, linkVotes, type LinkStore } from './links';
 import { WORLD_WIDTH, xOfVerse } from './layout';
@@ -151,7 +152,8 @@ export function createArcRenderer(canvas: HTMLCanvasElement): ArcRenderer | null
   gl.enable(gl.BLEND);
   // Additive, so overlapping arcs build into light and the picture keeps its depth.
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
-  gl.clearColor(0.043, 0.051, 0.071, 1);
+  const base = Number.parseInt(cssToken('--bg-base').slice(1), 16);
+  gl.clearColor((base >> 16 & 255) / 255, (base >> 8 & 255) / 255, (base & 255) / 255, 1);
 
   function createBatch(segments: number): ArcBatch {
     const vao = gl!.createVertexArray()!;

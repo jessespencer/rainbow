@@ -1,3 +1,4 @@
+import { cssToken } from '@jessespencer/bible-ui/tokens';
 import { BOOKS } from '../data/books';
 import { BOOK_GENRE, GENRES } from '../data/genres';
 import { BOOK_SPANS, NT_LEFT, OT_RIGHT, pixelsPerVerse, xOfVerse } from './layout';
@@ -45,7 +46,7 @@ export function renderAxis(
     const room = right - left - 6;
     const label = ctx.measureText(name).width <= room ? name : abbr;
     if (ctx.measureText(label).width > room) continue;
-    ctx.fillStyle = '#A0AEC0';
+    ctx.fillStyle = cssToken('--text-secondary');
     ctx.fillText(label, (left + right) / 2, ty + 13);
   }
 
@@ -54,7 +55,7 @@ export function renderAxis(
   if (passage) {
     const left = screenX(xOfVerse(passage.start)) - pixelsPerVerse(k) / 2;
     const right = screenX(xOfVerse(passage.end)) + pixelsPerVerse(k) / 2;
-    ctx.fillStyle = '#FFFFFF';
+    ctx.fillStyle = cssToken('--text-bright');
     ctx.fillRect(left, ty + 1, Math.max(right - left, 2), STRIP_HEIGHT + 2);
   }
 }
@@ -67,7 +68,7 @@ function renderChapterTicks(
   const perVerse = pixelsPerVerse(k);
   if (perVerse < 0.4) return;
   ctx.font = '10px "DM Mono", monospace';
-  ctx.fillStyle = 'rgba(160,174,192,0.7)';
+  ctx.fillStyle = cssToken('--text-dim');
   for (const span of BOOK_SPANS) {
     if (span.right * k + tx < 0 || span.left * k + tx > width) continue;
     bookMeta[span.index].verseCounts.forEach((count, c) => {
@@ -85,7 +86,7 @@ export function renderDivider(
   height: number,
 ) {
   const x = ((OT_RIGHT + NT_LEFT) / 2) * k + tx;
-  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.strokeStyle = cssToken('--border-subtle');
   ctx.setLineDash([4, 4]);
   ctx.beginPath();
   ctx.moveTo(x, 0);

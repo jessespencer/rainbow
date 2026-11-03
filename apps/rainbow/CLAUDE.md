@@ -15,7 +15,8 @@ Both Atlas and Lineage use the [`@jessespencer/bible-ui`](../bible-ui) package f
 - Site header component (`createHeader()`) — title, subtitle, gradient bar, controls slot, app switcher
 - Book and verse numbering (`@jessespencer/bible-ui/bible`), re-exported by `scripts/bible-metadata.ts`
 - Design tokens — colors, fills, borders, text hierarchy, radii (CSS custom properties)
-- Typography — Fraunces (serif, UI) + DM Mono (monospace, data)
+- Typography — IM Fell Great Primer (titles and headings), EB Garamond (reading and UI text, small caps for labels) and DM Mono (numbers and data)
+- Colors — Deep Night from bible-ui, with Atlas's Starlight accent set on `html:root` at the top of `src/style.css`. Drawing code reads them with `cssToken()` from `/tokens`; never hard-code a UI color in canvas or WebGL
 - Font loading (`loadFonts()`)
 - The Controls guide (`/guide`). Each view's wording lives in `src/lib/guides.ts`; keep it true when a view's input changes
 
