@@ -10,7 +10,7 @@ Work agreed but not done yet, roughly in order. Tick items off in the commit tha
 - [ ] App language: translate the interface wording to match the Bibles offered
 - [x] "Read in…" links for copyrighted translations (ESV, NIV, NLT, NASB)
 - [x] Share button on a passage: copy link, copy text, system share sheet
-- [ ] Install for offline use
+- [x] Install for offline use
 
 ## Look and feel
 - [ ] Light mode: parchment base, accents deepened for paper, arcs that darken as they overlap

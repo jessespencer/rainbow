@@ -74,6 +74,11 @@ const app = document.querySelector<HTMLDivElement>("#app")!;
 loadFonts();
 initSelectMenus();
 
+// Works offline once visited, and the browser can install it (public/sw.js). Production only.
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch((err) => console.warn("Offline copy unavailable", err));
+}
+
 // -- Header (shared component) --
 const { element: headerEl, controls: headerControls, center: headerCenter } = createHeader({
   title: "Lineage",

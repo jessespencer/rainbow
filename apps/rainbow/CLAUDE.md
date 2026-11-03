@@ -38,6 +38,7 @@ The shared package is a local dependency at `../bible-ui`. Rainbow's `src/style.
 - **Colors are genres** — the 8 canon sections in `data/genres.ts`; OpenBible has no theme data, so don't invent categories
 - **URL is state** — `?ref=John.3.16&to=Rom.5.8&votes=10&genre=gospels&view=galaxy&shape=ring` (or `view=heatmap&scale=count`)
 - **Canvas overlays** — legend, stats, zoom and credits float over the canvas; `pointer-events: none` on their wrappers keeps pan and tap working underneath
+- **Offline** — `public/sw.js` saves the page, `links.bin` and `bsb.json` on first visit and everything else as it's used; the page is network-first, the rest is served from the saved copy and refreshed in the background. Registered in production builds only. Lineage has its own in `apps/chronos/public/`
 - **About dialog** — holds the full credits. Keep the OpenBible link visible in `#canvas-credits`
 - **Phone** — below 760px the companion is a bottom sheet; a finger on the book strip scrubs, elsewhere it pans and pinches. Galaxy shifts its view up by `setInset` to stay clear of the sheet
 

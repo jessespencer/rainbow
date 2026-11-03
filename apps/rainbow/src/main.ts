@@ -985,6 +985,11 @@ async function main() {
     if (e.ctrlKey) e.preventDefault();
   }, { passive: false });
 
+  // Works offline once visited, and the browser can install it (public/sw.js). Production only.
+  if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(err => console.warn('Offline copy unavailable', err));
+  }
+
   setProgress(30);
   const response = await fetch(`${import.meta.env.BASE_URL}data/links.bin`);
   if (!response.ok) throw new Error(`Failed to load cross-references (${response.status})`);

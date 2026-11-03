@@ -40,6 +40,7 @@ Galaxy turns every verse into a star on a two-armed spiral, one arm per Testamen
 - **Filter by votes** from 100 down to every link.
 - **Filter by section** to bring forward Law, History, Poetry & Wisdom, Prophets, Gospels, Acts, Epistles, or Revelation while the rest fade back.
 - **Shuffle** to land on a random connection with both verses in front of you.
+- **Offline.** After your first visit, Atlas works without a connection, and your browser can install it as an app. Translations and Galaxy are saved once you've opened them.
 - **Share** any view with the share button in the reading panel, or copy the address. Everything you've selected lives in it:
 
 | Parameter | Example | Meaning |

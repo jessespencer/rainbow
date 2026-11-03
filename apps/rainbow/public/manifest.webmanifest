@@ -1,0 +1,18 @@
+{
+  "name": "Atlas \u2014 Bible Cross-References",
+  "short_name": "Atlas",
+  "description": "Every cross-reference in the Bible, drawn as arcs, a galaxy and a heatmap.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#020611",
+  "theme_color": "#020611",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

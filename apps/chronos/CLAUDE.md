@@ -61,6 +61,7 @@ Years are stored as **signed integers**:
 | `src/lib/minimap.ts` | Bottom minimap with viewport indicator |
 | `src/lib/eras.ts` | Era bands |
 | `vite.config.ts` | Base path, pinned dev port 5174, and Rainbow's data in dev |
+| `public/` | Offline copy (`sw.js`), manifest and install icon; production builds only |
 
 ## Code Style
 
