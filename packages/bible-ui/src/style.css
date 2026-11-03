@@ -235,17 +235,19 @@
 .bui-header__gradient {
   height: 4px;
   width: 100%;
+  /* The eight section colours, Law to Revelation, at one lightness (Atlas's data/genres.ts) */
   background: linear-gradient(
     90deg,
-    rgb(154, 61, 55) 0%,
-    rgb(163, 95, 59) 14.423%,
-    rgb(182, 148, 74) 27.404%,
-    rgb(126, 148, 82) 39.423%,
-    rgb(74, 118, 88) 52.404%,
-    rgb(53, 88, 124) 68.75%,
-    rgb(53, 88, 124) 85.096%,
-    rgb(93, 56, 135) 100%
+    #EB827B 0%,
+    #E18C5F 14.3%,
+    #C79E41 28.6%,
+    #8CB460 42.9%,
+    #5ABB88 57.1%,
+    #4AB9B2 71.4%,
+    #67AAED 85.7%,
+    #B191EA 100%
   );
+  opacity: 0.85;
 }
 
 /* ─── Compact Header ──────────────────────────────────────────── */

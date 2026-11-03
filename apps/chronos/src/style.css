@@ -23,26 +23,27 @@ html:root {
   --station-ring: rgba(239, 231, 214, 0.75);
   --text-shadow-deep: 0 1px 3px rgba(4, 8, 22, 0.7);
 
-  /* Category palette — Chronos-specific */
+  /* Category palette: saturation capped and lightness pulled into one band for Deep Night,
+     but still varied, so twelve categories stay told apart */
   --cat-antediluvian:  #d4a056;
   --cat-postdiluvian:  #c48060;
-  --cat-patriarch:     #e87840;
-  --cat-exodus:        #e05252;
+  --cat-patriarch:     #df7e50;
+  --cat-exodus:        #d86d69;
   --cat-judge:         #8a9e52;
-  --cat-united-king:   #9b6dff;
+  --cat-united-king:   #9880dc;
   --cat-israel-king:   #40b8a0;
   --cat-judah-king:    #d4b84a;
-  --cat-prophet:       #5a9cf5;
+  --cat-prophet:       #619ced;
   --cat-exile-return:  #4aad6e;
   --cat-messiah:       #e8e0d0;
-  --cat-priest:        #9cc4f0;
+  --cat-priest:        #9ac2ee;
 
   /* Lineage palette */
   --lineage-messianic:   #e8c06a;
-  --lineage-cainite:     #8a6050;
-  --lineage-nations:     #6a8a6a;
+  --lineage-cainite:     #a97d6d;
+  --lineage-nations:     #739373;
   --lineage-ishmaelite:  #b89050;
-  --lineage-edomite:     #a06040;
+  --lineage-edomite:     #b97756;
   --lineage-tribes:      #7090b0;
   --lineage-israel-king: #40b8a0;
   --lineage-christ:      #ffe9a8;

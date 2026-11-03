@@ -14,8 +14,8 @@ Work agreed but not done yet, roughly in order. Tick items off in the commit tha
 
 ## Look and feel
 - [ ] Light mode: parchment base, accents deepened for paper, arcs that darken as they overlap
-- [ ] Header rainbow line in the even section colours
-- [ ] Lineage category and era colours on the even spectrum, era bands retuned for Deep Night
+- [x] Header rainbow line in the even section colours
+- [x] Lineage category and era colours tuned for Deep Night (harmonised, not one lightness: twelve categories need lightness to stay apart)
 - [ ] Faint starfield in empty space
 - [ ] Arc exposure that follows the view: calm overview, brighter as you filter or zoom
 - [ ] Custom dropdowns that open below the control (keep native pickers on touch screens)
