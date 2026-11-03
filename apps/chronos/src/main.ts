@@ -2,6 +2,7 @@ import "@jessespencer/bible-ui/style.css";
 import "./style.css";
 import { createHeader, loadFonts } from "@jessespencer/bible-ui";
 import { createGuide } from "@jessespencer/bible-ui/guide";
+import { initSelectMenus } from "@jessespencer/bible-ui/select-menu";
 import { Compass, createElement } from "lucide";
 import {
   yearToX,
@@ -71,6 +72,7 @@ const app = document.querySelector<HTMLDivElement>("#app")!;
 
 // -- Load shared fonts --
 loadFonts();
+initSelectMenus();
 
 // -- Header (shared component) --
 const { element: headerEl, controls: headerControls, center: headerCenter } = createHeader({

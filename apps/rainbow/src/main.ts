@@ -5,6 +5,7 @@ import { createTranslationPicker, type TranslationPickerHandle } from '@jessespe
 import {
   DEFAULT_TRANSLATION, saveTranslation, savedTranslation, translationById, type Translation,
 } from '@jessespencer/bible-ui/translations';
+import { initSelectMenus } from '@jessespencer/bible-ui/select-menu';
 import { shareView } from '@jessespencer/bible-ui/share';
 import { Check, createElement, Compass, Grid3x3, Orbit, Rainbow, Share2, Shuffle, Scaling } from 'lucide';
 import { GENRES } from './data/genres';
@@ -954,6 +955,7 @@ async function main() {
   document.getElementById('view-arcs')!.prepend(createElement(Rainbow));
   document.getElementById('view-galaxy')!.prepend(createElement(Orbit));
   document.getElementById('view-heatmap')!.prepend(createElement(Grid3x3));
+  initSelectMenus();
   translationPicker = createTranslationPicker({
     parent: document.getElementById('companion-version')!,
     current: translation,

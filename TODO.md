@@ -18,7 +18,7 @@ Work agreed but not done yet, roughly in order. Tick items off in the commit tha
 - [x] Lineage category and era colours tuned for Deep Night (harmonised, not one lightness: twelve categories need lightness to stay apart)
 - [x] Faint starfield in empty space (Atlas's arcs view)
 - [x] Arc exposure that follows the view: calm overview, brighter as you filter or zoom (arcs already brighten as you zoom; a selection now draws 1.4× brighter over a 10% background)
-- [ ] Custom dropdowns that open below the control (keep native pickers on touch screens)
+- [x] Custom dropdowns that open below the control (keep native pickers on touch screens)
 - [x] Favicons from the app icons
 
 ## Fixes and checks

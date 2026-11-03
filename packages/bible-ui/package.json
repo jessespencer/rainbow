@@ -14,6 +14,7 @@
     "./tokens": "./src/tokens.ts",
     "./translations": "./src/translations.ts",
     "./translation-picker": "./src/translationPicker.ts",
-    "./share": "./src/share.ts"
+    "./share": "./src/share.ts",
+    "./select-menu": "./src/selectMenu.ts"
   }
 }

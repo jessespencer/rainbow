@@ -26,6 +26,7 @@ Shared design system and UI components for Bible visualization apps — [Atlas](
 - `createTranslationPicker({ parent, current, onChange })` (from `/translation-picker`) — the chip and grouped menu for picking a translation
 - `LINKED_TRANSLATIONS`, `readElsewhereHref(reference, version)` (from `/translations`) — the copyrighted translations a passage links out to on Bible Gateway
 - `shareView(title)` (from `/share`) — the system share sheet on touch screens, otherwise the link goes to the clipboard
+- `initSelectMenus()` (from `/select-menu`) — call once: with a mouse or trackpad, every `select.bui-select` opens our menu below the control instead of the system's, with arrow keys, type-ahead and Esc. Touch screens keep the native picker
 - `cssToken(name)` (from `/tokens`) — reads a design token for canvas, SVG and WebGL code, which can't use `var()`
 
 ## Usage
