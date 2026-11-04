@@ -2,6 +2,7 @@ import { useEffect, useState, type CSSProperties } from 'react'
 import { MissingKeyError, fetchChapter, getKey, getTranslation, setKey, type Book, type Translation, type Verse } from '../lib/bible'
 import { inkLevel, isDue, verseKey, type Progress } from '../lib/memory'
 import { prefersStillness } from '../lib/motion'
+import { Backup } from './Backup'
 import { Footnotes } from './Footnotes'
 import { BookPicker, TranslationPicker } from './Picker'
 import type { SessionItem } from './Session'
@@ -232,6 +233,7 @@ export const PageView = (props: PageViewProps) => {
             . {translation} text is in the public domain.
           </p>
         )}
+        <Backup />
       </footer>
 
       <VerseSlip

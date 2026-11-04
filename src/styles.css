@@ -1681,3 +1681,14 @@ kbd {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* When something fails to render */
+
+.fallen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100svh;
+  padding-bottom: 0;
+}
