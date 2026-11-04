@@ -385,7 +385,7 @@ html[data-theme="light"] .bui-appswitch__item-icon {
     gap: 8px;
   }
 
-  /* Matches Rainbow's rows: brand on top, search and view toggle below. */
+  /* Brand on top, search and the controls below. */
   #app .bui-header--compact .bui-header__brand {
     flex: 1 0 100%;
   }
