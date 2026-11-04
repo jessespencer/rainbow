@@ -26,7 +26,7 @@ Work agreed but not done yet, roughly in order. Tick items off in the commit tha
 - [x] Lineage: closing the Controls panel by clicking the timeline also picks a year
 - [x] Family Tree label widths still estimated for DM Mono (now measured in the real fonts)
 - [ ] Test Galaxy's + and − keys, and everything on a real phone
-- [ ] Move Atlas onto bible-ui's compact header and `setupSheet`
+- [x] Move Atlas onto bible-ui's compact header and `setupSheet`
 
 ## Shipping
 - [x] Merge PR 9, then open a PR for `feat/controls-guide` (both landed with PR 10)

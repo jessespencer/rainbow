@@ -19,19 +19,18 @@
 <body>
   <div id="app">
     <!-- header injected by bible-ui createHeader() -->
-    <div id="toolbar">
-      <div id="search-box">
-        <input type="search" id="book-search" placeholder="Go to John 3:16, Ps 23..." aria-label="Go to a passage" aria-keyshortcuts="Meta+K Control+K" enterkeyhint="go" />
-        <kbd id="search-hint" aria-hidden="true"></kbd>
-      </div>
-      <div id="toolbar-actions">
-        <button id="clear-filters" class="canvas-btn">✕ Clear</button>
-        <button id="btn-shuffle" class="canvas-btn">Shuffle</button>
-        <div id="view-toggle">
-          <button id="view-arcs" class="active" aria-label="Arcs">Arcs</button>
-          <button id="view-galaxy" aria-label="Galaxy">Galaxy</button>
-          <button id="view-heatmap" aria-label="Heatmap"><span class="label-long">Heatmap</span><span class="label-short">Map</span></button>
-        </div>
+    <!-- moved into the header's center slot and controls by main.ts -->
+    <div id="search-box">
+      <input type="search" id="book-search" placeholder="Go to John 3:16, Ps 23..." aria-label="Go to a passage" aria-keyshortcuts="Meta+K Control+K" enterkeyhint="go" />
+      <kbd id="search-hint" aria-hidden="true"></kbd>
+    </div>
+    <div id="toolbar-actions">
+      <button id="clear-filters" class="canvas-btn" aria-label="Clear">✕<span class="label-long">&nbsp;Clear</span></button>
+      <button id="btn-shuffle" class="canvas-btn">Shuffle</button>
+      <div id="view-toggle">
+        <button id="view-arcs" class="active" aria-label="Arcs">Arcs</button>
+        <button id="view-galaxy" aria-label="Galaxy">Galaxy</button>
+        <button id="view-heatmap" aria-label="Heatmap"><span class="label-long">Heatmap</span><span class="label-short">Map</span></button>
       </div>
     </div>
     <div id="stage">
@@ -102,8 +101,8 @@
           <span>Data: <a href="https://www.openbible.info/labs/cross-references/" target="_blank" rel="noopener">OpenBible.info</a>, <a href="https://berean.bible/" target="_blank" rel="noopener">BSB</a></span>
         </div>
       </div>
-      <aside id="companion" class="hidden" data-sheet="peek" aria-label="Companion">
-        <div id="companion-handle"><span></span></div>
+      <aside id="companion" class="bui-sheet hidden" data-sheet="peek" aria-label="Companion">
+        <div id="companion-handle" class="bui-sheet__handle"><span></span></div>
         <header id="companion-head">
           <div id="companion-heading"></div>
           <div id="companion-version"></div>

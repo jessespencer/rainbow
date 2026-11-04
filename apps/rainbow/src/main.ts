@@ -23,7 +23,7 @@ import { hideTooltip, showLinkTooltip, showPassageTooltip } from './lib/tooltip'
 import { setupZoom, zoomBy, zoomTo, type ZoomState } from './lib/zoom';
 import { CANVAS_LABELS, guideFor } from './lib/guides';
 import { rememberSection, renderLinkView, renderPassageView, setReading, type CompanionTarget, type VerseTexts } from './lib/companion';
-import { setupSheet, type SheetHandle } from './lib/sheet';
+import { setupSheet, type SheetHandle } from '@jessespencer/bible-ui/sheet';
 import { createSky } from './lib/sky';
 import { onThemeChange } from '@jessespencer/bible-ui/theme';
 import {
@@ -919,14 +919,16 @@ async function main() {
   // Load shared fonts and create header
   loadFonts();
   const app = document.getElementById('app')!;
-  const { element: header, controls } = createHeader({
+  const { element: header, controls, center } = createHeader({
     title: 'Atlas',
     subtitle: 'The world\'s first hyperlinked Text — The Bible',
     background: 'var(--bg-base)',
     appId: 'rainbow',
+    compact: true,
   });
 
-  controls.append(document.getElementById('toolbar')!);
+  center!.append(document.getElementById('search-box')!);
+  controls.append(document.getElementById('toolbar-actions')!);
   app.prepend(header);
 
   canvas = document.getElementById('main-canvas') as HTMLCanvasElement;

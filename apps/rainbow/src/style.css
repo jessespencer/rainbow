@@ -76,41 +76,6 @@ body {
   overflow: hidden;
 }
 
-/* ─── HEADER OVERRIDES ───────────────────────────────────── */
-/* #app outranks bible-ui's stylesheet, which loads after this one. */
-#app .bui-header {
-  /* Each side matches the gap above and below its edge control: the 28px logo on the left, the 36px view toggle on the right */
-  padding: 10px 10px 10px 14px;
-  border-bottom: 1px solid var(--border-faint);
-  /* Above the canvas chrome (10) and panel (50) so the app switcher menu can open over them. */
-  z-index: 60;
-}
-
-/* Equal outer columns keep search in the true center of the page. */
-#app .bui-header__row {
-  display: grid;
-  grid-template-columns: 1fr minmax(180px, 420px) 1fr;
-  gap: 20px;
-}
-
-#app .bui-header__title {
-  font-size: 20px;
-  line-height: 28px;
-}
-
-#app .bui-header__subtitle { display: none; }
-
-#app .bui-header__controls,
-#toolbar { display: contents; }
-
-/* The bible-ui rainbow bar becomes a thin edge along the top of the page. */
-#app .bui-header__gradient {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 2px;
-}
-
 /* ─── CANVAS OVERLAYS ────────────────────────────────────── */
 /* Overlay blocks let the canvas take input; only their controls catch the pointer. */
 #category-filters,
@@ -673,19 +638,23 @@ html[data-theme="light"] .bui-night {
 
 /* ─── COMPANION ──────────────────────────────────────────── */
 #companion {
-  position: relative;
-  flex: 0 0 min(420px, 42vw);
   background: var(--bg-surface);
-  border-left: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
   min-height: 0;
   z-index: 50;
 }
 
-#companion.hidden { display: none; }
+/* Below this width, bible-ui's sheet positions the panel. */
+@media (min-width: 761px) {
+  #companion {
+    position: relative;
+    flex: 0 0 min(420px, 42vw);
+    border-left: 1px solid var(--border-subtle);
+  }
+}
 
-#companion-handle { display: none; }
+#companion.hidden { display: none; }
 
 #companion-head {
   display: flex;
@@ -1284,29 +1253,7 @@ html[data-theme="light"] .bui-night {
 
 /* ─── PHONE ──────────────────────────────────────────────── */
 @media (max-width: 760px) {
-  #app .bui-header { padding: 8px 16px; }
-
-  #app .bui-header__row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  /* Leaves room for Shuffle alone, so search and the view toggle wrap to the next row. */
-  #app .bui-header__brand { flex: 1 0 calc(100% - 44px); }
-
-  #app .bui-header__title {
-    font-size: 18px;
-    line-height: 28px;
-  }
-
-  /* Flatten the slot so the buttons share the title's row and search wraps below. */
-  #toolbar-actions { display: contents; }
-
-  #view-toggle {
-    order: 3;
-    flex-shrink: 0;
-  }
+  #view-toggle { flex-shrink: 0; }
 
   /* Icons only on a phone, so search keeps its room; each button keeps its aria-label */
   #view-toggle button {
@@ -1321,15 +1268,10 @@ html[data-theme="light"] .bui-night {
   }
 
   #btn-shuffle {
+    height: 36px;
     gap: 0;
-    padding: 0 8px;
+    padding: 0 10px;
     font-size: 0;
-  }
-
-  #search-box {
-    order: 1;
-    flex: 1 1 0;
-    min-width: 100px;
   }
 
   #book-search {
@@ -1340,7 +1282,11 @@ html[data-theme="light"] .bui-night {
 
   #search-hint { display: none; }
 
-  #clear-filters { order: 2; height: 36px; }
+  /* Icon only, like Shuffle, so search keeps its room beside them */
+  #clear-filters {
+    height: 36px;
+    padding: 0 12px;
+  }
 
   .label-long { display: none; }
 
@@ -1379,48 +1325,7 @@ html[data-theme="light"] .bui-night {
     font-size: 10px;
   }
 
-  #companion {
-    --sheet-height: 86dvh;
-    --sheet-peek: 44dvh;
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: var(--sheet-height);
-    border-left: none;
-    border-top: 1px solid var(--border-default);
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    box-shadow: var(--shadow-sheet);
-    transform: translateY(calc(var(--drag, 0px)));
-    transition: transform 0.25s ease;
-  }
-
-  #companion[data-sheet="peek"] {
-    transform: translateY(calc(var(--sheet-height) - var(--sheet-peek) + var(--drag, 0px)));
-  }
-
-  #companion.dragging { transition: none; }
-
-  #companion-handle {
-    display: flex;
-    justify-content: center;
-    padding: 10px 0 8px;
-    flex-shrink: 0;
-    cursor: grab;
-    touch-action: none;
-  }
-
-  #companion-handle span {
-    width: 40px;
-    height: 4px;
-    border-radius: 2px;
-    background: var(--border-strong);
-  }
-
   #side-panel-content { padding-bottom: env(safe-area-inset-bottom); }
-
-  /* The sheet's lower part is off screen in peek, so the scroll area must stop at the screen edge. */
-  #companion[data-sheet="peek"] { padding-bottom: calc(var(--sheet-height) - var(--sheet-peek)); }
 
   #companion-head { padding: 0 12px 10px 16px; }
 

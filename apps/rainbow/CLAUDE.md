@@ -20,7 +20,7 @@ Both Atlas and Lineage use the [`@jessespencer/bible-ui`](../bible-ui) package f
 - Font loading (`loadFonts()`)
 - The Controls guide (`/guide`). Each view's wording lives in `src/lib/guides.ts`; keep it true when a view's input changes
 
-The shared package is a local dependency at `../bible-ui`. Rainbow's `src/style.css` layers app-specific tokens on top of the shared base. Rainbow puts its toolbar in the header's controls slot and compacts the header with `#app`-scoped CSS. Chronos uses the same layout through bible-ui's `compact` option; move Rainbow onto it, and onto bible-ui's `setupSheet`, in place of its own copies.
+The shared package is a local dependency at `../bible-ui`. Rainbow's `src/style.css` layers app-specific tokens on top of the shared base. Like Lineage, Atlas uses bible-ui's `compact` header (search in the center slot, the toolbar buttons in controls) and its `/sheet` for the phone companion (`.bui-sheet` on `#companion`).
 
 ## Architecture
 - **No framework** — vanilla TS with direct DOM manipulation
@@ -57,7 +57,6 @@ The shared package is a local dependency at `../bible-ui`. Rainbow's `src/style.
 - `src/lib/links.ts` — link store, filter, per-verse index
 - `src/lib/verses.ts` — verse numbering, reference parsing and formatting
 - `src/lib/companion.ts` — passage and connection panel
-- `src/lib/sheet.ts` — phone bottom sheet
 - `src/lib/heatmap.ts` — heatmap matrix rendering
 - `src/lib/galaxy.ts` — Three.js star view, lazy-loaded
 - `src/style.css` — app styles; `#app`-scoped phone rules because bible-ui's CSS loads later
