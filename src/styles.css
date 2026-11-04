@@ -5,12 +5,12 @@
   --hair: color-mix(in srgb, var(--ink) 18%, transparent);
   --soft: color-mix(in srgb, var(--ink) 58%, transparent);
   --ghost: 0.4;
-  --slip: #101b3d;
-  --slip-ink: #efe7d6;
-  --slip-accent: #e8b64c;
-  --sheet: #101b3d;
-  --sheet-ink: #efe7d6;
-  --sheet-accent: #e8b64c;
+  --slip: #020611;
+  --slip-ink: #e9e2d2;
+  --slip-accent: #ff8a7a;
+  --sheet: #020611;
+  --sheet-ink: #e9e2d2;
+  --sheet-accent: #ff8a7a;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --spring: linear(0, 0.06 3%, 0.22 7%, 0.62 15%, 0.92 23%, 1.03 30%, 1.05 36%, 1.03 46%, 1.005 58%, 0.998 70%, 1);
   --book: 'EB Garamond Variable', 'EB Garamond', Garamond, Georgia, serif;
@@ -19,14 +19,15 @@
 }
 
 :root[data-theme='dark'] {
-  --paper: #0b1430;
-  --ink: #efe7d6;
-  --rubric: #e8b64c;
+  /* Deep Night, shared with Atlas and Lineage; Ember is By Heart's own star */
+  --paper: #020611;
+  --ink: #e9e2d2;
+  --rubric: #ff8a7a;
   --ghost: 0.46;
   --slip: #f5f0e6;
   --slip-ink: #17140f;
   --slip-accent: #c8321e;
-  --sheet: #182449;
+  --sheet: #111a2e;
   color-scheme: dark;
 }
 
