@@ -11,7 +11,7 @@ const renderBlockingEntry = (): Plugin => ({
 });
 
 export default defineConfig({
-  base: '/rainbow/',
+  base: '/bible/atlas/',
   plugins: [renderBlockingEntry()],
   // Pinned so the bible-ui app switcher can link across dev servers.
   server: { port: 5173, strictPort: true },

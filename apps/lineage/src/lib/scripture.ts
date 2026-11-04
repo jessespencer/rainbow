@@ -1,7 +1,7 @@
 /**
  * Reads the timeline's scripture references ("Gen 4:25–5:8", "1 Kgs 17–2 Kgs 2",
- * "Gen 25:13; 28:9; Isa 60:7") into verse ranges in Rainbow's numbering, and
- * loads the Berean Standard Bible text that Rainbow already ships.
+ * "Gen 25:13; 28:9; Isa 60:7") into verse ranges in Atlas's numbering, and
+ * loads the Berean Standard Bible text that Atlas already ships.
  */
 
 import { bookOffsets, books } from "@jessespencer/bible-ui/bible";
@@ -10,7 +10,7 @@ export interface Passage {
   start: number;
   end: number;
   label: string;
-  /** Rainbow's `?ref=` value. Rainbow opens one chapter at most, so long passages open at their first. */
+  /** Atlas's `?ref=` value. Atlas opens one chapter at most, so long passages open at their first. */
   param: string;
 }
 
@@ -145,7 +145,7 @@ export const loadBible = (file: string): Promise<string[]> => {
   let bible = bibles.get(file);
   if (!bible) {
     const base = import.meta.env.BASE_URL;
-    const url = `${base}${import.meta.env.DEV ? "" : "../"}data/${file}`;
+    const url = `${base}${import.meta.env.DEV ? "" : "../atlas/"}data/${file}`;
     bible = fetch(url).then((res) => {
       if (!res.ok) throw new Error(`Could not load ${url}`);
       return res.json() as Promise<string[]>;

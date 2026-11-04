@@ -1,14 +1,14 @@
 # Atlas — Bible Cross-Reference Visualization
 
 ## Project Overview
-Shown to readers as **Atlas**. The folder, package and URL (`/rainbow/`) keep the old name `rainbow`, so links keep working. Interactive visualization of all 344,799 OpenBible.info cross-references, with BSB verse text. Vanilla TypeScript (no framework), arcs in WebGL2, axis and heatmap on Canvas 2D, a Three.js galaxy, D3 for zoom/pan. Sibling project to [Chronos](https://github.com/jessespencer/chronos).
+Shown to readers as **Atlas**, served at `/bible/atlas/`. Old `/rainbow/` links redirect there. Two stored ids keep the old name `rainbow` so readers keep their settings: the panel's `rainbow:panel:` keys and the guide ids. Interactive visualization of all 344,799 OpenBible.info cross-references, with BSB verse text. Vanilla TypeScript (no framework), arcs in WebGL2, axis and heatmap on Canvas 2D, a Three.js galaxy, D3 for zoom/pan. Sibling to [Lineage](../lineage).
 
 ## Stack
 - TypeScript + Vite (dev & build)
 - WebGL2 for arcs, Canvas 2D overlay for axis, highlights and heatmap
 - Three.js for the Galaxy view, loaded by dynamic import only
 - D3.js v3/v4 (selection, transition, zoom)
-- Deployed as static site at `/rainbow/` base path
+- Deployed as a static site at `/bible/atlas/`
 
 ## Shared Design System
 Both Atlas and Lineage use the [`@jessespencer/bible-ui`](../bible-ui) package for:
@@ -20,7 +20,7 @@ Both Atlas and Lineage use the [`@jessespencer/bible-ui`](../bible-ui) package f
 - Font loading (`loadFonts()`)
 - The Controls guide (`/guide`). Each view's wording lives in `src/lib/guides.ts`; keep it true when a view's input changes
 
-The shared package is a local dependency at `../bible-ui`. Rainbow's `src/style.css` layers app-specific tokens on top of the shared base. Like Lineage, Atlas uses bible-ui's `compact` header (search in the center slot, the toolbar buttons in controls) and its `/sheet` for the phone companion (`.bui-sheet` on `#companion`).
+The shared package is a local dependency at `../bible-ui`. Atlas's `src/style.css` layers app-specific tokens on top of the shared base. Like Lineage, Atlas uses bible-ui's `compact` header (search in the center slot, the toolbar buttons in controls) and its `/sheet` for the phone companion (`.bui-sheet` on `#companion`).
 
 ## Architecture
 - **No framework** — vanilla TS with direct DOM manipulation
@@ -40,7 +40,7 @@ The shared package is a local dependency at `../bible-ui`. Rainbow's `src/style.
 - **Colors are genres** — the 8 canon sections in `data/genres.ts`; OpenBible has no theme data, so don't invent categories
 - **URL is state** — `?ref=John.3.16&to=Rom.5.8&votes=10&genre=gospels&view=galaxy&shape=ring` (or `view=heatmap&scale=count`)
 - **Canvas overlays** — legend, stats, zoom and credits float over the canvas; `pointer-events: none` on their wrappers keeps pan and tap working underneath
-- **Offline** — `public/sw.js` saves the page, `links.bin` and `bsb.json` on first visit and everything else as it's used; the page is network-first, the rest is served from the saved copy and refreshed in the background. Registered in production builds only. Lineage has its own in `apps/chronos/public/`
+- **Offline** — `public/sw.js` saves the page, `links.bin` and `bsb.json` on first visit and everything else as it's used; the page is network-first, the rest is served from the saved copy and refreshed in the background. Registered in production builds only. Lineage has its own in `apps/lineage/public/`
 - **About dialog** — holds the full credits. Keep the OpenBible link visible in `#canvas-credits`
 - **Phone** — below 760px the companion is a bottom sheet; a finger on the book strip scrubs, elsewhere it pans and pinches. Galaxy shifts its view up by `setInset` to stay clear of the sheet
 

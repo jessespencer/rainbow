@@ -2,7 +2,7 @@
 
 > *344,799 threads woven through 66 books. Every arc a conversation across millennia.*
 
-**▶ [Open Atlas](https://jessespencer.github.io/rainbow/)**
+**▶ [Open Atlas](https://jessedestroys.com/bible/atlas/)**
 
 ## Why this exists
 
@@ -103,21 +103,21 @@ Requires [Node.js](https://nodejs.org/) 22 or newer and [pnpm](https://pnpm.io/)
 
 ```bash
 pnpm install
-pnpm dev:rainbow
+pnpm dev:atlas
 ```
 
-Then open <http://localhost:5173/rainbow/>. The path matters: the app is served under `/rainbow/`, as it is on GitHub Pages.
+Then open <http://localhost:5173/bible/atlas/>. The path matters: the app is served under `/bible/atlas/`, as it is on GitHub Pages.
 
 | Command | Purpose |
 | --- | --- |
-| `pnpm dev:rainbow` | Start the Vite dev server |
-| `pnpm build:rainbow` | Build the site into `apps/rainbow/dist/` |
+| `pnpm dev:atlas` | Start the Vite dev server |
+| `pnpm build:atlas` | Build the site into `apps/atlas/dist/` |
 | `pnpm build` | Build every app in the monorepo |
 
 The datasets are committed, so you don't need to download anything to run the app. To rebuild them from source, for example to pick up new OpenBible votes:
 
 ```bash
-cd apps/rainbow
+cd apps/atlas
 pnpm build:data
 pnpm build:translations
 ```
@@ -127,7 +127,7 @@ pnpm build:translations
 ### Project structure
 
 ```text
-apps/rainbow/
+apps/atlas/
 ├── public/data/
 │   ├── links.bin                # All cross-references, strongest first
 │   ├── bsb.json                 # Berean Standard Bible text by verse
@@ -170,7 +170,7 @@ The site deploys to GitHub Pages from `main` through [`.github/workflows/deploy.
 
 ## Part of a family
 
-Atlas lives alongside [Lineage](https://jessespencer.github.io/rainbow/timeline/), a horizontal Bible timeline from Adam to the resurrection. Both share the [`@jessespencer/bible-ui`](../../packages/bible-ui) design system: IM Fell Great Primer, EB Garamond and DM Mono type, a navy and parchment palette shared with By Heart, and the rainbow gradient.
+Atlas lives alongside [Lineage](https://jessedestroys.com/bible/lineage/), a horizontal Bible timeline from Adam to the resurrection. Both share the [`@jessespencer/bible-ui`](../../packages/bible-ui) design system: IM Fell Great Primer, EB Garamond and DM Mono type, a navy and parchment palette shared with By Heart, and the rainbow gradient.
 
 ## Credits
 

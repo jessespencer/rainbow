@@ -2,7 +2,7 @@
 
 > *4,150 years on one screen. Every bar a life, every overlap a shared moment in history.*
 
-**▶ [Open Lineage](https://jessespencer.github.io/rainbow/timeline/)**
+**▶ [Open Lineage](https://jessedestroys.com/bible/lineage/)**
 
 Lineage is an interactive Bible timeline, from Adam to the resurrection of Jesus (~AD 33). It opens on the whole story, then lets you zoom into any reign, read the scripture behind a person, and see who was alive at the same moment. It works on phones as well as desktops.
 
@@ -15,7 +15,7 @@ Lineage is an interactive Bible timeline, from Adam to the resurrection of Jesus
 - **King and Priest.** Follow the royal line from Judah and the priestly line from Levi, both leading to Jesus, one by descent and the other by God's oath.
 - **Search.** Find a person, a year like 586 BC, or an era. Press ⌘K or Ctrl K from anywhere.
 - **Controls.** A button that explains how to explore each view, with a short tip on your first visit. On a keyboard, `+` and `−` zoom.
-- **Links into Atlas.** Open any passage in [Atlas](../rainbow) to see its cross-references.
+- **Links into Atlas.** Open any passage in [Atlas](../atlas) to see its cross-references.
 - **Shareable.** Every selection has its own address, such as `?figure=king-david` or `?year=-586`, and the panel's share button sends it. Each passage also links out to the ESV, NIV, NLT and NASB.
 - **Night or Day.** Switch from the app menu beside the title, and Atlas follows.
 - **Offline.** After your first visit, Lineage works without a connection, and your browser can install it as an app.
@@ -27,11 +27,11 @@ From the repo root:
 
 ```bash
 pnpm install
-pnpm dev:chronos      # http://localhost:5174/rainbow/timeline/
-pnpm build:chronos    # type-check and build for production
+pnpm dev:lineage      # http://localhost:5174/bible/lineage/
+pnpm build:lineage    # type-check and build for production
 ```
 
-Run `pnpm dev:rainbow` too if you want the links into Atlas to work locally.
+Run `pnpm dev:atlas` too if you want the links into Atlas to work locally.
 
 ## Data
 

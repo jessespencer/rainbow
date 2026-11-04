@@ -26,7 +26,7 @@ const FLY_MS = 620;
 const SETTLED_LOG = 0.001;
 const MAX_FRAME_MS = 50;
 
-/** Lucide's Scaling icon, the one on Rainbow's Fit button. */
+/** Lucide's Scaling icon, the one on Atlas's Fit button. */
 const FIT_ICON =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
   '<path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>' +
@@ -215,7 +215,7 @@ export const initZoom = (
     (e) => {
       if (!e.ctrlKey && !e.metaKey) return;
       e.preventDefault();
-      // The same curve as d3-zoom, which Rainbow uses. Trackpad pinches arrive as ctrl-wheel.
+      // The same curve as d3-zoom, which Atlas uses. Trackpad pinches arrive as ctrl-wheel.
       const unit = e.deltaMode === 1 ? 0.05 : e.deltaMode ? 1 : 0.002;
       const factor = 2 ** (-e.deltaY * unit * (e.ctrlKey ? 10 : 1));
       easeAt(targetPpy() * factor, e.clientX, e.clientY, WHEEL_EASE_MS);

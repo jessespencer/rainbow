@@ -1,6 +1,6 @@
 /**
  * The Bibles the apps can read from. Each one is mapped to KJV verse numbering at build time
- * (apps/rainbow/scripts/build-translations.ts) and served as `data/<file>`, one string per verse.
+ * (apps/atlas/scripts/build-translations.ts) and served as `data/<file>`, one string per verse.
  * Every one here is public domain or openly licensed; copyrighted ones are only ever linked to.
  */
 

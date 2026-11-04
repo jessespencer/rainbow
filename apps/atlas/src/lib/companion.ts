@@ -68,6 +68,7 @@ function heading(target: HTMLElement, eyebrow: string, color: string, title: str
   `;
 }
 
+// Saved under Atlas's old name, so readers keep their open sections.
 const SECTION_KEY = 'rainbow:panel:';
 
 function sectionIsOpen(id: string, fallback: boolean): boolean {

@@ -11,11 +11,11 @@ const renderBlockingEntry = (): Plugin => ({
 });
 
 export default defineConfig(({ command }) => ({
-  base: "/rainbow/timeline/",
+  base: "/bible/lineage/",
   plugins: [renderBlockingEntry()],
   // Pinned so the bible-ui app switcher can link across dev servers.
   server: { port: 5174, strictPort: true },
-  // In production Atlas's data sits one level up, and this folder holds only Lineage's own offline files.
+  // In production Atlas's data sits beside us in ../atlas/, and this folder holds only Lineage's own offline files.
   // Dev serves Atlas's public folder here instead.
-  publicDir: command === "serve" ? "../rainbow/public" : "public",
+  publicDir: command === "serve" ? "../atlas/public" : "public",
 }));

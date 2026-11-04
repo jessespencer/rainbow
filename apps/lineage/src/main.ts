@@ -86,7 +86,7 @@ if (import.meta.env.PROD && "serviceWorker" in navigator) {
 const { element: headerEl, controls: headerControls, center: headerCenter } = createHeader({
   title: "Lineage",
   subtitle: "A Visual History of the Bible",
-  appId: "chronos",
+  appId: "lineage",
   compact: true,
 });
 app.appendChild(headerEl);
@@ -487,6 +487,7 @@ const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 // Each press of + or − zooms by this much
 const KEY_ZOOM = 1.6;
 const guide = createGuide({ parent: statusRow, stage: canvasArea, icon: () => createElement(Compass) });
+// Guide ids keep the old app name, so a guide a reader has seen stays seen.
 const showGuide = () => guide.show(`chronos-${getView()}`, guideFor(getView(), isMac));
 onViewChange(showGuide);
 mainViewport.setAttribute(

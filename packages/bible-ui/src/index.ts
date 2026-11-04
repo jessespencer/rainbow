@@ -27,10 +27,10 @@ export interface AppEntry {
 /** Every app in the ecosystem. Add an entry here to add it to the switcher. */
 export const APPS: AppEntry[] = [
   {
-    id: "rainbow",
+    id: "atlas",
     label: "Atlas",
     tagline: "Every cross-reference in the Bible",
-    path: "/rainbow/",
+    path: "/bible/atlas/",
     devPort: 5173,
     // Lucide "rainbow": three arches, like the arc diagram
     icon: '<path d="M22 17a10 10 0 0 0-20 0"/><path d="M6 17a6 6 0 0 1 12 0"/><path d="M10 17a2 2 0 0 1 4 0"/>',
@@ -39,10 +39,10 @@ export const APPS: AppEntry[] = [
     accentLight: "36, 82, 150",
   },
   {
-    id: "chronos",
+    id: "lineage",
     label: "Lineage",
     tagline: "Visual history of the Bible",
-    path: "/rainbow/timeline/",
+    path: "/bible/lineage/",
     devPort: 5174,
     // Lucide "git-branch": a family line branching off the main one
     icon: '<path d="M15 6a9 9 0 0 0-9 9V3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/>',

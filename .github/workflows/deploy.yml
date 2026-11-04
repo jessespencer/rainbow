@@ -26,14 +26,15 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build:rainbow
-      - run: pnpm build:chronos
+      - run: pnpm build:atlas
+      - run: pnpm build:lineage
+      # Served at /bible/: each app in its own folder, and the root forwards to Atlas.
       - name: Assemble Pages output
         run: |
-          mkdir -p dist
-          cp -r apps/rainbow/dist/. dist/
-          mkdir -p dist/timeline
-          cp -r apps/chronos/dist/. dist/timeline/
+          mkdir -p dist/atlas dist/lineage
+          cp -r apps/atlas/dist/. dist/atlas/
+          cp -r apps/lineage/dist/. dist/lineage/
+          cp pages/index.html dist/index.html
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

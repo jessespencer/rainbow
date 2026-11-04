@@ -48,7 +48,7 @@ let translation: Translation =
 
 export const readingTranslation = (): Translation => translation;
 
-const rainbowHref = (passage: Passage): string =>
+const atlasHref = (passage: Passage): string =>
   `${appHref(APPS[0]!)}?ref=${passage.param}${translation.id === DEFAULT_TRANSLATION.id ? "" : `&tr=${translation.id}`}`;
 
 const heading = (parent: HTMLElement, eyebrow: string, title: string, note: string, color?: string) => {
@@ -176,7 +176,7 @@ export const initCompanion = (
     const links = el("div", "cp-links", root);
     for (const passage of passages) {
       const link = el("a", "cp-context", links);
-      link.href = rainbowHref(passage);
+      link.href = atlasHref(passage);
       link.textContent = `${passage.label} in Atlas ›`;
     }
     // Copyrighted translations can't be bundled, so the passage links out to them instead.
