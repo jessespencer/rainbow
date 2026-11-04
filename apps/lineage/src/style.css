@@ -1120,7 +1120,7 @@ html[data-theme="light"] .minimap__era { background: var(--era-day); opacity: 1;
 }
 
 /* ─── Canvas Overlays ─────────────────────────────────────────── */
-/* Match Rainbow's. Overlay blocks let the timeline take input; only their controls catch the pointer. */
+/* Match Atlas's. Overlay blocks let the timeline take input; only their controls catch the pointer. */
 
 .canvas-status {
   position: absolute;
@@ -1202,7 +1202,7 @@ html[data-theme="light"] .minimap__era { background: var(--era-day); opacity: 1;
   color: var(--text-secondary);
 }
 
-/* A real row, not an overlay, so it sits at the very bottom like Rainbow's. */
+/* A real row, not an overlay, so it sits at the very bottom like Atlas's. */
 .canvas-credits {
   display: flex;
   align-items: center;

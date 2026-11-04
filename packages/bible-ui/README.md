@@ -1,6 +1,6 @@
 # @jessespencer/bible-ui
 
-Shared design system and UI components for Bible visualization apps — [Atlas](../../apps/rainbow) and [Lineage](../../apps/chronos).
+Shared design system and UI components for the Bible apps — [Atlas](../../apps/atlas) and [Lineage](../../apps/lineage).
 
 ## What's included
 

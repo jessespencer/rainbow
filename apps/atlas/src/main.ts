@@ -371,6 +371,7 @@ function setViewMode(mode: ViewMode) {
   // Galaxy is a night sky in either theme, so the controls over it take Night's colours.
   document.getElementById('canvas-container')!.classList.toggle('bui-night', mode === 'galaxy');
   if (mode !== 'galaxy') canvas.setAttribute('aria-label', CANVAS_LABELS[mode]);
+  // Guide ids keep the old app names, so a guide a reader has seen stays seen.
   guide?.show(`rainbow-${mode}`, guideFor(mode, isMac));
   hideTooltip();
   galaxy?.setActive(mode === 'galaxy');
@@ -923,7 +924,7 @@ async function main() {
     title: 'Atlas',
     subtitle: 'The world\'s first hyperlinked Text — The Bible',
     background: 'var(--bg-base)',
-    appId: 'rainbow',
+    appId: 'atlas',
     compact: true,
   });
 

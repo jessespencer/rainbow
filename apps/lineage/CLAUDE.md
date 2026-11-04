@@ -1,6 +1,6 @@
 # Lineage — Bible Timeline
 
-Interactive Bible timeline, shown to readers as **Lineage**. Its Lineage view is shown as **Family Tree**. The folder, package, URL (`/rainbow/timeline/`, `?view=lineage`) and code keep the old names `chronos` and `lineage`, so links keep working. Sibling to [Atlas](../rainbow), and shares the [`@jessespencer/bible-ui`](../../packages/bible-ui) design system with it.
+Interactive Bible timeline, shown to readers as **Lineage**. Its Lineage view is shown as **Family Tree**. Served at `/bible/lineage/`; old `/rainbow/timeline/` links redirect there. The guide ids keep the old name `chronos` so readers keep their settings. Sibling to [Atlas](../atlas), and shares the [`@jessespencer/bible-ui`](../../packages/bible-ui) design system with it.
 
 Scope: Adam through Jesus's resurrection (~AD 33). No apostolic age yet.
 
@@ -10,11 +10,11 @@ Scope: Adam through Jesus's resurrection (~AD 33). No apostolic age yet.
 - Single page: HTML + CSS + TS
 - Deep Night theme via shared design tokens from `@jessespencer/bible-ui`, with Lineage's Candlelight accent set on `html:root` at the top of `src/style.css`. SVG and canvas colors read them with `cssToken()` from `/tokens`, or pass `var()` straight to SVG attributes, which follows the theme without a redraw. Day's colours sit in an `html[data-theme="light"]:root` rule beside Night's; eras carry a `wash` for Day
 - Typography: IM Fell Great Primer (titles and headings), EB Garamond (reading and UI text, small caps for labels) and DM Mono (numbers and data)
-- Deployed as a static site at `/rainbow/timeline/`
+- Deployed as a static site at `/bible/lineage/`
 
 ## Shared Design System
 
-`@jessespencer/bible-ui` provides the compact header and app switcher, the phone bottom sheet (`/sheet`), the Controls guide (`/guide`, with each view's wording in `src/lib/guides.ts`), book and verse numbering (`/bible`), fonts, and design tokens. Chronos imports the shared CSS first, then layers its own tokens on top.
+`@jessespencer/bible-ui` provides the compact header and app switcher, the phone bottom sheet (`/sheet`), the Controls guide (`/guide`, with each view's wording in `src/lib/guides.ts`), book and verse numbering (`/bible`), fonts, and design tokens. Lineage imports the shared CSS first, then layers its own tokens on top.
 
 ## Architecture
 
@@ -25,7 +25,7 @@ Scope: Adam through Jesus's resurrection (~AD 33). No apostolic age yet.
 - **Selection is the state** — nothing, a figure, or a year. `select()` in `main.ts` drives the bars, scrubber, minimap, panel and URL together
 - **URL is state** — `?figure=king-david`, `?year=-586`, `?view=lineage`
 - **Input** — a mouse scrubs by dragging the lanes. A finger pans them, so touch scrubs on the axis strip and picks with a tap. Pinch also pans, and lives in `zoom.ts`
-- **Scripture comes from Rainbow** — `scripture.ts` parses each `scriptureRef` into Rainbow's verse numbering, reads Rainbow's `data/bsb.json`, and links to `?ref=` there. Every `scriptureRef` must keep parsing when you add a figure
+- **Scripture comes from Atlas** — `scripture.ts` parses each `scriptureRef` into Atlas's verse numbering, reads Atlas's `data/` (from `../atlas/` in production), and links to `?ref=` there. Every `scriptureRef` must keep parsing when you add a figure
 - **Phone** — below 760px the panel is a bottom sheet and the lane labels are gone; color carries the category
 
 ## Year Convention
@@ -60,7 +60,7 @@ Years are stored as **signed integers**:
 | `src/lib/scripture.ts` | Reference parsing and BSB loading |
 | `src/lib/minimap.ts` | Bottom minimap with viewport indicator |
 | `src/lib/eras.ts` | Era bands |
-| `vite.config.ts` | Base path, pinned dev port 5174, and Rainbow's data in dev |
+| `vite.config.ts` | Base path, pinned dev port 5174, and Atlas's data in dev |
 | `public/` | Offline copy (`sw.js`), manifest and install icon; production builds only |
 
 ## Code Style

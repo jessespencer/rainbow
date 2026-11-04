@@ -1,5 +1,5 @@
 /**
- * What the Controls guide says for each Chronos view.
+ * What the Controls guide says for each Lineage view.
  */
 
 import {

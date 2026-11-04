@@ -1,7 +1,7 @@
 // Offline copy of Lineage. The page tries the network first so updates arrive when online;
 // everything else (code, data, fonts) is served from the saved copy and refreshed in the background.
 const CACHE = 'lineage-v1';
-const PRECACHE = ['./', '../data/bsb.json'];
+const PRECACHE = ['./', '../atlas/data/bsb.json'];
 const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 
 self.addEventListener('install', (event) => {

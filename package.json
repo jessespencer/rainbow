@@ -1,13 +1,13 @@
 {
-  "name": "bible-viz",
+  "name": "bible",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev:rainbow": "pnpm --filter rainbow dev",
-    "dev:chronos": "pnpm --filter chronos dev",
+    "dev:atlas": "pnpm --filter atlas dev",
+    "dev:lineage": "pnpm --filter lineage dev",
     "build": "pnpm -r build",
-    "build:rainbow": "pnpm --filter rainbow build",
-    "build:chronos": "pnpm --filter chronos build"
+    "build:atlas": "pnpm --filter atlas build",
+    "build:lineage": "pnpm --filter lineage build"
   }
 }

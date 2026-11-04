@@ -1,5 +1,5 @@
 /**
- * Timeline figure data — Chronos Bible Timeline
+ * Timeline figure data — Lineage
  *
  * ═══════════════════════════════════════════════════════════════════
  * CHRONOLOGY SOURCES
