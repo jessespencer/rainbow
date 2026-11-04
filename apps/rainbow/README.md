@@ -40,6 +40,7 @@ Galaxy turns every verse into a star on a two-armed spiral, one arm per Testamen
 - **Filter by votes** from 100 down to every link.
 - **Filter by section** to bring forward Law, History, Poetry & Wisdom, Prophets, Gospels, Acts, Epistles, or Revelation while the rest fade back.
 - **Shuffle** to land on a random connection with both verses in front of you.
+- **Night or Day.** Switch from the app menu beside the title. By day the arcs are ink on parchment, darkening where they overlap; Galaxy stays a night sky. Your choice carries to Lineage.
 - **Offline.** After your first visit, Atlas works without a connection, and your browser can install it as an app. Translations and Galaxy are saved once you've opened them.
 - **Share** any view with the share button in the reading panel, or copy the address. Everything you've selected lives in it:
 

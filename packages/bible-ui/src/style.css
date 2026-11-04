@@ -48,6 +48,7 @@
   /* Depth: what is selected or live glows in the app's accent */
   --shadow-pop:    0 12px 32px rgba(0, 0, 0, 0.6);
   --shadow-raised: 0 0 0 1px var(--accent-border), 0 0 18px var(--accent-halo);
+  --shadow-sheet:  0 -8px 32px rgba(0, 0, 0, 0.5);
 
   /* Radii */
   --radius-sm: 4px;
@@ -58,6 +59,74 @@
   --font-display: "IM Fell Great Primer", "EB Garamond", Georgia, serif;
   --font-ui:      "EB Garamond", Georgia, serif;
   --font-mono:    "DM Mono", ui-monospace, monospace;
+}
+
+/* Day: parchment and iron-gall ink. Set by `data-theme="light"` (theme.ts). Depth comes from
+   ink and a soft shadow; each app deepens its own accent in an html[data-theme="light"]:root rule. */
+html[data-theme="light"] {
+  color-scheme: light;
+
+  --bg-edge:      #E7DECB;
+  --bg-base:      #F3EDE0;
+  --bg-surface:   #EFE8D8;
+  --bg-elevated:  #FBF8F1;
+  --bg-scrim:     rgba(58, 46, 28, 0.32);
+  --bg-glass:     rgba(243, 237, 224, 0.82);
+
+  --fill-subtle:  #EEE7D7;
+  --fill-default: #E8E0CD;
+  --fill-hover:   #E2D8C2;
+  --fill-active:  #DBD0B7;
+  --fill-selected:#D5C9AE;
+
+  --border-faint:   rgba(64, 46, 20, 0.07);
+  --border-subtle:  rgba(64, 46, 20, 0.12);
+  --border-default: rgba(64, 46, 20, 0.19);
+  --border-strong:  rgba(64, 46, 20, 0.30);
+
+  --text-disabled:  #B3A790;
+  --text-muted:     #857861;
+  --text-dim:       #685D4B;
+  --text-secondary: #4A4235;
+  --text-primary:   #2C261E;
+  --text-bright:    #18130D;
+
+  --accent-rgb:    52, 74, 120;
+  --accent-bright: #22344F;
+  --accent-fill:   #DDE1E6;
+
+  --shadow-pop:    0 10px 28px rgba(64, 46, 20, 0.16), 0 1px 3px rgba(64, 46, 20, 0.10);
+  --shadow-raised: 0 0 0 1px var(--accent-border), 0 1px 4px rgba(var(--accent-rgb), 0.16);
+  --shadow-sheet:  0 -6px 24px rgba(64, 46, 20, 0.14);
+}
+
+/* A dark island inside Day, such as Galaxy's night sky: Deep Night's tokens again, for it alone. */
+html[data-theme="light"] .bui-night {
+  color-scheme: dark;
+
+  --bg-base:      #020611;
+  --bg-elevated:  #08122A;
+  --bg-glass:     rgba(2, 6, 17, 0.70);
+  --fill-subtle:  #061024;
+  --fill-default: #0A1630;
+  --fill-hover:   #0D1A3A;
+  --fill-selected:#15254E;
+  --border-faint:   rgba(214, 226, 255, 0.06);
+  --border-subtle:  rgba(214, 226, 255, 0.10);
+  --border-default: rgba(214, 226, 255, 0.15);
+  --border-strong:  rgba(214, 226, 255, 0.24);
+  --text-muted:     #7A84A3;
+  --text-dim:       #A3A9BD;
+  --text-secondary: #CFC9BC;
+  --text-primary:   #E9E2D2;
+  --text-bright:    #F6F1E6;
+  /* The app's night accent (--night-accent-rgb on its html:root), with its derived tokens redone here */
+  --accent-rgb:    var(--night-accent-rgb, 207, 224, 255);
+  --accent-text:   rgb(var(--accent-rgb));
+  --accent-border: rgba(var(--accent-rgb), 0.45);
+  --accent-glow:   rgba(var(--accent-rgb), 0.16);
+  --accent-halo:   rgba(var(--accent-rgb), 0.35);
+  --shadow-raised: 0 0 0 1px var(--accent-border), 0 0 18px var(--accent-halo);
 }
 
 /* ─── Site Header ─────────────────────────────────────────────── */
@@ -137,7 +206,29 @@
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
   background: var(--bg-elevated);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--shadow-pop);
+}
+
+/* Night and Day, under the apps */
+.bui-theme {
+  margin: 6px 4px 2px;
+  padding-top: 0;
+}
+
+.bui-theme button {
+  flex: 1;
+  justify-content: center;
+}
+
+.bui-appswitch__mark,
+.bui-appswitch__item-icon {
+  --app-accent: var(--app-accent-dark);
+}
+
+html[data-theme="light"] .bui-appswitch__mark,
+html[data-theme="light"] .bui-appswitch__item-icon {
+  --app-accent: var(--app-accent-light);
+  filter: none;
 }
 
 .bui-appswitch__menu[hidden] {
@@ -335,7 +426,7 @@
     border-left: none;
     border-top: 1px solid var(--border-default);
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.5);
+    box-shadow: var(--shadow-sheet);
     transform: translateY(calc(var(--drag, 0px)));
     transition: transform 0.25s ease;
   }

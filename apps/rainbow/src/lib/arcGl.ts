@@ -1,4 +1,5 @@
 import { cssToken } from '@jessespencer/bible-ui/tokens';
+import { currentTheme } from '@jessespencer/bible-ui/theme';
 import { GENRES, BOOK_GENRE } from '../data/genres';
 import { linkFrom, linkToStart, linkVotes, type LinkStore } from './links';
 import { WORLD_WIDTH, xOfVerse } from './layout';
@@ -20,6 +21,8 @@ export interface ArcRenderer {
   setFocus(store: LinkStore, ids: Int32Array | null): void;
   draw(view: ArcView): void;
   resize(width: number, height: number, dpr: number): void;
+  /** Read the theme again: light on Night's sky, or ink on Day's paper. Draw after. */
+  setTheme(light: boolean): void;
 }
 
 interface ArcBatch {
@@ -39,8 +42,14 @@ const MAX_ALPHA = 0.7;
 // How bright the summed light is before the curve maps it. A little over 1, so the overview keeps
 // its sparkle now that dense areas no longer clip.
 const EXPOSURE = 1.35;
+// The same for Day's ink: how dark the summed ink is before it meets the paper.
+const INK_EXPOSURE = 0.75;
+// The darkest any one channel of an ink counts as, so no colour absorbs without limit.
+const INK_FLOOR = '0.14';
 // How much brighter a selection's arcs draw than the same arcs in the overview.
 const FOCUS_LIFT = 1.4;
+// By day a selection has no glow to stand out by, so its ink lays down this much heavier.
+const FOCUS_INK = 2.4;
 
 // World-span buckets: small arcs need few segments, which keeps a whole-Bible draw light on phones.
 const BUCKETS = [
@@ -62,6 +71,7 @@ uniform vec3 u_view;
 uniform float u_segments;
 uniform float u_reveal;
 uniform vec3 u_palette[8];
+uniform float u_ink;
 out vec4 v_color;
 void main() {
   float t = float(gl_VertexID) / u_segments;
@@ -75,6 +85,9 @@ void main() {
   vec2 screen = world * u_view.x + u_view.yz;
   gl_Position = vec4(screen.x / u_size.x * 2.0 - 1.0, 1.0 - screen.y / u_size.y * 2.0, 0.0, 1.0);
   vec3 color = mix(u_palette[int(a_genres.x)], u_palette[int(a_genres.y)], t);
+  // By day an arc carries how much of each channel its ink takes from the paper. Mixed before
+  // converting, and floored, so an arc between two sections stays a blend rather than going black.
+  if (u_ink > 0.5) color = -log(max(color, vec3(${INK_FLOOR})));
   v_color = vec4(color, local > 0.0 ? a_weight : 0.0);
 }`;
 
@@ -82,9 +95,12 @@ const FRAGMENT_SHADER = `#version 300 es
 precision mediump float;
 in vec4 v_color;
 uniform float u_alpha;
+uniform float u_premultiply;
+uniform float u_strength;
 out vec4 color;
 void main() {
-  color = vec4(v_color.rgb, v_color.a * u_alpha);
+  float a = v_color.a * u_alpha;
+  color = vec4(v_color.rgb * u_strength * mix(1.0, a, u_premultiply), a);
 }`;
 
 // Second pass: arcs add up in a float buffer, then this maps the total to the screen. Faint arcs pass
@@ -98,13 +114,23 @@ void main() {
   gl_Position = vec4(corner * 2.0 - 1.0, 0.0, 1.0);
 }`;
 
+// By day the same buffer holds ink instead of light: each arc adds its section's absorbance, and
+// the paper shows through by Beer–Lambert, so faint arcs tint it and dense ones deepen toward a dark
+// ink of their own hue. Opaque, since the paper is drawn here.
 const COMPOSITE_FRAGMENT = `#version 300 es
 precision highp float;
 in vec2 v_uv;
 uniform sampler2D u_light;
 uniform float u_exposure;
+uniform float u_ink;
+uniform vec3 u_paper;
 out vec4 color;
 void main() {
+  if (u_ink > 0.5) {
+    vec3 density = texture(u_light, v_uv).rgb * u_exposure;
+    color = vec4(u_paper * exp(-density), 1.0);
+    return;
+  }
   vec3 light = texture(u_light, v_uv).rgb * u_exposure;
   float luma = dot(light, vec3(0.2126, 0.7152, 0.0722));
   vec3 mapped = luma > 0.0 ? light * (1.0 - exp(-luma)) / luma : light;
@@ -167,6 +193,8 @@ function link(gl: WebGL2RenderingContext, vertex: string, fragment: string): Web
 
 interface LightBuffer {
   resize(width: number, height: number): void;
+  /** Light on Night's sky, or ink on Day's paper. */
+  setInk(paper: [number, number, number] | null): void;
   begin(): void;
   finish(exposure: number): void;
 }
@@ -177,6 +205,8 @@ function createLightBuffer(gl: WebGL2RenderingContext): LightBuffer | null {
   if (!gl.getExtension('EXT_color_buffer_float')) return null;
   const program = link(gl, COMPOSITE_VERTEX, COMPOSITE_FRAGMENT);
   const exposure = gl.getUniformLocation(program, 'u_exposure');
+  const ink = gl.getUniformLocation(program, 'u_ink');
+  const paperUniform = gl.getUniformLocation(program, 'u_paper');
   gl.useProgram(program);
   gl.uniform1i(gl.getUniformLocation(program, 'u_light'), 0);
 
@@ -206,6 +236,11 @@ function createLightBuffer(gl: WebGL2RenderingContext): LightBuffer | null {
       gl.bindFramebuffer(gl.FRAMEBUFFER, resolveTarget);
       gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    },
+    setInk(paper) {
+      gl.useProgram(program);
+      gl.uniform1f(ink, paper ? 1 : 0);
+      if (paper) gl.uniform3f(paperUniform, ...paper);
     },
     begin() {
       gl.bindFramebuffer(gl.FRAMEBUFFER, drawTarget);
@@ -242,8 +277,9 @@ export function createArcRenderer(canvas: HTMLCanvasElement): ArcRenderer | null
     segments: uniform('u_segments'),
     reveal: uniform('u_reveal'),
     alpha: uniform('u_alpha'),
+    strength: uniform('u_strength'),
   };
-  gl.uniform3fv(uniform('u_palette'), GENRES.flatMap(g => hexToRgb(g.color)));
+  const premultiply = uniform('u_premultiply');
 
   const attributes = {
     ends: gl.getAttribLocation(program, 'a_ends'),
@@ -252,10 +288,25 @@ export function createArcRenderer(canvas: HTMLCanvasElement): ArcRenderer | null
   };
 
   gl.enable(gl.BLEND);
-  // Additive, so overlapping arcs build into light and the picture keeps its depth.
-  gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
-  const base = hexToRgb(cssToken('--bg-base'));
   const light = createLightBuffer(gl);
+  let base: [number, number, number] = [0, 0, 0];
+  let ink = false;
+
+  function setTheme(next: boolean) {
+    ink = next;
+    base = hexToRgb(cssToken('--bg-base'));
+    gl!.useProgram(program);
+    // Night's arcs carry their colour as light; Day's carry their ink, turned to absorbance in the shader.
+    gl!.uniform3fv(uniform('u_palette'), GENRES.flatMap(g => hexToRgb(ink ? g.ink : g.color)));
+    gl!.uniform1f(uniform('u_ink'), ink ? 1 : 0);
+    light?.setInk(ink ? base : null);
+    // Additive, so overlapping arcs build into light, or into ink, and the picture keeps its depth.
+    // Without the float buffer, Day's ink multiplies the paper down directly.
+    gl!.uniform1f(premultiply, !light && ink ? 1 : 0);
+    if (!light && ink) gl!.blendFunc(gl!.ZERO, gl!.ONE_MINUS_SRC_COLOR);
+    else gl!.blendFunc(gl!.SRC_ALPHA, gl!.ONE);
+  }
+  setTheme(currentTheme() === 'light');
 
   function createBatch(segments: number): ArcBatch {
     const vao = gl!.createVertexArray()!;
@@ -336,13 +387,17 @@ export function createArcRenderer(canvas: HTMLCanvasElement): ArcRenderer | null
 
       // Long arcs go down first, so the short ones stay legible on top.
       gl.uniform1f(uniforms.alpha, arcAlpha(backgroundCount, view) * view.backgroundAlpha);
+      gl.uniform1f(uniforms.strength, 1);
       for (let b = background.length - 1; b >= 0; b--) drawBatch(background[b], view.k);
 
       // The same rule as the full view, lifted a little: the calm overview stays calm, and what you pick glows.
       gl.uniform1f(uniforms.alpha, Math.min(MAX_ALPHA, arcAlpha(focus.count, view) * FOCUS_LIFT));
+      gl.uniform1f(uniforms.strength, ink ? FOCUS_INK : 1);
       drawBatch(focus, view.k);
       gl.bindVertexArray(null);
-      light?.finish(EXPOSURE);
+      light?.finish(ink ? INK_EXPOSURE : EXPOSURE);
     },
+
+    setTheme,
   };
 }

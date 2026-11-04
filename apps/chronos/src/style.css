@@ -7,6 +7,48 @@ html:root {
   --accent-rgb:    242, 196, 107;
   --accent-bright: #FFE3A6;
   --accent-fill:   #3A2C12;
+  --night-accent-rgb: 242, 196, 107;
+}
+
+/* By day, an iron-gall amber; and every palette below darkened to ink on paper, same hues */
+html[data-theme="light"]:root {
+  --accent-rgb:    146, 94, 18;
+  --accent-bright: #5E3A05;
+  --accent-fill:   #EEDFC0;
+
+  --christ-glow:        rgba(160, 112, 20, 0.30);
+  --christ-glow-strong: rgba(160, 112, 20, 0.45);
+  --christ-glow-soft:   rgba(160, 112, 20, 0.14);
+  --accent-glow-strong: rgba(var(--accent-rgb), 0.30);
+
+  --wash-faint:  rgba(64, 46, 20, 0.05);
+  --wash-hover:  rgba(64, 46, 20, 0.09);
+  --wash-border: rgba(64, 46, 20, 0.16);
+  --station-ring: rgba(44, 38, 30, 0.70);
+  --text-shadow-deep: 0 0 3px rgba(243, 237, 224, 0.95);
+
+  --cat-antediluvian:  #8e5e00;
+  --cat-postdiluvian:  #834526;
+  --cat-patriarch:     #943d07;
+  --cat-exodus:        #933333;
+  --cat-judge:         #4f600e;
+  --cat-united-king:   #5e4598;
+  --cat-israel-king:   #00745f;
+  --cat-judah-king:    #8f7400;
+  --cat-prophet:       #2259a1;
+  --cat-exile-return:  #006c32;
+  --cat-messiah:       #2a2218;
+  --cat-priest:        #587ea6;
+
+  --lineage-messianic:   #9f7a1b;
+  --lineage-cainite:     #754d3e;
+  --lineage-nations:     #436143;
+  --lineage-ishmaelite:  #755002;
+  --lineage-edomite:     #824525;
+  --lineage-tribes:      #3d5b78;
+  --lineage-israel-king: #00745f;
+  --lineage-christ:      #8a6410;
+  --lineage-priestly:    #5a80a8;
 }
 
 :root {
@@ -196,6 +238,7 @@ body {
   position: absolute;
   top: 0;
   bottom: 0;
+  background: var(--era-night);
   opacity: 0.10;
   pointer-events: none;
   z-index: 0;
@@ -426,6 +469,16 @@ body {
   z-index: 6;
 }
 
+/* By day a selected bar is solid ink, so its name is set in paper; hover darkens rather than lights. */
+html[data-theme="light"] .figure-bar--selected .figure-bar__name {
+  color: var(--bg-elevated);
+  text-shadow: none;
+}
+
+html[data-theme="light"] .figure-bar:hover {
+  filter: brightness(0.9);
+}
+
 .figure-bar__reign {
   position: absolute;
   top: 0;
@@ -577,8 +630,13 @@ body {
   position: absolute;
   top: 0;
   bottom: 0;
+  background: var(--era-night);
   opacity: 0.55;
 }
+
+/* By day the eras are pale washes of the same hues (eras.ts `wash`) */
+html[data-theme="light"] .era-band { background: var(--era-day); opacity: 0.4; }
+html[data-theme="light"] .minimap__era { background: var(--era-day); opacity: 1; }
 
 .minimap__viewport-rect {
   position: absolute;
@@ -1336,7 +1394,8 @@ body {
 }
 
 .cp-elsewhere {
-  margin: 8px 0 0;
+  margin: 2px 0 0;
+  padding: 0 20px;
   color: var(--text-muted);
   font-size: 14px;
   font-style: italic;

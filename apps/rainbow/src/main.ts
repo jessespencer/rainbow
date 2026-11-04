@@ -25,6 +25,7 @@ import { CANVAS_LABELS, guideFor } from './lib/guides';
 import { rememberSection, renderLinkView, renderPassageView, setReading, type CompanionTarget, type VerseTexts } from './lib/companion';
 import { setupSheet, type SheetHandle } from './lib/sheet';
 import { createSky } from './lib/sky';
+import { onThemeChange } from '@jessespencer/bible-ui/theme';
 import {
   bookPassage, chapterPassage, formatRange, formatVerse, locate, neighborPassage, parseReference, passageFromParam,
   passageToParam, VERSE_BOOK, versePassage, type Passage,
@@ -367,6 +368,8 @@ function setViewMode(mode: ViewMode) {
   document.getElementById('arc-canvas')!.classList.toggle('hidden', mode !== 'arcs');
   document.getElementById('app')!.classList.toggle('galaxy-mode', mode === 'galaxy');
   document.getElementById('app')!.classList.toggle('heatmap-mode', mode === 'heatmap');
+  // Galaxy is a night sky in either theme, so the controls over it take Night's colours.
+  document.getElementById('canvas-container')!.classList.toggle('bui-night', mode === 'galaxy');
   if (mode !== 'galaxy') canvas.setAttribute('aria-label', CANVAS_LABELS[mode]);
   guide?.show(`rainbow-${mode}`, guideFor(mode, isMac));
   hideTooltip();
@@ -383,7 +386,7 @@ function setupFilters() {
   GENRES.forEach((genre, i) => {
     const btn = document.createElement('button');
     btn.className = 'cat-pill';
-    btn.innerHTML = `<span class="cat-dot" style="background:${genre.color}"></span>${genre.label}`;
+    btn.innerHTML = `<span class="cat-dot" style="background:${genre.css}"></span>${genre.label}`;
     btn.addEventListener('click', () => {
       filter.genre = filter.genre === i ? null : i;
       syncFilterControls();
@@ -958,6 +961,11 @@ async function main() {
   document.getElementById('view-heatmap')!.prepend(createElement(Grid3x3));
   initSelectMenus();
   createSky(document.getElementById('canvas-container')!);
+  // Galaxy keeps its night sky either way; the arcs, axis and heatmap redraw in the new colours.
+  onThemeChange(theme => {
+    arcs.setTheme(theme === 'light');
+    scheduleRender();
+  });
   translationPicker = createTranslationPicker({
     parent: document.getElementById('companion-version')!,
     current: translation,

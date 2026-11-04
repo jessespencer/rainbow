@@ -15,3 +15,6 @@ export const cssToken = (name: string): string => {
   }
   return value;
 };
+
+/** Forget every value read, after the theme changes. */
+export const clearTokens = (): void => cache.clear();

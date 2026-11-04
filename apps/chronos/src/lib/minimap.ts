@@ -35,7 +35,9 @@ export const initMinimap = (
     const w = yearToX(era.endYear) - l;
     band.style.left = `${(l / getTimelineWidth()) * 100}%`;
     band.style.width = `${(w / getTimelineWidth()) * 100}%`;
-    band.style.background = era.color;
+    // Each theme picks its own: see .minimap__era in style.css.
+    band.style.setProperty("--era-night", era.color);
+    band.style.setProperty("--era-day", era.wash);
     track.appendChild(band);
   }
 

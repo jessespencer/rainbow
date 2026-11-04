@@ -113,7 +113,7 @@ function band({ id, title, note, count, trailing = '', defaultOpen = true, body 
 
 function connectionRow(store: LinkStore, id: number, start: number, end: number, texts: VerseTexts): string {
   return `
-    <div class="cp-row" style="--genre:${genreOf(start).color}">
+    <div class="cp-row" style="--genre:${genreOf(start).css}">
       <button class="cp-row-main" data-link="${id}">
         <span class="cp-row-ref">${formatRange(start, end)}<span>${linkVotes(store, id)}</span></span>
         <span class="cp-row-text">${passageText(texts, start, end)}</span>
@@ -141,7 +141,7 @@ function connectionList(
 
   let html = '';
   for (const [book, group] of byBook) {
-    html += `<div class="cp-book" style="--genre:${GENRES[BOOK_GENRE[book]].color}"><span>${BOOKS[book].name}</span><span>${group.length}</span></div>`;
+    html += `<div class="cp-book" style="--genre:${GENRES[BOOK_GENRE[book]].css}"><span>${BOOKS[book].name}</span><span>${group.length}</span></div>`;
     html += group.map(id => connectionRow(store, id, ...otherEnd(id), texts)).join('');
   }
   if (rows.length < ids.length) {
@@ -155,10 +155,10 @@ function genreBand(store: LinkStore, otherEnds: number[]): string {
   for (const verse of otherEnds) counts[BOOK_GENRE[VERSE_BOOK[verse]]]++;
   const present = GENRES.map((genre, i) => ({ genre, count: counts[i] })).filter(g => g.count > 0);
   const strip = present
-    .map(({ genre, count }) => `<span style="flex-grow:${count};background:${genre.color}"></span>`)
+    .map(({ genre, count }) => `<span style="flex-grow:${count};background:${genre.css}"></span>`)
     .join('');
   const rows = present
-    .map(({ genre, count }) => `<div class="cp-genre"><span style="background:${genre.color}"></span>${genre.label}<b>${count.toLocaleString()}</b></div>`)
+    .map(({ genre, count }) => `<div class="cp-genre"><span style="background:${genre.css}"></span>${genre.label}<b>${count.toLocaleString()}</b></div>`)
     .join('');
   return band({
     id: 'connects-to',
@@ -202,11 +202,11 @@ export function renderLinkView(
     ? ` · ${(position + 1).toLocaleString()} of ${siblings.length.toLocaleString()} between these books`
     : '';
 
-  heading(head, 'Connection', genreOf(from).color, `${formatVerse(from)} &harr; ${formatRange(toStart, toEnd)}`,
+  heading(head, 'Connection', genreOf(from).css, `${formatVerse(from)} &harr; ${formatRange(toStart, toEnd)}`,
     `${votes} reader vote${votes === 1 ? '' : 's'}${place}`);
 
   content.innerHTML = `
-    <div class="cp-pair" style="--from:${genreOf(from).color};--to:${genreOf(toStart).color}">
+    <div class="cp-pair" style="--from:${genreOf(from).css};--to:${genreOf(toStart).css}">
       ${pairVerse(texts, from, from)}
       ${pairVerse(texts, toStart, toEnd)}
     </div>
@@ -236,7 +236,7 @@ export function renderPassageView(
   const genre = genreOf(start);
   const testament = BOOKS[VERSE_BOOK[start]].testament === 'OT' ? 'Old Testament' : 'New Testament';
 
-  heading(head, `${genre.label} · ${testament}`, genre.color, passage.label,
+  heading(head, `${genre.label} · ${testament}`, genre.css, passage.label,
     `${connections.length.toLocaleString()} connection${connections.length === 1 ? '' : 's'}`);
 
   const inside = (verse: number) => verse >= start && verse <= end;
