@@ -32,8 +32,10 @@ Work agreed but not done yet, roughly in order. Tick items off in the commit tha
 - [x] By Heart's Deep Night dark mode (merged in by-heart PR 8)
 - [x] Decide app addresses: the repo is `bible`, with Atlas at `/bible/atlas/` and Lineage at `/bible/lineage/`; old `/rainbow/` links redirect
 - [x] Bring By Heart in as `apps/byheart`
-- [ ] Port By Heart's open branches with `git subtree merge --prefix=apps/byheart`: `claude/launch-blockers` (backups, error boundary, manifest), `claude/where-is-it` (by-heart PR 7), `claude/greek-layer-9d08ee` (fleuron brand mark)
-- [ ] Launch By Heart after the launch blockers: add it to the deploy workflow and to bible-ui's `APPS` switcher
+- [x] Port By Heart's open branches: launch blockers (backups, error boundary, manifest), the where-is-it drill (by-heart PR 7), the fleuron brand mark, and the Greek layer for Ephesians in the ESV
+- [ ] Try By Heart's Greek layer with an ESV key: it was ported onto the current page but needs a key to show
+- [ ] Launch By Heart: add it to the deploy workflow and to bible-ui's `APPS` switcher
+- [ ] Close by-heart PR 7 and archive the by-heart repo
 
 ## Skipped
 - Greek and Hebrew word links
