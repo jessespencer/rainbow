@@ -6,8 +6,11 @@
   "scripts": {
     "dev:atlas": "pnpm --filter atlas dev",
     "dev:lineage": "pnpm --filter lineage dev",
+    "dev:byheart": "pnpm --filter byheart dev",
     "build": "pnpm -r build",
     "build:atlas": "pnpm --filter atlas build",
-    "build:lineage": "pnpm --filter lineage build"
+    "build:lineage": "pnpm --filter lineage build",
+    "build:byheart": "pnpm --filter byheart build",
+    "test:byheart": "pnpm --filter byheart test"
   }
 }

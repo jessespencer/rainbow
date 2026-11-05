@@ -7,7 +7,6 @@ Work agreed but not done yet, roughly in order. Tick items off in the commit tha
 - [x] Bible translations: bundle public-domain texts (KJV, WEB, ASV) beside the BSB, loaded on demand
 - [x] Other languages' public-domain Bibles (Portuguese, German, Italian, Spanish), mapped to KJV verse numbering
 - [x] A translation picker that fits our design (not a copy of trekhleb's), shared by Atlas and Lineage and kept in the URL
-- [ ] App language: translate the interface wording to match the Bibles offered
 - [x] "Read in…" links for copyrighted translations (ESV, NIV, NLT, NASB)
 - [x] Share button on a passage: copy link, copy text, system share sheet
 - [x] Install for offline use
@@ -30,9 +29,14 @@ Work agreed but not done yet, roughly in order. Tick items off in the commit tha
 
 ## Shipping
 - [x] Merge PR 9, then open a PR for `feat/controls-guide` (both landed with PR 10)
-- [ ] Push and open a PR for By Heart's `feat/deep-night`
+- [x] By Heart's Deep Night dark mode (merged in by-heart PR 8)
 - [x] Decide app addresses: the repo is `bible`, with Atlas at `/bible/atlas/` and Lineage at `/bible/lineage/`; old `/rainbow/` links redirect
-- [ ] Bring By Heart in as `apps/byheart`
+- [x] Bring By Heart in as `apps/byheart`
+- [x] Port By Heart's open branches: launch blockers (backups, error boundary, manifest), the where-is-it drill (by-heart PR 7), the fleuron brand mark, and the Greek layer for Ephesians in the ESV
+- [ ] Try By Heart's Greek layer with an ESV key: it was ported onto the current page but needs a key to show
+- [x] Launch By Heart: add it to the deploy workflow and to bible-ui's `APPS` switcher
+- [ ] Give By Heart the app switcher in its own header, and share Night/Day with Atlas and Lineage (it keeps its own `byheart.theme` for now)
+- [ ] Close by-heart PR 7 and archive the by-heart repo
 
 ## Skipped
 - Greek and Hebrew word links
