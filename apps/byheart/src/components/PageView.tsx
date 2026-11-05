@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import {
   MissingKeyError,
   chapterName,
@@ -12,7 +12,7 @@ import {
 } from '../lib/bible'
 import { hasGreek, loadGreek, splitVerse, type GreekData, type GreekTag } from '../lib/greek'
 import { inkLevel, isDue, verseKey, type Progress } from '../lib/memory'
-import { prefersStillness } from '../lib/motion'
+import { canTransition, prefersStillness, withTransition } from '../lib/motion'
 import { Backup } from './Backup'
 import { HeartMark } from './Heart'
 import { Footnotes } from './Footnotes'
@@ -42,7 +42,7 @@ const parseKey = (key: string) => {
 
 export const PageView = (props: PageViewProps) => {
   const { book, chapter, translation, progress, theme } = props
-  const [loaded, setLoaded] = useState<{ id: string; verses: Verse[] }>()
+  const [loaded, setLoaded] = useState<{ id: string; verses: Verse[]; turned: boolean }>()
   const [failure, setFailure] = useState<{ id: string; message: string; needsKey: boolean }>()
   const [chosen, setChosen] = useState<{ id: string; range: [number, number] }>()
   const [keyAttempt, setKeyAttempt] = useState(0)
@@ -50,27 +50,39 @@ export const PageView = (props: PageViewProps) => {
   const [greek, setGreek] = useState<GreekData>()
   const [opened, setOpened] = useState<{ id: string; tag: GreekTag; ref: string; anchor: HTMLElement }>()
   const [found, setFound] = useState<{ chapter: number; verse: number }>()
+  const printed = useRef(false)
   const pageId = `${translation}:${book.code}:${chapter}:${keyAttempt}`
   const selection = chosen?.id === pageId ? chosen.range : undefined
-  const verses = loaded?.id === pageId ? loaded.verses : []
   const problem = failure?.id === pageId ? failure : undefined
-  const opening = !verses.length && !problem
-  const greekReady = hasGreek(translation, book.code) && greekOn ? greek : undefined
+  // The last page stays printed while the next one loads, so the page never collapses between them.
+  const held = problem ? undefined : loaded
+  const waiting = !!held && held.id !== pageId
+  const verses = held?.verses ?? []
+  const opening = !held && !problem
+  const greekReady = hasGreek(translation, book.code) && greekOn && !waiting ? greek : undefined
   const note = greekReady && opened?.id === pageId ? opened : undefined
 
   useEffect(() => {
-    let current = true
+    const live = { current: true }
     fetchChapter(translation, book, chapter)
       .then((v) => {
-        if (!current) return
-        setLoaded({ id: pageId, verses: v })
-        setFailure(undefined)
+        if (!live.current) return
+        // Turning from one page to the next cross-fades the text in place and eases what sits below it.
+        // Otherwise, as on the first page, the text rises into place.
+        const turned = printed.current && canTransition()
+        printed.current = true
+        const show = () => {
+          setLoaded({ id: pageId, verses: v, turned })
+          setFailure(undefined)
+        }
+        if (turned) withTransition('page', show)
+        else show()
       })
       .catch((e: Error) => {
-        if (current) setFailure({ id: pageId, message: e.message, needsKey: e instanceof MissingKeyError })
+        if (live.current) setFailure({ id: pageId, message: e.message, needsKey: e instanceof MissingKeyError })
       })
     return () => {
-      current = false
+      live.current = false
     }
   }, [translation, book, chapter, pageId])
 
@@ -111,7 +123,12 @@ export const PageView = (props: PageViewProps) => {
     ...(nextNew ? [{ kind: 'learn' as const, chapter, from: nextNew.verse, to: nextNew.verse }] : []),
   ]
 
+  const start = (items: SessionItem[]) => {
+    if (!waiting) props.onStart(items)
+  }
+
   const select = (verse: number) => {
+    if (waiting) return
     if (!selection) return setChosen({ id: pageId, range: [verse, verse] })
     const [from, to] = selection
     if (verse >= from && verse <= to) return setChosen(undefined)
@@ -184,7 +201,7 @@ export const PageView = (props: PageViewProps) => {
             type="button"
             className="primary"
             disabled={!todayItems.length}
-            onClick={() => props.onStart(todayItems)}
+            onClick={() => start(todayItems)}
           >
             {due.length
               ? 'Begin today’s verses'
@@ -198,7 +215,7 @@ export const PageView = (props: PageViewProps) => {
             type="button"
             className="quiet"
             disabled={!verses.length}
-            onClick={() => props.onStart([{ kind: 'run', chapter, from: 1, to: lastVerse }])}
+            onClick={() => start([{ kind: 'run', chapter, from: 1, to: lastVerse }])}
           >
             Recite chapter {chapter}
           </button>
@@ -246,7 +263,7 @@ export const PageView = (props: PageViewProps) => {
       ) : problem ? (
         <p className="session-message">{problem.message}</p>
       ) : (
-        <article className={`leaf ${greekReady ? 'leaf-greek' : ''}`} key={loaded?.id}>
+        <article className={`leaf ${greekReady ? 'leaf-greek' : ''} ${waiting ? 'leaf-waiting' : ''} ${held?.turned ? '' : 'leaf-arrive'}`} key={held?.id}>
           {hasGreek(translation, book.code) && verses.length > 0 && (
             <p className="greek-switch">
               <button type="button" className={`quiet ${greekOn ? 'on' : ''}`} aria-pressed={greekOn} onClick={toggleGreek}>
