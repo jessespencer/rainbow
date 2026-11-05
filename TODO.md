@@ -29,7 +29,7 @@ Work agreed but not done yet, roughly in order. Tick items off in the commit tha
 
 ## Shipping
 - [x] Merge PR 9, then open a PR for `feat/controls-guide` (both landed with PR 10)
-- [ ] Push and open a PR for By Heart's `feat/deep-night`
+- [x] By Heart's Deep Night dark mode (merged in by-heart PR 8)
 - [x] Decide app addresses: the repo is `bible`, with Atlas at `/bible/atlas/` and Lineage at `/bible/lineage/`; old `/rainbow/` links redirect
 - [ ] Bring By Heart in as `apps/byheart`
 
