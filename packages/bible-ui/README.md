@@ -18,7 +18,7 @@ Shared design system and UI components for the Bible apps — [Atlas](../../apps
 
 ### Components
 - `createHeader({ title, subtitle, appId, compact })` — site header with title, subtitle, rainbow gradient bar, and a `controls` slot for app-specific buttons. `appId` adds the app switcher. `compact` gives the one-bar layout, with a `center` slot for search
-- `APPS`, `appHref(app)` — the app registry and a URL to each app that works in dev and production. Each entry carries its Lucide icon as SVG markup and its accent, and the switcher draws each icon glowing in its own app's accent
+- `APPS`, `appHref(app)` — the app registry and a URL to each app that works in dev and production. Each entry carries its Lucide icon as SVG markup and its accent, and the switcher draws each icon glowing in its own app's accent. They also come alone from `/apps`, with no theme listener or styles, for an app that draws its own switcher (By Heart)
 - `setupSheet(panel, handle, onClose)` (from `/sheet`) — the two-height phone bottom sheet. Give the panel `.bui-sheet` and the handle `.bui-sheet__handle`
 - `books`, `bookOffsets`, `totalVerses` (from `/bible`) — the 66 books and KJV verse numbering, 31,102 verses
 - `createGuide({ parent, stage, icon })` (from `/guide`) — a Controls button that opens how to explore the current view, with mouse or touch steps and keyboard keys, plus a one-time tip the first time a reader opens each view. Call `show(id, content)` when the view changes; apps pass their own icons

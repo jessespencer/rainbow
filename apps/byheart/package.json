@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@jessespencer/bible-ui": "workspace:*",
     "@fontsource-variable/eb-garamond": "^5.3.0",
     "@fontsource/im-fell-great-primer": "^5.3.0",
     "react": "^19.3.1",

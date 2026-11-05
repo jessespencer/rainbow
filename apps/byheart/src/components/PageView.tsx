@@ -13,8 +13,8 @@ import {
 import { hasGreek, loadGreek, splitVerse, type GreekData, type GreekTag } from '../lib/greek'
 import { inkLevel, isDue, verseKey, type Progress } from '../lib/memory'
 import { prefersStillness } from '../lib/motion'
+import { AppSwitcher } from './AppSwitcher'
 import { Backup } from './Backup'
-import { HeartMark } from './Heart'
 import { Footnotes } from './Footnotes'
 import { GreekNote } from './GreekNote'
 import { BookPicker, TranslationPicker } from './Picker'
@@ -157,10 +157,7 @@ export const PageView = (props: PageViewProps) => {
   return (
     <div className="page">
       <header className="masthead">
-        <span className="wordmark">
-          <HeartMark />
-          By Heart
-        </span>
+        <AppSwitcher />
         <BookPicker book={book} translation={translation} progress={progress} onPick={props.onBook} />
         <TranslationPicker translation={translation} progress={progress} onPick={props.onTranslation} />
         <button type="button" className="quiet theme" onClick={(e) => props.onTheme(e.currentTarget)} aria-label="Switch between day and night">
