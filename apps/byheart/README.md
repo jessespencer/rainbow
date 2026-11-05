@@ -30,4 +30,4 @@ NIV, NKJV and NLT come through [API.Bible](https://api.bible), which needs a fre
 
 In development, put keys in `.env.local` as `VITE_ESV_KEY` and `VITE_API_BIBLE_KEY` so they apply on every port. They are never included in a production build.
 
-Progress is stored per translation in `localStorage`.
+Progress is stored per translation in `localStorage`. Browsers can clear it, Safari after a week away unless the app is on the home screen, so the page's colophon saves and restores a JSON backup of progress, structure recall, place and theme. Keys and Bible text are never included. Once there is progress, the app also asks the browser to keep its storage.

@@ -4,6 +4,7 @@ import { Session, type SessionItem } from './components/Session'
 import { StructureMap } from './components/StructureMap'
 import { StructureQuiz } from './components/StructureQuiz'
 import { Welcome } from './components/Welcome'
+import { keepStorage } from './lib/backup'
 import { getBook } from './lib/bible'
 import { revealFrom, withTransition } from './lib/motion'
 import { emptyRecord, loadProgress, saveProgress, writeStore, type Progress, type VerseRecord } from './lib/memory'
@@ -52,6 +53,7 @@ export const App = () => {
   // Before paint, so the theme reveal captures the new colours.
   useLayoutEffect(() => {
     document.documentElement.dataset.theme = theme
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'light' ? '#f5f0e6' : '#020611')
     writeStore('byheart.theme', theme)
   }, [theme])
 
@@ -59,7 +61,10 @@ export const App = () => {
   useEffect(() => {
     if (!welcoming) writeStore(placeStore, JSON.stringify(place))
   }, [place, welcoming])
-  useEffect(() => saveProgress(progress), [progress])
+  useEffect(() => {
+    saveProgress(progress)
+    if (Object.keys(progress).length) keepStorage()
+  }, [progress])
   useEffect(() => saveStructureRecall(recall), [recall])
 
   // Another open tab may have saved since, and this tab would otherwise write over it.
