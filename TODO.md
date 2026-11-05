@@ -36,7 +36,7 @@ Work agreed but not done yet, roughly in order. Tick items off in the commit tha
 - [ ] Try By Heart's Greek layer with an ESV key: it was ported onto the current page but needs a key to show
 - [x] Launch By Heart: add it to the deploy workflow and to bible-ui's `APPS` switcher
 - [ ] Give By Heart the app switcher in its own header, and share Night/Day with Atlas and Lineage (it keeps its own `byheart.theme` for now)
-- [ ] Close by-heart PR 7 and archive the by-heart repo
+- [x] Close by-heart PR 7 and archive the by-heart repo
 
 ## Skipped
 - Greek and Hebrew word links

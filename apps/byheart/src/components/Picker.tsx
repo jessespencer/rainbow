@@ -16,7 +16,9 @@ const countBy = (values: string[]) => {
 // A phone keyboard would cover the list it is meant to search, so touch has to ask for it.
 const canType = () => matchMedia('(hover: hover) and (pointer: fine)').matches
 
-const showRow = (id: string) => document.getElementById(id)?.scrollIntoView({ block: 'nearest' })
+const showRow = (id: string) => {
+  document.getElementById(id)?.scrollIntoView({ block: 'nearest' })
+}
 
 interface PickerProps {
   label: string
@@ -261,8 +263,13 @@ const Versions = ({ translation, progress, onPick, onClose }: TranslationPickerP
   const list = useRef<HTMLDivElement>(null)
   const counts = countBy(kept(progress).map(([id]) => id))
 
-  useEffect(() => list.current?.focus({ preventScroll: true }), [])
-  useEffect(() => showRow(`pick-version-${TRANSLATIONS[active].id}`), [active])
+  // Effects return only cleanups, and scrollIntoView now returns a promise, so these keep their braces.
+  useEffect(() => {
+    list.current?.focus({ preventScroll: true })
+  }, [])
+  useEffect(() => {
+    showRow(`pick-version-${TRANSLATIONS[active].id}`)
+  }, [active])
 
   const pick = (index: number) => {
     onClose()
