@@ -2,10 +2,12 @@
 
 A typographic app for memorizing Scripture, up to whole books. The chapter is printed as a page: unlearned verses are grey, and they darken as you learn them. A first visit asks which book and translation to begin with.
 
+From the repo root:
+
 ```bash
-npm install
-npm run dev
-npm test
+pnpm install
+pnpm dev:byheart      # http://localhost:5175/bible/byheart/
+pnpm test:byheart
 ```
 
 ## Getting around

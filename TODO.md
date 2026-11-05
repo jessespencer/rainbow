@@ -31,7 +31,9 @@ Work agreed but not done yet, roughly in order. Tick items off in the commit tha
 - [x] Merge PR 9, then open a PR for `feat/controls-guide` (both landed with PR 10)
 - [x] By Heart's Deep Night dark mode (merged in by-heart PR 8)
 - [x] Decide app addresses: the repo is `bible`, with Atlas at `/bible/atlas/` and Lineage at `/bible/lineage/`; old `/rainbow/` links redirect
-- [ ] Bring By Heart in as `apps/byheart`
+- [x] Bring By Heart in as `apps/byheart`
+- [ ] Port By Heart's open branches with `git subtree merge --prefix=apps/byheart`: `claude/launch-blockers` (backups, error boundary, manifest), `claude/where-is-it` (by-heart PR 7), `claude/greek-layer-9d08ee` (fleuron brand mark)
+- [ ] Launch By Heart after the launch blockers: add it to the deploy workflow and to bible-ui's `APPS` switcher
 
 ## Skipped
 - Greek and Hebrew word links
