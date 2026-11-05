@@ -50,6 +50,18 @@ export const APPS: AppEntry[] = [
     accent: "242, 196, 107",
     accentLight: "146, 94, 18",
   },
+  {
+    id: "byheart",
+    label: "By Heart",
+    tagline: "Memorize Scripture, up to whole books",
+    path: "/bible/byheart/",
+    devPort: 5175,
+    // Lucide "heart"
+    icon: '<path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/>',
+    // Ember, and by day the rubric red of its printed page
+    accent: "255, 138, 122",
+    accentLight: "200, 50, 30",
+  },
 ];
 
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1"]);

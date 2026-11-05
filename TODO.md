@@ -34,7 +34,8 @@ Work agreed but not done yet, roughly in order. Tick items off in the commit tha
 - [x] Bring By Heart in as `apps/byheart`
 - [x] Port By Heart's open branches: launch blockers (backups, error boundary, manifest), the where-is-it drill (by-heart PR 7), the fleuron brand mark, and the Greek layer for Ephesians in the ESV
 - [ ] Try By Heart's Greek layer with an ESV key: it was ported onto the current page but needs a key to show
-- [ ] Launch By Heart: add it to the deploy workflow and to bible-ui's `APPS` switcher
+- [x] Launch By Heart: add it to the deploy workflow and to bible-ui's `APPS` switcher
+- [ ] Give By Heart the app switcher in its own header, and share Night/Day with Atlas and Lineage (it keeps its own `byheart.theme` for now)
 - [ ] Close by-heart PR 7 and archive the by-heart repo
 
 ## Skipped

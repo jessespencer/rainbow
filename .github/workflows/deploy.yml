@@ -28,12 +28,15 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build:atlas
       - run: pnpm build:lineage
+      - run: pnpm test:byheart
+      - run: pnpm build:byheart
       # Served at /bible/: each app in its own folder, and the root forwards to Atlas.
       - name: Assemble Pages output
         run: |
-          mkdir -p dist/atlas dist/lineage
+          mkdir -p dist/atlas dist/lineage dist/byheart
           cp -r apps/atlas/dist/. dist/atlas/
           cp -r apps/lineage/dist/. dist/lineage/
+          cp -r apps/byheart/dist/. dist/byheart/
           cp pages/index.html dist/index.html
       - uses: actions/upload-pages-artifact@v3
         with:
