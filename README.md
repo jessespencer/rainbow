@@ -1,8 +1,12 @@
 # bible
 
-A family of apps for reading and studying the Bible, sharing one design system.
+A family of apps for reading and studying the Bible, sharing one design system:
 
-**▶ [Open Atlas](https://jessedestroys.com/bible/atlas/)** · **[Open Lineage](https://jessedestroys.com/bible/lineage/)**
+- **Atlas** draws all 344,799 cross-references as arcs.
+- **Lineage** maps 157 biblical lives on a timeline.
+- **By Heart** helps you memorize Scripture, up to whole books.
+
+**▶ [Open Atlas](https://jessedestroys.com/bible/atlas/)** · **[Open Lineage](https://jessedestroys.com/bible/lineage/)** · By Heart is coming soon
 
 Read the [Atlas](apps/atlas/README.md), [Lineage](apps/lineage/README.md) and [By Heart](apps/byheart/README.md) READMEs for what each one does, how the data works, and how to run it.
 
