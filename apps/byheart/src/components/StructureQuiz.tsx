@@ -4,7 +4,7 @@ import type { Progress } from '../lib/memory'
 import { quizRound, type Outline, type Question, type Section } from '../lib/outline'
 import { shuffled } from '../lib/text'
 import { Back } from './Back'
-import { Fleuron } from './Fleuron'
+import { Heart } from './Heart'
 
 interface StructureQuizProps {
   book: Book
@@ -74,7 +74,7 @@ export const StructureQuiz = ({ book, outline, recall, focus, onGrade, onExit }:
     const misses = asked - firstTime
     return (
       <main className="session session-end">
-        <Fleuron />
+        <Heart />
         <h1>{misses ? 'Nearly held.' : 'It holds.'}</h1>
         <p className="session-message">
           {firstTime} of {asked} at the first asking

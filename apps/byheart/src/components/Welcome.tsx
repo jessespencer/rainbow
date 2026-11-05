@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { getBook, getTranslation } from '../lib/bible'
+import { HeartMark } from './Heart'
 import { BookPicker, TranslationPicker } from './Picker'
 
 interface WelcomeProps {
@@ -14,7 +15,10 @@ export const Welcome = ({ book, translation, onBegin }: WelcomeProps) => {
   const [chosenTranslation, setChosenTranslation] = useState(translation)
   return (
     <main className="welcome">
-      <span className="wordmark">By Heart</span>
+      <span className="wordmark">
+        <HeartMark />
+        By Heart
+      </span>
       <h1>What will you hide in your heart?</h1>
       <form
         onSubmit={(e) => {
