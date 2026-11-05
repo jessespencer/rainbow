@@ -2,7 +2,7 @@
 
 > *Three ways into one book: see how it speaks to itself, who lived it, and carry it with you.*
 
-A family of free, open-source apps for reading and studying the Bible. Each one takes a single idea and gives it a whole screen. Atlas and Lineage share one design system, so moving between them feels like turning pages in the same book, and the app switcher in both opens By Heart.
+A family of free, open-source apps for reading and studying the Bible. Each one takes a single idea and gives it a whole screen. Atlas and Lineage share one design system, so moving between them feels like turning pages in the same book, and one app switcher links all three.
 
 **▶ [Open Atlas](https://jessedestroys.com/bible/atlas/)** · **[Open Lineage](https://jessedestroys.com/bible/lineage/)** · **[Open By Heart](https://jessedestroys.com/bible/byheart/)**
 
@@ -48,9 +48,23 @@ By Heart turns memorizing into reading. Each verse climbs a ladder of eight step
 
 **▶ [Open By Heart](https://jessedestroys.com/bible/byheart/)** · [More about By Heart →](apps/byheart/README.md)
 
+## Moving between them
+
+<img src="packages/bible-ui/docs/app-switcher.png" alt="The app switcher open in Atlas, listing Atlas, Lineage and By Heart with their icons and taglines, above a Night and Day switch" width="370" align="right">
+
+Every app has a mark of its own: Atlas's rainbow of arcs, Lineage's branching family line, and By Heart's heart. In Atlas and Lineage that mark sits beside the title, and tapping it opens the **app switcher**: all three apps with a line on what each is for, and a Night and Day switch at the foot.
+
+- **One tap across.** Pick an app and it opens in the same tab.
+- **Each app in its own colour.** Starlight for Atlas, candlelight for Lineage, Ember for By Heart, each deepened for paper by day.
+- **Night or Day follows you** from Atlas to Lineage.
+- **One place to add an app.** The list lives in bible-ui's `APPS`, so a new app appears in every switcher at once.
+
+By Heart is in the list now. It gets the switcher in its own header next.
+
+<br clear="right">
+
 ## Across Atlas and Lineage
 
-- **One switcher.** The app menu beside each title moves between all three apps.
 - **Night or Day.** Deep Night by default, parchment by day. Your choice carries from one app to the other.
 - **Many translations.** Atlas and Lineage read in the public-domain BSB, KJV, WEB and ASV, and in Portuguese, German, Italian and Spanish. Links open the ESV, NIV, NLT and NASB on their own sites.
 - **Shareable.** Every view has its own address, like `?ref=John.3.16` or `?figure=king-david`, and the share button sends it.
