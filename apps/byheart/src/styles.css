@@ -1,0 +1,1683 @@
+:root {
+  --paper: #f5f0e6;
+  --ink: #17140f;
+  --rubric: #c8321e;
+  --hair: color-mix(in srgb, var(--ink) 18%, transparent);
+  --soft: color-mix(in srgb, var(--ink) 58%, transparent);
+  --ghost: 0.4;
+  --slip: #020611;
+  --slip-ink: #e9e2d2;
+  --slip-accent: #ff8a7a;
+  --sheet: #020611;
+  --sheet-ink: #e9e2d2;
+  --sheet-accent: #ff8a7a;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --spring: linear(0, 0.06 3%, 0.22 7%, 0.62 15%, 0.92 23%, 1.03 30%, 1.05 36%, 1.03 46%, 1.005 58%, 0.998 70%, 1);
+  --book: 'EB Garamond Variable', 'EB Garamond', Garamond, Georgia, serif;
+  --display: 'IM Fell Great Primer', 'EB Garamond Variable', Georgia, serif;
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  /* Deep Night, shared with Atlas and Lineage; Ember is By Heart's own star */
+  --paper: #020611;
+  --ink: #e9e2d2;
+  --rubric: #ff8a7a;
+  --ghost: 0.46;
+  --slip: #f5f0e6;
+  --slip-ink: #17140f;
+  --slip-accent: #c8321e;
+  --sheet: #111a2e;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--paper);
+  scrollbar-gutter: stable;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--book);
+  font-size: 19px;
+  line-height: 1.5;
+  font-feature-settings: 'onum', 'liga', 'dlig', 'kern';
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--rubric);
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+:focus-visible {
+  outline: 2px solid var(--rubric);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+kbd {
+  font: inherit;
+  font-size: 0.8em;
+  opacity: 0.7;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.primary {
+  border-radius: 4px;
+  font-family: var(--display);
+  font-size: 1.3rem;
+  line-height: 1.2;
+  color: var(--paper);
+  background: var(--rubric);
+  padding: 0.42em 1.05em 0.46em;
+  transition: background 0.2s ease, transform 0.4s var(--spring);
+}
+
+.primary:active:not(:disabled) {
+  transform: scale(0.96);
+  transition-duration: 0.2s, 0.08s;
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--ink);
+}
+
+.primary:disabled {
+  opacity: 1;
+  color: var(--soft);
+  background: var(--hair);
+}
+
+.quiet {
+  color: var(--soft);
+  padding: 0.5em 0.2em;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  text-decoration-color: var(--hair);
+  transition: color 0.2s ease;
+}
+
+.quiet:hover:not(:disabled) {
+  color: var(--rubric);
+  text-decoration-color: currentColor;
+}
+
+.link {
+  color: var(--rubric);
+  text-decoration: underline;
+}
+
+/* The page */
+
+.page {
+  width: min(100%, 44rem);
+  margin: 0 auto;
+  padding: 0 1rem 9rem;
+}
+
+.masthead {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 1.1rem;
+  padding: 1.1rem 0;
+  border-bottom: 1px solid var(--hair);
+}
+
+.wordmark {
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 1.2rem;
+  margin-right: auto;
+  white-space: nowrap;
+  color: var(--rubric);
+}
+
+.pick-trigger {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  min-width: 0;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  color: var(--soft);
+  padding: 0.2rem 0;
+  border-bottom: 1px solid var(--hair);
+  transition: color 0.2s ease;
+}
+
+.pick-trigger span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pick-trigger svg {
+  flex: none;
+  width: 0.5em;
+  height: 0.3em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.25s var(--spring);
+}
+
+.pick-trigger:hover,
+.pick-trigger[aria-expanded='true'] {
+  color: var(--rubric);
+}
+
+/* Stays above the scrim so a second press closes what the first one opened. */
+.pick-trigger[aria-expanded='true'] {
+  position: relative;
+  z-index: 7;
+}
+
+.pick-trigger[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+
+.pick-scrim {
+  position: fixed;
+  z-index: 6;
+  inset: 0;
+  background: color-mix(in srgb, var(--paper) 55%, transparent);
+  animation: veil-in 0.14s ease-out backwards;
+}
+
+/* A night-blue sheet in either theme, lifted off the page by night. It opens fast, being opened often. */
+.pick-panel {
+  position: absolute;
+  z-index: 7;
+  top: calc(100% - 0.35rem);
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 4.5rem);
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--sheet);
+  color: var(--sheet-ink);
+  box-shadow: 0 10px 18px rgb(10 12 30 / 0.34);
+  transform-origin: top right;
+  animation: unfold 0.16s var(--ease-out) backwards;
+}
+
+.pick-panel > div {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.pick-panel [role='listbox'] {
+  outline: none;
+}
+
+.pick-panel kbd {
+  opacity: 0.6;
+}
+
+.pick-books {
+  left: 0;
+}
+
+.pick-versions {
+  width: min(100%, 25rem);
+}
+
+.pick-versions [role='listbox'] {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.pick-find {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.5rem 1.05rem 0.45rem;
+  border-bottom: 1px dashed color-mix(in srgb, var(--sheet-ink) 38%, transparent);
+}
+
+.pick-find input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  outline: none;
+  padding: 0;
+  font-family: var(--display);
+  font-size: 1.3rem;
+  caret-color: var(--sheet-accent);
+}
+
+.pick-find input::placeholder {
+  font-style: italic;
+  color: color-mix(in srgb, var(--sheet-ink) 50%, transparent);
+}
+
+.pick-esc {
+  font-style: normal;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+}
+
+@media (hover: none) {
+  .pick-esc {
+    display: none;
+  }
+}
+
+.pick-goes {
+  flex: none;
+  font-style: italic;
+  color: var(--sheet-accent);
+}
+
+/* Every book keeps its place, even while searching, so the hand learns where each one lives. */
+.pick-contents {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(17, auto);
+  grid-auto-columns: minmax(0, 1fr);
+  column-gap: 0.4rem;
+  padding: 0.55rem 0.6rem 0.7rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block: 4.5rem;
+}
+
+.pick-testament {
+  display: contents;
+}
+
+.pick-head {
+  align-self: end;
+  padding: 0 0.45rem 0.1rem;
+  font-size: 0.95rem;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--sheet-ink) 62%, transparent);
+}
+
+.pick-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.03rem 0.45rem 0.07rem;
+  border-radius: 2px;
+  font-family: var(--display);
+  font-size: 1.14rem;
+  line-height: 1.38;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: opacity 0.14s ease;
+}
+
+.pick-row small,
+.pick-version small {
+  font-family: var(--book);
+  font-size: 0.72em;
+  color: var(--sheet-accent);
+}
+
+.pick-row.on,
+.pick-version.on strong {
+  font-style: italic;
+  color: var(--sheet-accent);
+}
+
+.pick-row.faint {
+  opacity: 0.26;
+}
+
+.pick-row.active,
+.pick-version.active,
+.pick-row.active small,
+.pick-version.active small,
+.pick-version.active.on strong {
+  background: var(--sheet-accent);
+  color: var(--sheet);
+}
+
+.pick-version {
+  display: grid;
+  grid-template-columns: 1.1rem 4rem 1fr auto;
+  align-items: baseline;
+  padding: 0.22rem 1.05rem 0.27rem;
+  cursor: pointer;
+}
+
+.pick-version:first-child {
+  margin-top: 0.4rem;
+}
+
+.pick-version:last-child {
+  margin-bottom: 0.4rem;
+}
+
+.pick-version kbd {
+  font-size: 0.8rem;
+  color: var(--sheet-accent);
+  opacity: 1;
+}
+
+.pick-version.active kbd {
+  color: inherit;
+}
+
+.pick-version strong {
+  font-family: var(--display);
+  font-size: 1.2rem;
+  font-weight: 400;
+}
+
+.pick-version span {
+  font-style: italic;
+  white-space: nowrap;
+}
+
+.pick-version small {
+  padding-left: 0.6rem;
+}
+
+@media (hover: none) {
+  .pick-version {
+    grid-template-columns: 4rem 1fr auto;
+    padding-block: 0.6rem;
+  }
+
+  .pick-version kbd {
+    display: none;
+  }
+}
+
+.theme {
+  text-decoration: none;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.hero {
+  container-type: inline-size;
+  padding: clamp(2.5rem, 9vw, 5rem) 0 1.75rem;
+}
+
+.hero h1 {
+  font-family: var(--display);
+  font-weight: 400;
+  /* One line sized to fit the column, in a fixed slot so the controls below never move. */
+  display: flex;
+  align-items: flex-end;
+  height: min(8.74rem, 21.85cqw);
+  white-space: nowrap;
+  font-size: min(9.5rem, calc(190cqw / var(--letters)));
+  line-height: 0.92;
+  letter-spacing: -0.025em;
+  margin-left: -0.04em;
+}
+
+.tally {
+  margin-top: 1.1rem;
+  font-size: 1.2rem;
+  color: var(--soft);
+  font-style: italic;
+}
+
+.tally strong {
+  font-style: normal;
+  font-weight: 400;
+  color: var(--ink);
+}
+
+.tally .rubric {
+  color: var(--rubric);
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 1.1rem;
+  margin-top: 1.4rem;
+}
+
+/* Wide enough for one row or not, every book keeps the same height here. */
+@container (max-width: 37rem) {
+  .hero-actions {
+    min-height: 6.4rem;
+  }
+}
+
+.chapters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 1.15rem;
+  padding: 0.55rem 0;
+  border-block: 1px solid var(--hair);
+}
+
+.chapters button {
+  font-family: var(--display);
+  font-size: 1.2rem;
+  color: var(--soft);
+  padding: 0.15rem 0.1rem;
+}
+
+.chapters button:hover {
+  color: var(--ink);
+}
+
+.chapters .on {
+  color: var(--rubric);
+}
+
+.chapters small {
+  font-family: var(--book);
+  font-size: 0.72em;
+  margin-left: 0.25em;
+  vertical-align: 0.3em;
+  color: var(--rubric);
+}
+
+.leaf {
+  animation: arrive 0.5s var(--ease-out) backwards;
+  padding-top: 2rem;
+  font-size: 1.3rem;
+  line-height: 1.56;
+  text-align: justify;
+  hyphens: auto;
+  hanging-punctuation: first last;
+}
+
+.drop {
+  float: left;
+  font-family: var(--display);
+  font-size: 7.1rem;
+  line-height: 0.74;
+  padding: 0.08em 0.1em 0 0;
+  margin-left: -0.03em;
+  color: var(--rubric);
+}
+
+.verse {
+  cursor: pointer;
+  opacity: var(--ghost);
+  transition: opacity 0.5s var(--ease-out), background 0.25s var(--ease-out);
+  border-radius: 2px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.verse:hover {
+  opacity: 1;
+  transition-duration: 0.15s, 0.25s;
+}
+
+.verse:focus-visible {
+  opacity: 1;
+  outline-offset: 1px;
+}
+
+.ink-0 { opacity: var(--ghost); }
+.ink-1 { opacity: 0.46; }
+.ink-2 { opacity: 0.52; }
+.ink-3 { opacity: 0.58; }
+.ink-4 { opacity: 0.64; }
+.ink-5 { opacity: 0.7; }
+.ink-6 { opacity: 0.8; }
+.ink-7 { opacity: 0.86; }
+.ink-8 { opacity: 0.92; }
+.ink-9 { opacity: 0.96; }
+.ink-10 { opacity: 1; }
+
+.verse sup {
+  font-size: 0.56em;
+  line-height: 0;
+  padding: 0 0.12em 0 0.05em;
+  color: var(--rubric);
+}
+
+.verse.due sup::after {
+  content: '•';
+  margin-left: 0.1em;
+}
+
+.verse.chosen {
+  opacity: 1;
+  background: color-mix(in srgb, var(--rubric) 16%, transparent);
+}
+
+.footnotes {
+  clear: both;
+  margin-top: 1.5rem;
+  font-size: 0.95rem;
+  font-style: normal;
+  line-height: 1.45;
+  text-align: left;
+  hyphens: manual;
+  color: var(--soft);
+}
+
+.footnotes summary {
+  cursor: pointer;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+}
+
+.footnotes ol {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+}
+
+.footnotes li + li {
+  margin-top: 0.3rem;
+}
+
+.colophon {
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--hair);
+  font-size: 0.88rem;
+  color: var(--soft);
+}
+
+.colophon p + p {
+  margin-top: 0.4rem;
+}
+
+/* The verses blur and fade into the paper behind the slip. This sits apart from .dock,
+   whose filter would stop a backdrop blur from seeing the page. */
+.dock-veil {
+  position: fixed;
+  z-index: 4;
+  inset: auto 0 0;
+  height: 8.5rem;
+  pointer-events: none;
+  background: linear-gradient(to top, var(--paper) 20%, transparent);
+  backdrop-filter: blur(5px);
+  mask: linear-gradient(to top, #000 50%, transparent);
+  animation: veil-in 0.45s var(--ease-out) backwards;
+}
+
+.dock-veil.dock-leaving {
+  animation: veil-out 0.2s ease-in forwards;
+}
+
+/* A slip of the other theme laid on the page: night by day, parchment by night. */
+.dock {
+  position: fixed;
+  z-index: 5;
+  inset: auto 1rem max(1rem, env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  filter: blur(0) drop-shadow(0 10px 18px rgb(10 12 30 / 0.34));
+  animation: slip-in 0.55s var(--spring) backwards;
+}
+
+.dock-leaving {
+  animation: slip-out 0.2s ease-in forwards;
+}
+
+.dock-slip {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  border-radius: 4px;
+  max-width: 100%;
+  padding: 0.6rem 0.7rem 0.6rem 1.15rem;
+  background: var(--slip);
+  color: var(--slip-ink);
+  pointer-events: auto;
+}
+
+.dock-leaving .dock-slip {
+  pointer-events: none;
+}
+
+.dock-ref {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 0.9rem;
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 1.2rem;
+  white-space: nowrap;
+}
+
+.dock-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-left: 0.9rem;
+  border-left: 1px dashed color-mix(in srgb, var(--slip-ink) 38%, transparent);
+}
+
+.dock .primary {
+  font-size: 1.15rem;
+  color: var(--slip);
+  background: var(--slip-accent);
+}
+
+.dock .primary:hover:not(:disabled) {
+  background: var(--slip-ink);
+}
+
+.dock .primary:focus-visible {
+  outline-color: var(--slip-accent);
+}
+
+.dock .quiet {
+  font-family: var(--display);
+  font-size: 1.15rem;
+  color: var(--slip-ink);
+  text-decoration-color: color-mix(in srgb, var(--slip-ink) 38%, transparent);
+  padding: 0.2em 0.15em;
+}
+
+.dock .quiet:hover:not(:disabled) {
+  color: var(--slip-accent);
+}
+
+.dock .quiet:focus-visible {
+  outline-color: var(--slip-accent);
+}
+
+.key-form {
+  padding: 2.5rem 0;
+  max-width: 32rem;
+}
+
+.key-form h2 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 2.2rem;
+  line-height: 1.1;
+}
+
+.key-form p {
+  margin: 0.75rem 0 1.25rem;
+}
+
+.key-form input {
+  display: block;
+  width: 100%;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--ink);
+  padding: 0.4rem 0;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+/* The welcome */
+
+.welcome {
+  min-height: 100dvh;
+  width: min(100%, 34rem);
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  animation: arrive 0.6s var(--ease-out) backwards;
+}
+
+.welcome .wordmark {
+  margin: 0 0 1.5rem;
+}
+
+.welcome h1 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(2.8rem, 11vw, 4.4rem);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+}
+
+.welcome form {
+  margin-top: 1.75rem;
+}
+
+.welcome-choice {
+  margin-bottom: 1rem;
+}
+
+.welcome-choice > span {
+  font-style: italic;
+  color: var(--soft);
+}
+
+.welcome .pick-trigger {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.1rem 0.15rem 0.25rem 0;
+  font-family: var(--display);
+  font-size: 1.75rem;
+  font-variant-caps: normal;
+  letter-spacing: 0;
+  line-height: 1.25;
+  text-align: left;
+  color: var(--rubric);
+}
+
+.welcome .pick-trigger svg {
+  width: 0.42em;
+  height: 0.26em;
+}
+
+/* The choices sit mid-page with no room to hang the contents below them, so it opens centred. */
+@media (min-width: 34rem) {
+  .welcome .pick-panel {
+    position: fixed;
+    inset: 50% auto auto 50%;
+    width: min(42rem, 100vw - 2rem);
+    max-height: calc(100dvh - 2rem);
+    translate: -50% -50%;
+    transform-origin: center;
+  }
+
+  .welcome .pick-versions {
+    width: 25rem;
+  }
+}
+
+.welcome-key {
+  margin-bottom: 1rem;
+  font-style: italic;
+  color: var(--soft);
+}
+
+.welcome .primary {
+  margin-top: 0.4rem;
+}
+
+.welcome-notes {
+  list-style: none;
+  margin: 2rem 0 0;
+  padding: 0.9rem 0 0;
+  border-top: 1px solid var(--hair);
+  font-size: 0.92rem;
+  color: var(--soft);
+}
+
+.welcome-notes li + li {
+  margin-top: 0.2rem;
+}
+
+/* The session */
+
+.session {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 50rem);
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.session-head {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: baseline;
+  padding-top: 0.8rem;
+}
+
+.back {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.3rem 0;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+  color: var(--soft);
+  transition: color 0.2s ease;
+}
+
+.back:hover {
+  color: var(--rubric);
+}
+
+.back svg {
+  position: relative;
+  top: 0.09em;
+  flex: none;
+  width: 0.42em;
+  height: 0.7em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.25s var(--spring);
+}
+
+.back:hover svg {
+  transform: translateX(-0.14em);
+}
+
+.session-ref {
+  font-family: var(--display);
+  font-weight: 400;
+  font-style: italic;
+  font-size: 1.4rem;
+  color: var(--rubric);
+  text-align: center;
+}
+
+.session-count {
+  justify-self: end;
+  white-space: nowrap;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+  color: var(--soft);
+}
+
+.ladder {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0 0.95rem;
+  margin-top: 0.3rem;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.09em;
+  color: var(--soft);
+}
+
+.ladder button {
+  font-variant-caps: inherit;
+  letter-spacing: inherit;
+  padding: 0.15rem 0;
+  opacity: 0.75;
+}
+
+.ladder button:hover {
+  opacity: 1;
+}
+
+.ladder .on {
+  opacity: 1;
+  color: var(--ink);
+  box-shadow: 0 1px 0 0 var(--rubric);
+}
+
+.stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+.session-hint {
+  text-align: center;
+  font-style: italic;
+  color: var(--soft);
+  padding-bottom: 1.1rem;
+}
+
+.session-credit {
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+}
+
+.session-hint .footnotes {
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+.session-message {
+  text-align: center;
+  font-style: italic;
+  font-size: 1.25rem;
+  color: var(--soft);
+  padding: 2rem 0;
+}
+
+.session-end {
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.session-end h1 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(3.4rem, 13vw, 7.5rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.fleuron {
+  font-size: 2rem;
+  color: var(--rubric);
+  text-align: center;
+  animation: bloom 0.8s var(--spring) both;
+}
+
+.passage {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.passage-short {
+  font-size: clamp(1.65rem, 4.6vw, 2.75rem);
+  line-height: 1.32;
+}
+
+.passage-medium {
+  font-size: clamp(1.45rem, 3.6vw, 2.1rem);
+  line-height: 1.34;
+}
+
+.passage-long {
+  font-size: clamp(1.3rem, 2.7vw, 1.6rem);
+  line-height: 1.42;
+}
+
+.sense {
+  position: relative;
+  padding-left: 1.1em;
+  text-indent: -1.1em;
+}
+
+.sense-first:not(:first-child) {
+  margin-top: 0.55em;
+}
+
+.passage:has(.sense-number) {
+  padding-left: 1em;
+}
+
+.sense-number {
+  position: absolute;
+  left: -2em;
+  top: 0.45em;
+  font-size: 0.5em;
+  text-indent: 0;
+  color: var(--rubric);
+}
+
+.w {
+  position: relative;
+  display: inline-block;
+  text-indent: 0;
+  margin-right: 0.26em;
+  transition: opacity 0.2s ease;
+}
+
+.w-done .core,
+.w-helped .core {
+  animation: blot 0.45s var(--ease-out) both;
+}
+
+.w-helped {
+  color: var(--rubric);
+}
+
+.w-current::before {
+  content: '';
+  position: absolute;
+  left: -0.09em;
+  top: 0.14em;
+  bottom: 0.1em;
+  width: 2px;
+  background: var(--rubric);
+  animation: caret 1.05s steps(2, jump-none) infinite;
+}
+
+.w-wrong {
+  animation: shake 0.38s var(--ease-out);
+}
+
+.w-wrong::before {
+  animation: none;
+  width: 3px;
+}
+
+.r-ghost {
+  opacity: 0.3;
+}
+
+.w-current.r-ghost {
+  opacity: 0.62;
+}
+
+.r-initial .rest,
+.r-shape .core,
+.r-blank .core,
+.r-blank .p {
+  color: transparent;
+}
+
+.r-initial .first {
+  color: var(--ink);
+}
+
+.r-initial .p,
+.r-shape .p {
+  opacity: 0.45;
+}
+
+.r-shape .core,
+.r-initial .rest {
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--ink) 38%, transparent);
+}
+
+.w-current.r-shape .core {
+  box-shadow: inset 0 -2px 0 var(--rubric);
+}
+
+/* Words dissolve outward a few at a time. Only transforms move, so the lines hold still. */
+.w-gone {
+  opacity: 0;
+  filter: blur(10px);
+  transform: translateY(-0.14em) scale(1.14);
+  transition: opacity 0.85s var(--ease-out), filter 0.85s var(--ease-out), transform 0.85s var(--ease-out);
+}
+
+.w-gone:nth-child(3n + 1) {
+  transition-delay: 0.08s;
+}
+
+.w-gone:nth-child(3n + 2) {
+  transition-delay: 0.16s;
+}
+
+.w-plain {
+  transition: opacity 0.3s var(--ease-out), filter 0.3s var(--ease-out), transform 0.3s var(--ease-out);
+}
+
+/* Not on .typed itself: a transform there would drag its fixed input down the page. */
+.typed .passage,
+.typed .stage-tools,
+.order,
+.vanish,
+.quiz {
+  animation: arrive 0.45s var(--ease-out) backwards;
+}
+
+.typed {
+  cursor: text;
+}
+
+.typed-input {
+  position: fixed;
+  left: 50%;
+  bottom: 40%;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  border: 0;
+  padding: 0;
+  font-size: 16px;
+}
+
+.stage-tools {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin-top: 2.25rem;
+}
+
+.listening {
+  color: var(--rubric);
+  font-style: italic;
+  animation: caret 1.8s ease-in-out infinite;
+}
+
+.flourish .passage {
+  animation: settle 0.9s var(--ease-out);
+}
+
+.flourish .fleuron {
+  margin-top: 1.25rem;
+}
+
+.again-note {
+  margin-top: 1.25rem;
+  text-align: center;
+  font-style: italic;
+  color: var(--rubric);
+}
+
+.order {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  font-size: clamp(1.4rem, 3.3vw, 1.95rem);
+  line-height: 1.3;
+}
+
+.order-placed .sense {
+  padding: 0;
+  text-indent: 0;
+  min-height: 1.3em;
+}
+
+.order-slot {
+  box-shadow: inset 0 -1px 0 var(--hair);
+  margin-bottom: 0.2em;
+}
+
+.order-in {
+  animation: blot 0.45s var(--ease-out) both;
+}
+
+.order-pile {
+  list-style: none;
+  margin: 1.75rem 0 0;
+  padding: 0;
+  border-top: 1px solid var(--ink);
+}
+
+.order-pile button {
+  display: flex;
+  gap: 0.7em;
+  width: 100%;
+  text-align: left;
+  padding: 0.4em 0;
+  border-bottom: 1px solid var(--hair);
+  transition: color 0.15s ease;
+}
+
+.order-pile button:hover {
+  color: var(--rubric);
+}
+
+.order-key {
+  font-size: 0.62em;
+  padding-top: 0.42em;
+  color: var(--rubric);
+}
+
+/* The structure map */
+
+.map {
+  width: min(100%, 44rem);
+  margin: 0 auto;
+  padding: 0 1rem 3rem;
+}
+
+.map-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 1.1rem 0 0.4rem;
+  animation: arrive 0.45s var(--ease-out) backwards;
+}
+
+.map-head .tally {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.map-part {
+  margin-top: 1.1rem;
+}
+
+.map-part h2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 1rem;
+  font-weight: 400;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.1em;
+  color: var(--soft);
+  padding-bottom: 0.15rem;
+  border-bottom: 1px solid var(--ink);
+}
+
+.map-part h2 span {
+  font-family: var(--display);
+  font-variant-caps: normal;
+  letter-spacing: 0;
+}
+
+.map-part ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.map-part li {
+  animation: arrive 0.45s var(--ease-out) backwards;
+  animation-delay: calc(var(--row) * 24ms + 40ms);
+}
+
+.map-note {
+  margin-top: 1rem;
+  font-size: 0.88rem;
+  color: var(--soft);
+}
+
+.map-row {
+  display: grid;
+  grid-template-columns: 1.7rem 9.4rem 1fr auto;
+  align-items: baseline;
+  width: 100%;
+  text-align: left;
+  padding: 0.3rem 0 0.32rem;
+  border-bottom: 1px solid var(--hair);
+}
+
+.map-number {
+  font-size: 0.9rem;
+  color: var(--soft);
+}
+
+.map-number.held {
+  color: var(--rubric);
+}
+
+.map-name {
+  font-family: var(--display);
+  font-size: 1.4rem;
+  line-height: 1.2;
+  transition: opacity 0.2s ease, color 0.15s ease, transform 0.35s var(--spring);
+}
+
+.map-row:active .map-name {
+  transform: translateX(0.2rem);
+}
+
+@media (hover: hover) {
+  .map-row:hover .map-name {
+    opacity: 1;
+    color: var(--rubric);
+    transform: translateX(0.2rem);
+  }
+}
+
+.map-row:focus-visible .map-name {
+  opacity: 1;
+  color: var(--rubric);
+}
+
+.map-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+  align-self: center;
+  padding-right: 0.75rem;
+}
+
+.map-dots i {
+  width: 0.34rem;
+  height: 0.34rem;
+  border-radius: 50%;
+  background: currentColor;
+  animation: dot 0.4s var(--spring) backwards;
+  animation-delay: calc(var(--row) * 24ms + var(--dot) * 9ms + 120ms);
+}
+
+.map-dots .ink-0 {
+  opacity: 0.2;
+}
+
+.map-dots .due {
+  background: var(--rubric);
+}
+
+.map-ref {
+  font-style: italic;
+  color: var(--soft);
+  white-space: nowrap;
+}
+
+.quiz {
+  width: min(100%, 27rem);
+  margin: 0 auto;
+  font-size: clamp(1.4rem, 3.3vw, 1.75rem);
+  line-height: 1.3;
+  text-align: center;
+}
+
+.quiz-lead {
+  font-style: italic;
+  font-size: 1.05rem;
+  color: var(--soft);
+}
+
+.quiz-prompt {
+  font-family: var(--display);
+  font-size: clamp(2.5rem, 8vw, 3.75rem);
+  line-height: 1.1;
+  margin: 0.1em 0 0.15em;
+}
+
+.quiz .order-pile {
+  font-family: var(--display);
+  text-align: left;
+}
+
+.quiz .order-pile button:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.quiz .order-pile li {
+  animation: arrive 0.4s var(--ease-out) backwards;
+}
+
+.quiz .order-pile li:nth-child(2) { animation-delay: 45ms; }
+.quiz .order-pile li:nth-child(3) { animation-delay: 90ms; }
+.quiz .order-pile li:nth-child(4) { animation-delay: 135ms; }
+
+.quiz .order-pile button {
+  transition: color 0.15s ease, opacity 0.3s ease;
+}
+
+.quiz .order-pile .quiz-right {
+  color: var(--rubric);
+  animation: pop 0.45s var(--spring);
+}
+
+.quiz .order-pile .quiz-miss {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.quiz .order-pile button.quiz-other {
+  opacity: 0.45;
+}
+
+.quiz .order-key {
+  flex: none;
+  width: 0.8em;
+}
+
+.quiz .again-note {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+@keyframes blot {
+  from {
+    opacity: 0.1;
+    filter: blur(3px);
+  }
+}
+
+@keyframes caret {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@keyframes shake {
+  15% { transform: translateX(-0.09em); }
+  35% { transform: translateX(0.07em); }
+  55% { transform: translateX(-0.04em); }
+  75% { transform: translateX(0.02em); }
+}
+
+@keyframes bloom {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+    transform: scale(0.5) rotate(-24deg);
+  }
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+    transform: translateY(0.45rem);
+  }
+}
+
+@keyframes settle {
+  35% {
+    transform: scale(1.012);
+  }
+}
+
+@keyframes pop {
+  40% {
+    transform: scale(1.025);
+  }
+}
+
+@keyframes dot {
+  from {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+}
+
+@keyframes veil-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes veil-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes unfold {
+  from {
+    opacity: 0;
+    transform: translateY(-0.3rem) scale(0.985);
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(1.5rem);
+    opacity: 0;
+  }
+}
+
+@keyframes slip-in {
+  from {
+    opacity: 0;
+    filter: blur(5px) drop-shadow(0 2px 4px rgb(10 12 30 / 0));
+    transform: translateY(1.5rem) scale(0.94);
+  }
+}
+
+@keyframes slip-out {
+  to {
+    opacity: 0;
+    filter: blur(3px) drop-shadow(0 2px 4px rgb(10 12 30 / 0));
+    transform: translateY(0.8rem) scale(0.97);
+  }
+}
+
+@keyframes screen-out {
+  to {
+    opacity: 0;
+    filter: blur(4px);
+  }
+}
+
+@keyframes screen-in {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translateY(0.6rem);
+  }
+}
+
+@keyframes theme-reveal {
+  from {
+    clip-path: circle(0 at var(--reveal-x) var(--reveal-y));
+  }
+  to {
+    clip-path: circle(var(--reveal-r) at var(--reveal-x) var(--reveal-y));
+  }
+}
+
+/* Whole-screen changes. Ordinary transitions wait so they cannot blur the snapshots. */
+:root[data-transition],
+:root[data-transition] * {
+  transition: none !important;
+}
+
+:root[data-transition='screen']::view-transition-old(root) {
+  animation: screen-out 0.16s ease-in both;
+}
+
+:root[data-transition='screen']::view-transition-new(root) {
+  animation: screen-in 0.38s var(--ease-out) 0.06s both;
+}
+
+:root[data-transition='theme']::view-transition-old(root) {
+  animation: none;
+}
+
+:root[data-transition='theme']::view-transition-new(root) {
+  animation: theme-reveal 0.7s var(--ease-out) both;
+  mix-blend-mode: normal;
+}
+
+@media (max-width: 34rem) {
+  body {
+    font-size: 18px;
+  }
+
+  .leaf {
+    font-size: 1.2rem;
+    text-align: left;
+    hyphens: manual;
+  }
+
+  .drop {
+    font-size: 5.6rem;
+  }
+
+  .masthead {
+    gap: 0.75rem;
+  }
+
+  /* On a phone the slip becomes a sheet, in two columns within reach of a thumb. */
+  .pick-panel {
+    position: fixed;
+    inset: auto 0 0;
+    width: auto;
+    max-height: 84dvh;
+    padding-bottom: env(safe-area-inset-bottom);
+    border-radius: 4px 4px 0 0;
+    transform-origin: bottom;
+    animation-name: rise;
+    animation-duration: 0.22s;
+  }
+
+  .pick-contents {
+    grid-template-rows: repeat(34, auto);
+  }
+
+  .pick-row {
+    align-items: center;
+    min-height: 2.75rem;
+  }
+
+  .pick-find input {
+    font-size: 1.2rem;
+  }
+
+  .session-head .back {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    margin-block: -0.6rem;
+  }
+
+  .session-head .back span {
+    display: none;
+  }
+
+  .map-row {
+    grid-template-columns: 1.5rem 1fr auto;
+    row-gap: 0.1rem;
+  }
+
+  .map-dots {
+    grid-area: 2 / 2 / auto / -1;
+    padding: 0 0 0.2rem;
+  }
+
+  .passage-short {
+    font-size: 1.5rem;
+  }
+
+  .passage-medium {
+    font-size: 1.35rem;
+  }
+
+  .stage {
+    justify-content: flex-start;
+    padding-top: 1.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}
