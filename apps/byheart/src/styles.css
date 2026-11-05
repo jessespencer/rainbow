@@ -540,7 +540,6 @@ kbd {
 }
 
 .leaf {
-  animation: arrive 0.5s var(--ease-out) backwards;
   padding-top: 2rem;
   font-size: 1.3rem;
   line-height: 1.56;
@@ -548,6 +547,17 @@ kbd {
   hyphens: auto;
   hanging-punctuation: first last;
   position: relative;
+}
+
+.leaf-arrive {
+  animation: arrive 0.5s var(--ease-out) backwards;
+}
+
+/* A page still printed while the next one loads fades back, but only once the wait is long enough to notice. */
+.leaf-waiting {
+  opacity: 0.4;
+  pointer-events: none;
+  transition: opacity 0.3s ease 0.15s;
 }
 
 .drop {
@@ -1851,6 +1861,20 @@ kbd {
 
 :root[data-transition='screen']::view-transition-new(root) {
   animation: screen-in 0.38s var(--ease-out) 0.06s both;
+}
+
+/* Turning the page: the text cross-fades where it stands, and the colophon eases to where the new text ends. */
+:root[data-transition='page'] .leaf {
+  view-transition-name: leaf;
+}
+
+:root[data-transition='page'] .colophon {
+  view-transition-name: colophon;
+}
+
+:root[data-transition='page']::view-transition-group(*) {
+  animation-duration: 0.42s;
+  animation-timing-function: var(--ease-out);
 }
 
 :root[data-transition='theme']::view-transition-old(root) {
