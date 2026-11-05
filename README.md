@@ -1,14 +1,61 @@
 # bible
 
-A family of apps for reading and studying the Bible, sharing one design system:
+> *Three ways into one book: see how it speaks to itself, who lived it, and carry it with you.*
 
-- **Atlas** draws all 344,799 cross-references as arcs.
-- **Lineage** maps 157 biblical lives on a timeline.
-- **By Heart** helps you memorize Scripture, up to whole books.
+A family of free, open-source apps for reading and studying the Bible. Each one takes a single idea and gives it a whole screen. Atlas and Lineage share one design system and an app switcher, so moving between them feels like turning pages in the same book. By Heart joins them at launch.
 
 **▶ [Open Atlas](https://jessedestroys.com/bible/atlas/)** · **[Open Lineage](https://jessedestroys.com/bible/lineage/)** · By Heart is coming soon
 
-Read the [Atlas](apps/atlas/README.md), [Lineage](apps/lineage/README.md) and [By Heart](apps/byheart/README.md) READMEs for what each one does, how the data works, and how to run it.
+## The apps
+
+### 🌈 Atlas: every cross-reference at once
+
+*344,799 threads woven through 66 books.*
+
+The small notes in a Bible's margin send you from one passage to another that echoes, quotes or fulfills it. On paper you follow them one at a time. Atlas draws all of them together: 31,102 verses on one line from Genesis to Revelation, with every cross-reference an arc above it. Inspired by [Chris Harrison's](https://www.chrisharrison.net/index.php/visualizations/BibleViz) arc diagram.
+
+- **Read both ends of a connection.** Tap an arc and both passages open side by side, with the reader votes behind the link.
+- **Follow a passage outward.** Pick a verse, chapter or book to bring its arcs forward, split into what it references and what references it.
+- **Two more ways to see it.** A 66×66 heatmap of which books lean on each other, and a spiral galaxy where every verse is a star.
+- **Search, filter, shuffle.** Jump to `John 3:16` or `1 cor 13:4-7`, filter by section or reader votes, or land on a random connection.
+
+[More about Atlas →](apps/atlas/README.md)
+
+### 🌿 Lineage: 4,150 years on one screen
+
+*Every bar a life, every overlap a shared moment in history.*
+
+An interactive timeline from Adam to the resurrection. It opens on the whole story, then zooms into any reign, shows the scripture behind a person, and finds everyone who was alive at the same moment.
+
+- **157 lives** with their dates, scripture and a short account of each.
+- **Pick any year** and see who was alive. Search for a year like `586 BC` too.
+- **Family Tree** draws the generations as a subway map, with the Messianic line running to Jesus.
+- **King and Priest** follows the royal line from Judah and the priestly line from Levi, both leading to Jesus.
+
+[More about Lineage →](apps/lineage/README.md)
+
+### ❦ By Heart: memorize Scripture, up to whole books
+
+*The chapter is printed as a page. Unlearned verses are grey, and they darken as you learn them.*
+
+By Heart turns memorizing into reading. Each verse climbs a ladder of eight steps, from tracing the words to saying it with no help, and is then reviewed at widening intervals: a day, three days, a week, out to eight months.
+
+- **Learn, then recite.** Take today's verses, a single chapter, or the whole book in one run.
+- **Structure map.** See a book's outline on one page, recite a section across chapter breaks, and quiz yourself on what comes next.
+- **Where is it?** A drill in the other direction: given a verse you've begun, find its chapter and verse.
+- **The Greek behind the ESV.** In Ephesians, tap a word to see the Greek, its gloss and grammar, and where else it appears.
+- **Eleven translations,** from the BSB, KJV and Geneva Bible to the ESV, NIV, NKJV and NLT with your own free key. Progress is kept per translation, and you can save a backup.
+
+[More about By Heart →](apps/byheart/README.md)
+
+## Across Atlas and Lineage
+
+- **One switcher.** The app menu beside each title moves between the apps.
+- **Night or Day.** Deep Night by default, parchment by day. Your choice carries from one app to the other.
+- **Many translations.** Atlas and Lineage read in the public-domain BSB, KJV, WEB and ASV, and in Portuguese, German, Italian and Spanish. Links open the ESV, NIV, NLT and NASB on their own sites.
+- **Shareable.** Every view has its own address, like `?ref=John.3.16` or `?figure=king-david`, and the share button sends it.
+- **Offline.** After a first visit, both work without a connection and can be installed from your browser.
+- **Phones too.** Pinch to zoom, pan with a finger, and read in a bottom sheet.
 
 ## Workspaces
 
@@ -47,12 +94,19 @@ The workflow builds each app into its own folder of a combined `dist/`, and `pag
 
 The apps used to live at `/rainbow/` and `/rainbow/timeline/`. Those addresses redirect here from the `jessespencer.github.io` repo, keeping any `?ref=` or `?figure=`.
 
+## Data and credits
+
+- **Cross-references:** [OpenBible.info](https://www.openbible.info/labs/cross-references/) (CC BY 4.0), largely from the public-domain *Treasury of Scripture Knowledge*.
+- **Scripture:** the [Berean Standard Bible](https://berean.bible/) and the other bundled translations are in the public domain. By Heart loads its translations from the [Bible API](https://bible.helloao.org), [api.esv.org](https://api.esv.org) and [API.Bible](https://api.bible).
+- **Chronology:** James Ussher's *Annals of the World* before the monarchy, and Edwin R. Thiele's *The Mysterious Numbers of the Hebrew Kings* for the divided kingdom.
+- **Greek:** [STEP Bible](https://www.STEPBible.org) and Tyndale House, Cambridge (CC BY 4.0 and CC BY-NC 4.0).
+
+Each app's README gives the full sources and any changes made to them.
+
 ## History
 
-The repo was called `rainbow`, after Atlas's working name, until the family took the name `bible`. It absorbed three previously-separate repositories:
+The repo was called `rainbow`, after Atlas's working name, until the family took the name `bible`. It absorbed three previously separate repositories: `chronos` became `apps/lineage/`, `bible-ui` became `packages/bible-ui/`, and the private `by-heart` became `apps/byheart/`. By Heart came in with `git subtree`, so its history is here. The other two came in as copies, so their earlier history wasn't kept.
 
-- [`jessespencer/chronos`](https://github.com/jessespencer/chronos) → `apps/lineage/`
-- [`jessespencer/bible-ui`](https://github.com/jessespencer/bible-ui) → `packages/bible-ui/`
-- `jessespencer/by-heart` (private) → `apps/byheart/`
+## License
 
-The first two keep their git histories in those repos. By Heart came in with `git subtree`, so its history is here too.
+The code is released under the [MIT License](LICENSE). The data keeps its own licenses, listed in each app's README.
