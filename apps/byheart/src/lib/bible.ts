@@ -342,6 +342,10 @@ export const fetchChapter = (translationId: string, book: Book, chapter: number)
   return t.apiId ? fetchPublicDomain(t, book, chapter) : fetchEsv(t, book, chapter)
 }
 
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII']
+
+export const chapterName = (book: Book, n: number) => (book.chapters <= 12 ? ROMAN[n - 1] : String(n))
+
 export const refLabel = (book: Book, verses: Verse[]) => {
   const first = verses[0]
   const last = verses[verses.length - 1]

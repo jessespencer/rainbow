@@ -1,5 +1,15 @@
 import { useEffect, useState, type CSSProperties } from 'react'
-import { MissingKeyError, fetchChapter, getKey, getTranslation, setKey, type Book, type Translation, type Verse } from '../lib/bible'
+import {
+  MissingKeyError,
+  chapterName,
+  fetchChapter,
+  getKey,
+  getTranslation,
+  setKey,
+  type Book,
+  type Translation,
+  type Verse,
+} from '../lib/bible'
 import { inkLevel, isDue, verseKey, type Progress } from '../lib/memory'
 import { prefersStillness } from '../lib/motion'
 import { Backup } from './Backup'
@@ -19,10 +29,8 @@ interface PageViewProps {
   onTheme: (origin: HTMLElement) => void
   onStart: (items: SessionItem[]) => void
   onMap?: () => void
+  onWhere?: () => void
 }
-
-const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII']
-const chapterName = (book: Book, n: number) => (book.chapters <= 12 ? ROMAN[n - 1] : String(n))
 
 const parseKey = (key: string) => {
   const [, , chapter, verse] = key.split(':')
@@ -155,6 +163,11 @@ export const PageView = (props: PageViewProps) => {
           {props.onMap && (
             <button type="button" className="quiet" aria-label={`The structure of ${book.name}`} onClick={props.onMap}>
               Structure
+            </button>
+          )}
+          {props.onWhere && (
+            <button type="button" className="quiet" onClick={props.onWhere}>
+              Where is it?
             </button>
           )}
         </div>

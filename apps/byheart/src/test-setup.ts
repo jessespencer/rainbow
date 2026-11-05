@@ -7,6 +7,7 @@ export const setDevice = (fine: boolean) =>
   vi.stubGlobal('matchMedia', (query: string) => ({ matches: fine && query.includes('hover'), media: query }))
 
 Element.prototype.scrollIntoView = () => {}
+window.scrollTo = () => {}
 
 afterEach(() => {
   cleanup()
