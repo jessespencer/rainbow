@@ -13,6 +13,7 @@ import {
 import { inkLevel, isDue, verseKey, type Progress } from '../lib/memory'
 import { prefersStillness } from '../lib/motion'
 import { Backup } from './Backup'
+import { FleuronMark } from './Fleuron'
 import { Footnotes } from './Footnotes'
 import { BookPicker, TranslationPicker } from './Picker'
 import type { SessionItem } from './Session'
@@ -107,7 +108,10 @@ export const PageView = (props: PageViewProps) => {
   return (
     <div className="page">
       <header className="masthead">
-        <span className="wordmark">By Heart</span>
+        <span className="wordmark">
+          <FleuronMark />
+          By Heart
+        </span>
         <BookPicker book={book} translation={translation} progress={progress} onPick={props.onBook} />
         <TranslationPicker translation={translation} progress={progress} onPick={props.onTranslation} />
         <button type="button" className="quiet theme" onClick={(e) => props.onTheme(e.currentTarget)} aria-label="Switch between day and night">

@@ -3,6 +3,7 @@ import { chapterName, fetchChapter, getTranslation, type Book, type Verse } from
 import type { Progress } from '../lib/memory'
 import { gradeVerse, whereRound, type PlaceGrade } from '../lib/where'
 import { Back } from './Back'
+import { Fleuron } from './Fleuron'
 import { Footnotes } from './Footnotes'
 
 interface WhereIsItProps {
@@ -145,7 +146,7 @@ export const WhereIsIt = ({ book, translation, progress, onExit }: WhereIsItProp
     const misses = tally.asked - tally.right - tally.close
     return (
       <main className="session session-end">
-        <p className="fleuron">❦</p>
+        <Fleuron />
         <h1>{misses ? 'Nearly held.' : 'It holds.'}</h1>
         <p className="session-message">
           {tally.right} of {tally.asked} at the first asking
