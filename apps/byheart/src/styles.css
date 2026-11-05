@@ -177,10 +177,15 @@ kbd {
 
 .wordmark svg {
   display: inline-block;
-  width: 1.5rem;
-  margin-right: 0.4rem;
-  vertical-align: -0.08em;
-  fill: currentColor;
+  width: 1em;
+  height: 1em;
+  margin-right: 0.35rem;
+  vertical-align: -0.12em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .pick-trigger {
@@ -1158,16 +1163,21 @@ kbd {
   letter-spacing: -0.02em;
 }
 
-.fleuron {
+.heart {
   color: var(--rubric);
   animation: bloom 0.8s var(--spring) both;
 }
 
-.fleuron svg {
+.heart svg {
   display: block;
-  width: 3.25rem;
+  width: 2.25rem;
+  height: 2.25rem;
   margin: 0 auto;
-  fill: currentColor;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .passage {
@@ -1349,7 +1359,7 @@ kbd {
   animation: settle 0.9s var(--ease-out);
 }
 
-.flourish .fleuron {
+.flourish .heart {
   margin-top: 1.25rem;
 }
 

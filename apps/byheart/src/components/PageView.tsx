@@ -14,7 +14,7 @@ import { hasGreek, loadGreek, splitVerse, type GreekData, type GreekTag } from '
 import { inkLevel, isDue, verseKey, type Progress } from '../lib/memory'
 import { prefersStillness } from '../lib/motion'
 import { Backup } from './Backup'
-import { FleuronMark } from './Fleuron'
+import { HeartMark } from './Heart'
 import { Footnotes } from './Footnotes'
 import { GreekNote } from './GreekNote'
 import { BookPicker, TranslationPicker } from './Picker'
@@ -158,7 +158,7 @@ export const PageView = (props: PageViewProps) => {
     <div className="page">
       <header className="masthead">
         <span className="wordmark">
-          <FleuronMark />
+          <HeartMark />
           By Heart
         </span>
         <BookPicker book={book} translation={translation} progress={progress} onPick={props.onBook} />
