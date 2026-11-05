@@ -5,8 +5,10 @@ export const prefersStillness = () => matchMedia('(prefers-reduced-motion: reduc
 let latest: ViewTransition | undefined
 
 // Browsers without view transitions simply change straight away.
-export const withTransition = (kind: 'screen' | 'theme', update: () => void) => {
-  if (!document.startViewTransition || prefersStillness()) return update()
+export const canTransition = () => !!document.startViewTransition && !prefersStillness()
+
+export const withTransition = (kind: 'screen' | 'theme' | 'page', update: () => void) => {
+  if (!canTransition()) return update()
   const root = document.documentElement
   root.dataset.transition = kind
   const transition = document.startViewTransition(() => flushSync(update))
